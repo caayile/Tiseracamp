@@ -5,7 +5,7 @@
 @section('content')
 <section class="mx-auto max-w-3xl px-4 py-10">
     <div class="mb-6">
-        <a href="{{ route('programs.show', $program->slug) }}" class="text-sm font-medium text-brand-mid hover:underline">← {{ $program->title }}</a>
+        <x-back-nav :fallback="route('programs.show', $program->slug)" />
         <h2 class="mt-2 font-display text-2xl font-semibold text-ink">Daftar Magang</h2>
         <p class="mt-1 text-sm text-ink-soft">Lengkapi data diri dan unggah berkas persyaratan. Setelah dikirim, status menjadi menunggu seleksi.</p>
     </div>
@@ -79,9 +79,17 @@
                     @error('cover_letter') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium">Link portfolio</label>
+                    <label class="mb-1.5 block text-sm font-medium">Link portfolio <span class="font-normal text-ink-soft">(opsional)</span></label>
                     <input type="url" name="portfolio_url" value="{{ old('portfolio_url', $application->portfolio_url ?? '') }}" class="input-field" placeholder="https://...">
                     @error('portfolio_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium">Portfolio PDF <span class="font-normal text-ink-soft">(opsional)</span></label>
+                    <input type="file" name="portfolio_file" accept=".pdf" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                    @if ($application?->portfolio_path)
+                        <p class="mt-1 text-xs text-ink-soft">Sudah ada portfolio PDF tersimpan. Upload ulang untuk mengganti.</p>
+                    @endif
+                    @error('portfolio_file') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
         </div>

@@ -6,7 +6,7 @@
 <section class="mx-auto flex max-w-4xl flex-col px-4 py-6" style="height: calc(100vh - 8rem);">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <a href="{{ route('chat.index') }}" class="text-sm font-medium text-brand-deeper hover:underline">← Semua chat</a>
+            <x-back-nav :fallback="route('chat.index')" />
             <h1 class="mt-1 font-display text-xl font-semibold">{{ $conversation->mentor->name }}</h1>
             <p class="text-xs text-ink-soft">Mentor · {{ $conversation->program->title }}</p>
         </div>

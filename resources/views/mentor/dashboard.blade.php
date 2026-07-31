@@ -14,7 +14,7 @@
     <div class="flex flex-wrap items-center justify-between gap-6">
         <div class="flex items-center gap-4">
             @if ($mentor->avatar)
-                <img src="{{ asset('storage/'.$mentor->avatar) }}" alt="" class="h-20 w-20 rounded-2xl border-2 border-white/30 object-cover">
+                <img src="{{ media_url($mentor->avatar) }}" alt="" class="h-20 w-20 rounded-2xl border-2 border-white/30 object-cover">
             @else
                 <span class="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-white/30 bg-white/10 font-display text-2xl font-bold">{{ strtoupper($initials) }}</span>
             @endif

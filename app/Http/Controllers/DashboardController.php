@@ -13,6 +13,7 @@ use App\Models\Program;
 use App\Models\Submission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -83,41 +84,122 @@ class DashboardController extends Controller
         $enrollment = Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
         $program->load(['modules.lessons.assignment', 'mentor']);
 
+        $flatLessons = $program->modules->flatMap->lessons->values();
         $completedIds = LessonProgress::where('user_id', auth()->id())
-            ->whereIn('lesson_id', $program->lessons()->pluck('lessons.id'))
-            ->pluck('lesson_id')->all();
+            ->whereIn('lesson_id', $flatLessons->pluck('id'))
+            ->pluck('lesson_id')
+            ->all();
 
-        $currentLesson = $program->modules->flatMap->lessons
-            ->first(fn (Lesson $lesson) => ! in_array($lesson->id, $completedIds))
-            ?? $program->modules->flatMap->lessons->first();
+        $unlockedIds = $this->unlockedLessonIds($flatLessons, $completedIds);
+
+        $currentLesson = $flatLessons->first(fn (Lesson $lesson) => ! in_array($lesson->id, $completedIds, true))
+            ?? $flatLessons->first();
 
         $discussions = Discussion::with('user')->where('program_id', $program->id)->latest()->take(5)->get();
         $schedules = ClassSchedule::where('program_id', $program->id)->orderBy('starts_at')->take(5)->get();
+        $enrollment->load('certificate');
 
-        return view('learn.show', compact('program', 'enrollment', 'completedIds', 'currentLesson', 'discussions', 'schedules'));
+        return view('learn.show', compact(
+            'program',
+            'enrollment',
+            'completedIds',
+            'unlockedIds',
+            'currentLesson',
+            'discussions',
+            'schedules'
+        ));
     }
 
-    public function lesson(Program $program, Lesson $lesson): View
+    public function storeFeedback(Request $request, Program $program): RedirectResponse
+    {
+        $enrollment = Enrollment::where('user_id', auth()->id())
+            ->where('program_id', $program->id)
+            ->firstOrFail();
+
+        abort_unless($enrollment->isCompleted(), 403, 'Feedback hanya tersedia setelah semua materi selesai.');
+
+        $data = $request->validate([
+            'student_rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'student_feedback' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $enrollment->update([
+            'student_rating' => $data['student_rating'],
+            'student_feedback' => $data['student_feedback'] ?? null,
+            'student_feedback_at' => now(),
+        ]);
+
+        if ($program->mentor_id) {
+            $avg = Enrollment::query()
+                ->where('program_id', $program->id)
+                ->whereNotNull('student_rating')
+                ->avg('student_rating');
+
+            $program->mentor()->update(['rating' => round((float) $avg, 2)]);
+
+            AppNotification::create([
+                'user_id' => $program->mentor_id,
+                'title' => 'Feedback siswa baru',
+                'body' => auth()->user()->name.' memberi rating '.$data['student_rating'].'★ untuk '.$program->title,
+                'type' => 'info',
+                'link' => route('mentor.programs.students', $program),
+            ]);
+        }
+
+        return back()->with('success', 'Terima kasih! Feedback untuk mentor sudah dikirim.');
+    }
+
+    public function certificate(Program $program): View
+    {
+        $enrollment = Enrollment::with(['user', 'program.mentor', 'program.partner', 'certificate'])
+            ->where('user_id', auth()->id())
+            ->where('program_id', $program->id)
+            ->firstOrFail();
+
+        abort_unless($enrollment->isCompleted() && $enrollment->certificate, 404);
+
+        return view('certificates.show', [
+            'enrollment' => $enrollment,
+            'certificate' => $enrollment->certificate,
+            'user' => $enrollment->user,
+            'program' => $enrollment->program,
+        ]);
+    }
+
+    public function lesson(Program $program, Lesson $lesson): View|RedirectResponse
     {
         $enrollment = Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
         abort_unless($lesson->module->program_id === $program->id, 404);
 
         $program->load(['modules.lessons']);
+        $flatLessons = $program->modules->flatMap->lessons->values();
         $completedIds = LessonProgress::where('user_id', auth()->id())
-            ->whereIn('lesson_id', $program->lessons()->pluck('lessons.id'))
-            ->pluck('lesson_id')->all();
+            ->whereIn('lesson_id', $flatLessons->pluck('id'))
+            ->pluck('lesson_id')
+            ->all();
+        $unlockedIds = $this->unlockedLessonIds($flatLessons, $completedIds);
+
+        if (! in_array($lesson->id, $unlockedIds, true)) {
+            $fallback = $flatLessons->first(fn (Lesson $item) => ! in_array($item->id, $completedIds, true))
+                ?? $flatLessons->first();
+
+            return redirect()
+                ->route('learn.lesson', [$program, $fallback])
+                ->with('error', 'Materi terkunci. Selesaikan materi sebelumnya terlebih dahulu.');
+        }
 
         $lesson->load([
             'assignment.questions',
             'assignment.submissions' => fn ($q) => $q->where('user_id', auth()->id()),
         ]);
 
-        $flatLessons = $program->modules->flatMap->lessons->values();
         $currentIndex = $flatLessons->search(fn (Lesson $item) => $item->id === $lesson->id);
         $previousLesson = $currentIndex > 0 ? $flatLessons[$currentIndex - 1] : null;
         $nextLesson = ($currentIndex !== false && $currentIndex < $flatLessons->count() - 1)
             ? $flatLessons[$currentIndex + 1]
             : null;
+
+        $nextUnlocked = $nextLesson && in_array($lesson->id, $completedIds, true);
 
         $note = LessonNote::where('user_id', auth()->id())
             ->where('lesson_id', $lesson->id)
@@ -128,8 +210,10 @@ class DashboardController extends Controller
             'enrollment',
             'lesson',
             'completedIds',
+            'unlockedIds',
             'previousLesson',
             'nextLesson',
+            'nextUnlocked',
             'note'
         ));
     }
@@ -138,6 +222,19 @@ class DashboardController extends Controller
     {
         Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
         abort_unless($lesson->module->program_id === $program->id, 404);
+
+        $program->load(['modules.lessons']);
+        $flatLessons = $program->modules->flatMap->lessons->values();
+        $completedIds = LessonProgress::where('user_id', auth()->id())
+            ->whereIn('lesson_id', $flatLessons->pluck('id'))
+            ->pluck('lesson_id')
+            ->all();
+
+        if (! in_array($lesson->id, $this->unlockedLessonIds($flatLessons, $completedIds), true)) {
+            return redirect()
+                ->route('learn.show', $program)
+                ->with('error', 'Materi terkunci. Selesaikan materi sebelumnya terlebih dahulu.');
+        }
 
         $data = $request->validate([
             'body' => ['nullable', 'string', 'max:10000'],
@@ -156,6 +253,17 @@ class DashboardController extends Controller
         $enrollment = Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
         abort_unless($lesson->module->program_id === $program->id, 404);
 
+        $program->load(['modules.lessons']);
+        $flatLessons = $program->modules->flatMap->lessons->values();
+        $completedIds = LessonProgress::where('user_id', auth()->id())
+            ->whereIn('lesson_id', $flatLessons->pluck('id'))
+            ->pluck('lesson_id')
+            ->all();
+
+        if (! in_array($lesson->id, $this->unlockedLessonIds($flatLessons, $completedIds), true)) {
+            return back()->with('error', 'Materi terkunci. Selesaikan materi sebelumnya terlebih dahulu.');
+        }
+
         LessonProgress::firstOrCreate(
             ['user_id' => auth()->id(), 'lesson_id' => $lesson->id],
             ['completed_at' => now()]
@@ -169,6 +277,21 @@ class DashboardController extends Controller
     public function submitAssignment(Request $request, Program $program, Lesson $lesson): RedirectResponse
     {
         Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+        abort_unless($lesson->module->program_id === $program->id, 404);
+
+        $program->load(['modules.lessons']);
+        $flatLessons = $program->modules->flatMap->lessons->values();
+        $completedIds = LessonProgress::where('user_id', auth()->id())
+            ->whereIn('lesson_id', $flatLessons->pluck('id'))
+            ->pluck('lesson_id')
+            ->all();
+
+        if (! in_array($lesson->id, $this->unlockedLessonIds($flatLessons, $completedIds), true)) {
+            return redirect()
+                ->route('learn.show', $program)
+                ->with('error', 'Materi terkunci. Selesaikan materi sebelumnya terlebih dahulu.');
+        }
+
         $assignment = $lesson->assignment()->with('questions')->first();
         abort_unless($assignment, 404);
 
@@ -205,7 +328,7 @@ class DashboardController extends Controller
 
         $path = $data['file_url'] ?? null;
         if ($request->hasFile('proof')) {
-            $path = $request->file('proof')->store('submissions', 'public');
+            $path = $request->file('proof')->store('submissions', media_disk());
         }
 
         Submission::updateOrCreate(
@@ -224,5 +347,29 @@ class DashboardController extends Controller
         }
 
         return back()->with('success', 'Tugas berhasil dikirim.');
+    }
+
+    /**
+     * Lessons unlock top-to-bottom: each item requires all previous ones completed.
+     *
+     * @param  Collection<int, Lesson>  $flatLessons
+     * @param  array<int, int>  $completedIds
+     * @return array<int, int>
+     */
+    private function unlockedLessonIds(Collection $flatLessons, array $completedIds): array
+    {
+        $unlocked = [];
+
+        foreach ($flatLessons as $index => $item) {
+            $previousDone = $index === 0 || $flatLessons->take($index)->pluck('id')->every(
+                fn ($id) => in_array($id, $completedIds, true)
+            );
+
+            if ($previousDone || in_array($item->id, $completedIds, true)) {
+                $unlocked[] = $item->id;
+            }
+        }
+
+        return $unlocked;
     }
 }

@@ -9,7 +9,7 @@ class LogbookEntry extends Model
 {
     protected $fillable = [
         'user_id', 'program_id', 'enrollment_id', 'entry_date',
-        'title', 'body', 'hours', 'attachment_path',
+        'title', 'body', 'obstacles', 'hours', 'attachment_path',
     ];
 
     protected function casts(): array

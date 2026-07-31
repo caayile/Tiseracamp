@@ -11,7 +11,7 @@
             aria-expanded="false"
             aria-label="Menu profil">
         @if ($navUser->avatar)
-            <img src="{{ asset('storage/'.$navUser->avatar) }}" alt="{{ $navUser->name }}" class="h-9 w-9 rounded-full object-cover ring-2 ring-brand/30">
+            <img src="{{ media_url($navUser->avatar) }}" alt="{{ $navUser->name }}" class="h-9 w-9 rounded-full object-cover ring-2 ring-brand/30">
         @else
             <span class="flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1F2A] font-display text-xs font-bold text-brand">
                 {{ strtoupper($navInitials) }}
@@ -34,6 +34,9 @@
             @if ($navUser->isStudent())
                 <a href="{{ route('profile.applications') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
                     Riwayat pendaftaran
+                </a>
+                <a href="{{ route('payments.index') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
+                    Riwayat pembayaran
                 </a>
                 <a href="{{ route('profile.logbook') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
                     Logbook

@@ -11,17 +11,20 @@
 
 @unless($isMentor)
 <section class="mesh-bg border-b border-brand/10">
-    <div class="mx-auto flex max-w-3xl items-center gap-4 px-4 py-10">
-        @if ($user->avatar)
-            <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-16 w-16 rounded-2xl object-cover ring-2 ring-brand/30">
-        @else
-            <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-deeper font-display text-lg font-bold text-white">
-                {{ strtoupper($initials) }}
-            </span>
-        @endif
-        <div>
-            <h1 class="section-title">Edit profil</h1>
-            <p class="mt-1 text-sm text-ink-soft">{{ $user->email }} · {{ ucfirst($user->role) }}</p>
+    <div class="mx-auto max-w-3xl px-4 py-10">
+        <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
+        <div class="flex items-center gap-4">
+            @if ($user->avatar)
+                <img src="{{ media_url($user->avatar) }}" alt="{{ $user->name }}" class="h-16 w-16 rounded-2xl object-cover ring-2 ring-brand/30">
+            @else
+                <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-deeper font-display text-lg font-bold text-white">
+                    {{ strtoupper($initials) }}
+                </span>
+            @endif
+            <div>
+                <h1 class="section-title">Edit profil</h1>
+                <p class="mt-1 text-sm text-ink-soft">{{ $user->email }} · {{ ucfirst($user->role) }}</p>
+            </div>
         </div>
     </div>
 </section>
@@ -35,7 +38,7 @@
         @if ($isMentor)
             <div class="flex items-center gap-4 border-b border-brand/10 pb-4">
                 @if ($user->avatar)
-                    <img src="{{ asset('storage/'.$user->avatar) }}" alt="{{ $user->name }}" class="h-16 w-16 rounded-2xl object-cover">
+                    <img src="{{ media_url($user->avatar) }}" alt="{{ $user->name }}" class="h-16 w-16 rounded-2xl object-cover">
                 @else
                     <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-deeper font-display text-lg font-bold text-white">
                         {{ strtoupper($initials) }}

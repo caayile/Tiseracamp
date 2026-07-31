@@ -20,7 +20,6 @@
                 <a href="{{ route('admin.programs.index') }}" class="rounded-lg px-3 py-2 text-sm hover:bg-white/10">Programs</a>
                 <a href="{{ route('admin.payments.index') }}" class="rounded-lg px-3 py-2 text-sm hover:bg-white/10">Payments</a>
                 <a href="{{ route('admin.content.index') }}" class="rounded-lg px-3 py-2 text-sm hover:bg-white/10">Content</a>
-                <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 text-sm hover:bg-white/10">Site</a>
                 <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
                     <button class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10" type="submit">Logout</button>

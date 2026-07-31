@@ -31,17 +31,34 @@ class ContentController extends Controller
     public function storeArticle(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'title' => ['required', 'string'],
-            'excerpt' => ['nullable', 'string'],
+            'title' => ['required', 'string', 'max:200'],
+            'excerpt' => ['nullable', 'string', 'max:500'],
             'body' => ['nullable', 'string'],
+            'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
+
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $request->file('thumbnail')->store('articles', media_disk());
+        }
+
         Article::create([
-            ...$data,
+            'title' => $data['title'],
+            'excerpt' => $data['excerpt'] ?? null,
+            'body' => $data['body'] ?? null,
+            'thumbnail' => $thumbnailPath,
             'slug' => Str::slug($data['title']).'-'.Str::random(4),
             'is_published' => true,
         ]);
 
-        return back()->with('success', 'Artikel ditambahkan.');
+        return back()->with('success', 'Berita dipublikasikan.');
+    }
+
+    public function destroyArticle(Article $article): RedirectResponse
+    {
+        $article->delete();
+
+        return back()->with('success', 'Berita dihapus.');
     }
 
     public function storeBanner(Request $request): RedirectResponse

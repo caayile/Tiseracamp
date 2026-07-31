@@ -7,7 +7,7 @@
     @include('partials.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-[#062A3A] text-white antialiased">
+<body class="min-h-screen bg-surface text-ink antialiased">
     @yield('body')
 </body>
 </html>

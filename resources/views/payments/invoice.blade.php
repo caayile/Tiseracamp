@@ -14,18 +14,17 @@
     [$statusLabel, $statusClass, $statusHint] = $statusMap[$payment->status] ?? ['Unknown', 'bg-slate-100 text-slate-600', ''];
 @endphp
 
-<section class="bg-[#F3F8FB] py-10 sm:py-14">
+<section class="bg-surface py-10 sm:py-14">
     <div class="mx-auto max-w-3xl px-4">
-        <a href="{{ route('payments.index') }}" class="text-sm font-medium text-[#0B9BC4] hover:underline">← Riwayat pembayaran</a>
+        <x-back-nav :fallback="route('payments.index')" />
 
-        <div class="mt-5 overflow-hidden rounded-3xl border border-[#0B1F2A]/8 bg-white shadow-[0_24px_50px_-28px_rgba(11,31,42,0.35)]">
-            <div class="relative overflow-hidden px-6 py-8 sm:px-8" style="background: linear-gradient(135deg, #0B1F2A, #065A7A 55%, #0B9BC4);">
-                <div class="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-[#27CCF5]/25 blur-2xl"></div>
+        <div class="mt-5 overflow-hidden rounded-3xl border border-brand/15 bg-white shadow-sm">
+            <div class="relative overflow-hidden bg-gradient-to-br from-brand-mist via-white to-brand-light/40 px-6 py-8 sm:px-8">
                 <div class="relative flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#27CCF5]">Tiga Serangkai Invoice</p>
-                        <p class="mt-2 font-display text-3xl font-bold text-white">{{ $payment->invoice_code }}</p>
-                        <p class="mt-1 text-sm text-[#7DE6FA]/75">{{ $payment->created_at->translatedFormat('d M Y, H:i') }}</p>
+                        <p class="text-xs font-bold uppercase tracking-[0.18em] text-brand-mid">Tiga Serangkai Invoice</p>
+                        <p class="mt-2 font-display text-3xl font-bold text-ink">{{ $payment->invoice_code }}</p>
+                        <p class="mt-1 text-sm text-ink-soft">{{ $payment->created_at->translatedFormat('d M Y, H:i') }}</p>
                     </div>
                     <span class="rounded-xl px-3 py-1.5 text-xs font-bold {{ $statusClass }}">{{ $statusLabel }}</span>
                 </div>
@@ -60,11 +59,11 @@
                         <p class="text-sm font-semibold text-[#0B1F2A]">Bukti transfer</p>
                         <div class="mt-3 flex flex-wrap items-center gap-3">
                             @if (preg_match('/\.(jpg|jpeg|png)$/i', $payment->proof_path))
-                                <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="block overflow-hidden rounded-xl border border-slate-200">
-                                    <img src="{{ asset('storage/'.$payment->proof_path) }}" alt="Bukti" class="h-28 w-auto object-cover">
+                                <a href="{{ media_url($payment->proof_path) }}" target="_blank" class="block overflow-hidden rounded-xl border border-slate-200">
+                                    <img src="{{ media_url($payment->proof_path) }}" alt="Bukti" class="h-28 w-auto object-cover">
                                 </a>
                             @endif
-                            <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="inline-flex rounded-xl border border-[#0B1F2A]/15 px-4 py-2 text-sm font-semibold text-[#0B1F2A] hover:border-[#27CCF5] hover:bg-[#27CCF5]/10">Buka file bukti</a>
+                            <a href="{{ media_url($payment->proof_path) }}" target="_blank" class="inline-flex rounded-xl border border-[#0B1F2A]/15 px-4 py-2 text-sm font-semibold text-[#0B1F2A] hover:border-[#27CCF5] hover:bg-[#27CCF5]/10">Buka file bukti</a>
                         </div>
                     </div>
                 @endif

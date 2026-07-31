@@ -35,7 +35,7 @@ class PaymentController extends Controller
     {
         $request->validate(['proof' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120']]);
 
-        $path = $request->file('proof')->store('payments', 'public');
+        $path = $request->file('proof')->store('payments', media_disk());
 
         $payment = Payment::create([
             'user_id' => auth()->id(),

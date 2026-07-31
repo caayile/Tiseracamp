@@ -5,7 +5,7 @@
 @section('content')
 <section class="mx-auto max-w-2xl px-4 py-10">
     <div class="mb-6">
-        <a href="{{ route('programs.show', $program->slug) }}" class="text-sm font-medium text-brand-mid hover:underline">← {{ $program->title }}</a>
+        <x-back-nav :fallback="route('programs.show', $program->slug)" />
         <h1 class="mt-2 font-display text-2xl font-semibold text-ink">Status pendaftaran</h1>
     </div>
 

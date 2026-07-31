@@ -6,8 +6,14 @@
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-6xl px-4 py-12">
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-mid">Katalog</p>
-        <h1 class="section-title mt-2">Bootcamp & Program</h1>
-        <p class="mt-3 max-w-2xl text-ink-soft">Pilih jalur belajar yang sesuai — dari skill intensive hingga magang online bersama partner.</p>
+        <h1 class="section-title mt-2">
+            {{ request('type') === 'internship' ? 'Lowongan Magang' : 'Bootcamp & Program' }}
+        </h1>
+        <p class="mt-3 max-w-2xl text-ink-soft">
+            {{ request('type') === 'internship'
+                ? 'Jelajahi program magang online bersama partner industri.'
+                : 'Pilih jalur belajar yang sesuai — dari skill intensive hingga magang online bersama partner.' }}
+        </p>
 
         <form method="GET" class="mt-8 grid gap-3 rounded-2xl border border-brand/15 bg-white/80 p-4 shadow-sm md:grid-cols-[1fr_auto_auto_auto]">
             <input type="search" name="q" value="{{ request('q') }}" placeholder="Cari program..." class="input-field">

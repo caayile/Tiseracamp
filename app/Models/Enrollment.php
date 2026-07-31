@@ -17,6 +17,12 @@ class Enrollment extends Model
         'progress',
         'enrolled_at',
         'completed_at',
+        'student_rating',
+        'student_feedback',
+        'student_feedback_at',
+        'mentor_rating',
+        'mentor_note',
+        'mentor_rated_at',
     ];
 
     protected function casts(): array
@@ -24,7 +30,34 @@ class Enrollment extends Model
         return [
             'enrolled_at' => 'datetime',
             'completed_at' => 'datetime',
+            'student_feedback_at' => 'datetime',
+            'mentor_rated_at' => 'datetime',
         ];
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->progress >= 100 || $this->status === 'completed';
+    }
+
+    public static function mentorRatingLabels(): array
+    {
+        return [
+            5 => 'Berhasil menyelesaikan semua',
+            4 => 'Ada course yang tidak sesuai',
+            3 => 'Performa cukup',
+            2 => 'Perlu perbaikan signifikan',
+            1 => 'Tidak memenuhi kriteria',
+        ];
+    }
+
+    public function mentorRatingLabel(): ?string
+    {
+        if (! $this->mentor_rating) {
+            return null;
+        }
+
+        return self::mentorRatingLabels()[$this->mentor_rating] ?? null;
     }
 
     public function user(): BelongsTo

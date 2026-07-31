@@ -29,16 +29,19 @@
 
                         <div class="mt-3 flex flex-wrap gap-3 text-xs">
                             @if ($application->cv_path)
-                                <a href="{{ asset('storage/'.$application->cv_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">CV</a>
+                                <a href="{{ media_url($application->cv_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">CV</a>
                             @endif
                             @if ($application->transcript_path)
-                                <a href="{{ asset('storage/'.$application->transcript_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Transkrip</a>
+                                <a href="{{ media_url($application->transcript_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Transkrip</a>
                             @endif
                             @if ($application->cover_letter_path)
-                                <a href="{{ asset('storage/'.$application->cover_letter_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Surat pengantar</a>
+                                <a href="{{ media_url($application->cover_letter_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Surat pengantar</a>
                             @endif
                             @if ($application->portfolio_url)
-                                <a href="{{ $application->portfolio_url }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Portfolio</a>
+                                <a href="{{ $application->portfolio_url }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Portfolio (link)</a>
+                            @endif
+                            @if ($application->portfolio_path)
+                                <a href="{{ media_url($application->portfolio_path) }}" target="_blank" class="font-semibold text-brand-mid hover:underline">Portfolio (PDF)</a>
                             @endif
                         </div>
                     </div>

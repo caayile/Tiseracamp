@@ -52,8 +52,13 @@ return new class extends Migration
         });
 
         // Allow richer material types beyond original enum values
-        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
             Schema::getConnection()->statement("ALTER TABLE lessons MODIFY type VARCHAR(32) NOT NULL DEFAULT 'text'");
+        } elseif ($driver === 'pgsql') {
+            Schema::getConnection()->statement("ALTER TABLE lessons ALTER COLUMN type TYPE VARCHAR(32)");
+            Schema::getConnection()->statement("ALTER TABLE lessons ALTER COLUMN type SET DEFAULT 'text'");
         }
 
         Schema::create('quiz_questions', function (Blueprint $table) {

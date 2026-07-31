@@ -9,7 +9,7 @@ class InternshipApplication extends Model
 {
     protected $fillable = [
         'user_id', 'program_id', 'full_name', 'phone', 'university', 'major', 'semester', 'education_level',
-        'motivation', 'experience', 'cv_path', 'transcript_path', 'cover_letter_path', 'portfolio_url',
+        'motivation', 'experience', 'cv_path', 'transcript_path', 'cover_letter_path', 'portfolio_url', 'portfolio_path',
         'status', 'reviewer_note', 'reviewed_by', 'submitted_at', 'reviewed_at',
     ];
 

@@ -29,10 +29,10 @@
             {{-- Foto mentor / thumbnail --}}
             <div class="relative w-[42%] shrink-0 self-end">
                 @if ($program->thumbnail)
-                    <img src="{{ str_starts_with($program->thumbnail, 'http') ? $program->thumbnail : asset('storage/'.$program->thumbnail) }}"
+                    <img src="{{ media_url($program->thumbnail) }}"
                          alt="" class="h-full max-h-full w-full object-cover object-top">
                 @elseif ($mentor?->avatar)
-                    <img src="{{ asset('storage/'.$mentor->avatar) }}" alt="{{ $mentor->name }}"
+                    <img src="{{ media_url($mentor->avatar) }}" alt="{{ $mentor->name }}"
                          class="h-full w-full object-cover object-top">
                 @else
                     <div class="flex h-full min-h-[140px] items-end justify-center bg-gradient-to-t from-ink to-brand-mid pb-2">

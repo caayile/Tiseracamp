@@ -74,7 +74,7 @@
                                     class="flex items-center gap-3 rounded-2xl border border-[#0B1F2A]/10 bg-white py-1.5 pl-1.5 pr-3 shadow-sm transition hover:border-[#27CCF5]/50 hover:shadow-md"
                                     aria-expanded="false">
                                 @if ($mentor->avatar)
-                                    <img src="{{ asset('storage/'.$mentor->avatar) }}" alt="{{ $mentor->name }}" class="h-11 w-11 rounded-xl object-cover ring-2 ring-[#27CCF5]/40">
+                                    <img src="{{ media_url($mentor->avatar) }}" alt="{{ $mentor->name }}" class="h-11 w-11 rounded-xl object-cover ring-2 ring-[#27CCF5]/40">
                                 @else
                                     <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0B1F2A] font-display text-sm font-bold text-[#27CCF5]">
                                         {{ strtoupper($initials) }}
@@ -91,7 +91,7 @@
                                 <div class="bg-gradient-to-br from-brand/20 via-white to-brand-mist p-5">
                                     <div class="flex items-center gap-3">
                                         @if ($mentor->avatar)
-                                            <img src="{{ asset('storage/'.$mentor->avatar) }}" alt="" class="h-14 w-14 rounded-xl object-cover">
+                                            <img src="{{ media_url($mentor->avatar) }}" alt="" class="h-14 w-14 rounded-xl object-cover">
                                         @else
                                             <span class="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-deeper font-display text-lg font-bold text-white">{{ strtoupper($initials) }}</span>
                                         @endif

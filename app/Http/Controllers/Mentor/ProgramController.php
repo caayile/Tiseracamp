@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Mentor;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppNotification;
 use App\Models\Category;
 use App\Models\Enrollment;
 use App\Models\Module;
 use App\Models\Program;
+use App\Models\QuizQuestion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -49,7 +51,7 @@ class ProgramController extends Controller
 
         $thumbnailPath = null;
         if ($request->hasFile('thumbnail')) {
-            $thumbnailPath = $request->file('thumbnail')->store('program-banners', 'public');
+            $thumbnailPath = $request->file('thumbnail')->store('program-banners', media_disk());
         }
 
         Program::create([
@@ -103,17 +105,51 @@ class ProgramController extends Controller
             'video_url' => ['nullable', 'url'],
             'file_url' => ['nullable', 'url'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'instructions' => ['nullable', 'string'],
+            'question' => ['nullable', 'string', 'max:500'],
+            'option_0' => ['nullable', 'string', 'max:255'],
+            'option_1' => ['nullable', 'string', 'max:255'],
+            'option_2' => ['nullable', 'string', 'max:255'],
+            'option_3' => ['nullable', 'string', 'max:255'],
+            'correct_index' => ['nullable', 'integer', 'min:0', 'max:3'],
         ]);
 
         $data['content'] = $this->sanitizeRichText($data['content'] ?? null);
 
-        $module->lessons()->create([
-            ...$data,
-            'duration_minutes' => $data['duration_minutes'] ?? 10,
+        $lesson = $module->lessons()->create([
+            'title' => $data['title'],
+            'type' => $data['type'],
+            'content' => $data['content'] ?? null,
+            'video_url' => $data['video_url'] ?? null,
+            'file_url' => $data['file_url'] ?? null,
+            'duration_minutes' => $data['duration_minutes'] ?? ($data['type'] === 'text' ? 10 : 15),
             'sort_order' => $module->lessons()->count() + 1,
         ]);
 
-        return back()->with('success', 'Materi ditambahkan.');
+        if ($data['type'] === 'quiz') {
+            $assignment = $lesson->assignment()->create([
+                'title' => $data['title'],
+                'instructions' => $data['instructions'] ?? null,
+                'kind' => 'quiz',
+            ]);
+
+            if (filled($data['question'] ?? null)) {
+                QuizQuestion::create([
+                    'assignment_id' => $assignment->id,
+                    'question' => $data['question'],
+                    'options' => array_values(array_filter([
+                        $data['option_0'] ?? null,
+                        $data['option_1'] ?? null,
+                        $data['option_2'] ?? null,
+                        $data['option_3'] ?? null,
+                    ])),
+                    'correct_index' => (int) ($data['correct_index'] ?? 0),
+                    'points' => 10,
+                ]);
+            }
+        }
+
+        return back()->with('success', $data['type'] === 'quiz' ? 'Quiz ditambahkan di akhir modul.' : 'Materi ditambahkan.');
     }
 
     private function sanitizeRichText(?string $html): ?string
@@ -160,8 +196,39 @@ class ProgramController extends Controller
     public function students(Program $program): View
     {
         abort_unless($program->mentor_id === auth()->id(), 403);
-        $enrollments = Enrollment::with('user')->where('program_id', $program->id)->latest()->get();
+        $enrollments = Enrollment::with(['user', 'certificate'])
+            ->where('program_id', $program->id)
+            ->latest()
+            ->get();
 
         return view('mentor.programs.students', compact('program', 'enrollments'));
+    }
+
+    public function rateStudent(Request $request, Enrollment $enrollment): RedirectResponse
+    {
+        $enrollment->load('program');
+        abort_unless($enrollment->program->mentor_id === auth()->id(), 403);
+        abort_unless($enrollment->isCompleted(), 403, 'Rating hanya untuk siswa yang sudah menyelesaikan semua materi.');
+
+        $data = $request->validate([
+            'mentor_rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'mentor_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $enrollment->update([
+            'mentor_rating' => $data['mentor_rating'],
+            'mentor_note' => $data['mentor_note'] ?? null,
+            'mentor_rated_at' => now(),
+        ]);
+
+        AppNotification::create([
+            'user_id' => $enrollment->user_id,
+            'title' => 'Rating dari mentor',
+            'body' => 'Mentor memberi '.$data['mentor_rating'].'★ untuk program '.$enrollment->program->title,
+            'type' => 'info',
+            'link' => route('learn.show', $enrollment->program),
+        ]);
+
+        return back()->with('success', 'Rating siswa disimpan.');
     }
 }

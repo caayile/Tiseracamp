@@ -15,6 +15,7 @@ use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InternshipApplicationController;
 use App\Http\Controllers\LogbookController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\Mentor\AnnouncementController as MentorAnnouncementController;
 use App\Http\Controllers\Mentor\ApplicationController as MentorApplicationController;
 use App\Http\Controllers\Mentor\AssignmentController as MentorAssignmentController;
@@ -30,6 +31,8 @@ use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/berita', [NewsController::class, 'index'])->name('news.index');
+Route::get('/berita/{slug}', [NewsController::class, 'show'])->name('news.show');
 Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
 Route::get('/programs/{slug}', [ProgramController::class, 'show'])->name('programs.show');
 
@@ -73,6 +76,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/learn/{program}/lessons/{lesson}/complete', [DashboardController::class, 'completeLesson'])->name('learn.complete');
     Route::post('/learn/{program}/lessons/{lesson}/submit', [DashboardController::class, 'submitAssignment'])->name('learn.submit');
     Route::post('/learn/{program}/lessons/{lesson}/note', [DashboardController::class, 'saveNote'])->name('learn.note');
+    Route::post('/learn/{program}/feedback', [DashboardController::class, 'storeFeedback'])->name('learn.feedback');
+    Route::get('/learn/{program}/certificate', [DashboardController::class, 'certificate'])->name('learn.certificate');
 
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/checkout/{program}', [PaymentController::class, 'checkout'])->name('payments.checkout');
@@ -104,6 +109,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::post('/programs', [MentorProgramController::class, 'store'])->name('programs.store');
     Route::get('/programs/{program}/curriculum', [MentorProgramController::class, 'curriculum'])->name('programs.curriculum');
     Route::get('/programs/{program}/students', [MentorProgramController::class, 'students'])->name('programs.students');
+    Route::post('/enrollments/{enrollment}/rate', [MentorProgramController::class, 'rateStudent'])->name('enrollments.rate');
     Route::post('/programs/{program}/modules', [MentorProgramController::class, 'storeModule'])->name('modules.store');
     Route::post('/modules/{module}/lessons', [MentorProgramController::class, 'storeLesson'])->name('lessons.store');
     Route::post('/lessons/{lesson}/assignments', [MentorAssignmentController::class, 'store'])->name('assignments.store');
@@ -146,6 +152,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
 
     Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
     Route::post('/content/articles', [AdminContentController::class, 'storeArticle'])->name('content.articles');
+    Route::delete('/content/articles/{article}', [AdminContentController::class, 'destroyArticle'])->name('content.articles.destroy');
     Route::post('/content/banners', [AdminContentController::class, 'storeBanner'])->name('content.banners');
     Route::post('/content/faqs', [AdminContentController::class, 'storeFaq'])->name('content.faqs');
     Route::post('/content/categories', [AdminContentController::class, 'storeCategory'])->name('content.categories');

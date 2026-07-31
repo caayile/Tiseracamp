@@ -5,20 +5,43 @@
 
 @section('content')
 <div class="grid gap-6 xl:grid-cols-2">
-    {{-- Artikel --}}
+    {{-- Berita --}}
     <div class="card-soft p-5">
-        <h2 class="font-display text-lg font-semibold">Artikel</h2>
-        <form method="POST" action="{{ route('admin.content.articles') }}" class="mt-4 space-y-3">
+        <h2 class="font-display text-lg font-semibold">Berita</h2>
+        <p class="mt-1 text-xs text-ink-soft">Hanya admin yang dapat menambah berita. Tampil di beranda & menu Berita.</p>
+        <form method="POST" action="{{ route('admin.content.articles') }}" enctype="multipart/form-data" class="mt-4 space-y-3">
             @csrf
-            <input type="text" name="title" class="input-field" placeholder="Judul artikel" required>
-            <input type="text" name="excerpt" class="input-field" placeholder="Ringkasan">
-            <textarea name="body" rows="3" class="input-field" placeholder="Isi artikel"></textarea>
-            <button class="btn-primary" type="submit">Tambah artikel</button>
+            <input type="text" name="title" class="input-field" placeholder="Judul berita" required>
+            <input type="text" name="excerpt" class="input-field" placeholder="Ringkasan singkat">
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-ink">Thumbnail <span class="font-normal text-ink-soft">(opsional)</span></label>
+                <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                @error('thumbnail') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <textarea name="body" rows="4" class="input-field" placeholder="Isi berita"></textarea>
+            <button class="btn-primary" type="submit">Publikasikan berita</button>
         </form>
         <ul class="mt-4 space-y-2">
-            @foreach ($articles as $article)
-                <li class="rounded-lg bg-brand-mist/50 px-3 py-2 text-sm">{{ $article->title }}</li>
-            @endforeach
+            @forelse ($articles as $article)
+                <li class="flex items-start justify-between gap-3 rounded-lg bg-brand-mist/50 px-3 py-2 text-sm">
+                    <div class="flex min-w-0 items-start gap-3">
+                        @if ($article->thumbnail)
+                            <img src="{{ media_url($article->thumbnail) }}" alt="" class="h-12 w-16 shrink-0 rounded-lg object-cover">
+                        @endif
+                        <div class="min-w-0">
+                            <p class="font-medium text-ink">{{ $article->title }}</p>
+                            <p class="text-xs text-ink-soft">{{ $article->created_at->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ route('admin.content.articles.destroy', $article) }}" onsubmit="return confirm('Hapus berita ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-xs font-semibold text-red-600 hover:underline">Hapus</button>
+                    </form>
+                </li>
+            @empty
+                <li class="text-sm text-ink-soft">Belum ada berita.</li>
+            @endforelse
         </ul>
     </div>
 

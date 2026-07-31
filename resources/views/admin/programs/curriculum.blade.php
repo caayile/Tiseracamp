@@ -4,6 +4,17 @@
 @section('heading', 'Kurikulum: '.$program->title)
 
 @section('content')
+@php
+    $typeLabels = [
+        'text' => 'Pengenalan',
+        'video' => 'Video',
+        'article' => 'Artikel',
+        'pdf' => 'PDF',
+        'recording' => 'Rekaman',
+        'quiz' => 'Quiz',
+    ];
+@endphp
+
 <div class="mb-6 flex flex-wrap gap-3">
     <a href="{{ route('admin.programs.index') }}" class="btn-secondary">← Kembali</a>
     <a href="{{ route('programs.show', $program->slug) }}" class="btn-ghost" target="_blank">Lihat publik</a>
@@ -44,6 +55,11 @@
     </div>
 @endif
 
+<div class="card-soft mb-6 border-brand/20 bg-brand-mist/40 p-4 text-sm text-ink-soft">
+    <p class="font-semibold text-ink">Alur materi yang disarankan</p>
+    <p class="mt-1">1) Pengenalan → 2) Video / materi → 3) Quiz di akhir (opsional).</p>
+</div>
+
 <form method="POST" action="{{ route('admin.modules.store', $program) }}" class="card-soft mb-6 flex flex-wrap gap-3 p-4">
     @csrf
     <input type="text" name="title" class="input-field max-w-md" placeholder="Judul modul baru" required>
@@ -52,9 +68,13 @@
 
 <div class="space-y-6">
     @forelse ($program->modules as $module)
+        @php $defaultType = $module->lessons->isEmpty() ? 'text' : 'video'; @endphp
         <div class="card-soft p-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="font-display text-lg font-semibold">{{ $module->sort_order }}. {{ $module->title }}</h2>
+                <div>
+                    <h2 class="font-display text-lg font-semibold">{{ $module->sort_order }}. {{ $module->title }}</h2>
+                    <p class="mt-1 text-xs text-ink-soft">{{ $module->lessons->count() }} materi</p>
+                </div>
                 <form method="POST" action="{{ route('admin.modules.destroy', $module) }}" onsubmit="return confirm('Hapus modul?')">
                     @csrf
                     @method('DELETE')
@@ -63,34 +83,75 @@
             </div>
 
             <ul class="mt-4 space-y-2">
-                @foreach ($module->lessons as $lesson)
-                    <li class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand-mist/50 px-3 py-2 text-sm">
-                        <span>{{ $lesson->title }} <span class="text-ink-soft">({{ $lesson->type }} · {{ $lesson->duration_minutes }}m)</span></span>
+                @forelse ($module->lessons as $lesson)
+                    <li class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-brand/10 bg-white px-3 py-2 text-sm">
+                        <span>
+                            <span class="font-medium">{{ $lesson->sort_order }}. {{ $lesson->title }}</span>
+                            <span class="ml-2 rounded-lg bg-brand-mist px-2 py-0.5 text-[11px] font-semibold text-brand-mid">
+                                {{ $typeLabels[$lesson->type] ?? $lesson->type }}
+                            </span>
+                            <span class="text-ink-soft">· {{ $lesson->duration_minutes }}m</span>
+                        </span>
                         <form method="POST" action="{{ route('admin.lessons.destroy', $lesson) }}">
                             @csrf
                             @method('DELETE')
                             <button class="text-xs font-semibold text-red-600" type="submit">Hapus</button>
                         </form>
                     </li>
-                @endforeach
+                @empty
+                    <li class="rounded-xl border border-dashed border-brand/30 bg-brand-mist/30 px-4 py-6 text-center text-sm text-ink-soft">
+                        Belum ada materi. Mulai dari <strong class="text-ink">Pengenalan</strong>.
+                    </li>
+                @endforelse
             </ul>
 
-            <form method="POST" action="{{ route('admin.lessons.store', $module) }}" class="mt-4 grid gap-3 border-t border-brand/10 pt-4 md:grid-cols-2">
+            <form method="POST" action="{{ route('admin.lessons.store', $module) }}" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form>
                 @csrf
-                <input type="text" name="title" class="input-field" placeholder="Judul lesson" required>
-                <select name="type" class="input-field" required>
-                    <option value="video">Video</option>
-                    <option value="text">Text</option>
-                    <option value="article">Artikel</option>
-                    <option value="pdf">PDF</option>
-                    <option value="quiz">Quiz</option>
-                    <option value="recording">Recording</option>
-                </select>
-                <input type="url" name="video_url" class="input-field" placeholder="URL video (opsional)">
-                <input type="url" name="file_url" class="input-field" placeholder="URL file (opsional)">
-                <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="15">
-                <textarea name="content" rows="2" class="input-field md:col-span-2" placeholder="Konten materi"></textarea>
-                <button class="btn-secondary md:col-span-2" type="submit">Tambah lesson</button>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">Tambah materi</p>
+                    <p class="mt-1 text-sm text-ink-soft">Pilih tipe — field menyesuaikan. Quiz biasanya di akhir.</p>
+                </div>
+
+                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5" role="radiogroup" aria-label="Tipe materi">
+                    @foreach ([
+                        'text' => ['Pengenalan', 'Teks pembuka'],
+                        'video' => ['Video', 'Materi utama'],
+                        'article' => ['Artikel', 'Bacaan'],
+                        'pdf' => ['PDF', 'Dokumen'],
+                        'quiz' => ['Quiz', 'Biasanya di akhir'],
+                    ] as $value => [$label, $hint])
+                        <label class="cursor-pointer">
+                            <input type="radio" name="type" value="{{ $value }}" class="peer sr-only" @checked($defaultType === $value) data-lesson-type>
+                            <span class="flex h-full flex-col rounded-2xl border border-ink/10 bg-white px-3 py-3 text-left transition peer-checked:border-brand peer-checked:bg-brand-mist peer-checked:shadow-sm peer-checked:ring-2 peer-checked:ring-brand/25 hover:border-brand/40">
+                                <span class="text-sm font-semibold text-ink">{{ $label }}</span>
+                                <span class="mt-0.5 text-[11px] text-ink-soft">{{ $hint }}</span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+
+                <div class="grid gap-3 md:grid-cols-2">
+                    <input type="text" name="title" class="input-field" placeholder="Judul materi" required value="{{ $defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : '' }}">
+                    <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="{{ $defaultType === 'text' ? 10 : 15 }}">
+                </div>
+
+                <div data-lesson-panel="video" class="{{ $defaultType === 'video' ? '' : 'hidden' }}">
+                    <input type="url" name="video_url" class="input-field" placeholder="URL video (opsional)">
+                </div>
+
+                <div data-lesson-panel="pdf" class="{{ $defaultType === 'pdf' ? '' : 'hidden' }}">
+                    <input type="url" name="file_url" class="input-field" placeholder="URL file PDF (opsional)">
+                </div>
+
+                <div data-lesson-panel="content" class="{{ in_array($defaultType, ['text', 'article'], true) ? '' : 'hidden' }}">
+                    <textarea name="content" rows="4" class="input-field" placeholder="Konten pengenalan / artikel"></textarea>
+                </div>
+
+                <div data-lesson-panel="quiz" class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900 {{ $defaultType === 'quiz' ? '' : 'hidden' }}">
+                    Materi quiz. Detail soal bisa dilengkapi mentor di halaman kurikulum mentor.
+                </div>
+
+                <button class="btn-secondary" type="submit">Tambah materi</button>
             </form>
         </div>
     @empty

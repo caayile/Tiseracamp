@@ -6,6 +6,10 @@
 <section class="hero-gradient border-b border-brand/10">
     <div class="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[1.2fr_0.8fr] md:items-start">
         <div class="reveal">
+            <x-back-nav
+                :fallback="$program->type === 'internship' ? route('programs.index', ['type' => 'internship']) : route('programs.index')"
+                class="mb-4"
+            />
             <div class="flex flex-wrap gap-2">
                 <span class="badge">{{ $program->typeLabel() }}</span>
                 <span class="rounded-lg bg-white/70 px-2.5 py-1 text-xs font-medium text-ink-soft">{{ $program->level }}</span>

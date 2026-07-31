@@ -5,6 +5,7 @@
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-3xl px-4 py-10">
+        <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
         <h1 class="section-title">Logbook magang</h1>
         <p class="mt-2 text-sm text-ink-soft">Catat aktivitas harian setelah kamu diterima di program magang.</p>
     </div>
@@ -36,19 +37,28 @@
                 <div>
                     <label class="mb-1.5 block text-sm font-medium">Judul kegiatan</label>
                     <input type="text" name="title" value="{{ old('title') }}" class="input-field" required>
+                    @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium">Jam kerja</label>
                     <input type="number" name="hours" value="{{ old('hours', 4) }}" min="1" max="24" class="input-field" required>
+                    @error('hours') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
             <div>
-                <label class="mb-1.5 block text-sm font-medium">Deskripsi</label>
-                <textarea name="body" rows="3" class="input-field" required>{{ old('body') }}</textarea>
+                <label class="mb-1.5 block text-sm font-medium">Aktivitas</label>
+                <textarea name="body" rows="3" class="input-field" required placeholder="Apa yang dikerjakan hari ini?">{{ old('body') }}</textarea>
+                @error('body') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="mb-1.5 block text-sm font-medium">Lampiran (opsional)</label>
-                <input type="file" name="attachment" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                <label class="mb-1.5 block text-sm font-medium">Kendala <span class="font-normal text-ink-soft">(opsional)</span></label>
+                <textarea name="obstacles" rows="2" class="input-field" placeholder="Hambatan atau kendala yang ditemui">{{ old('obstacles') }}</textarea>
+                @error('obstacles') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium">Gambar <span class="font-normal text-ink-soft">(opsional, 1 file)</span></label>
+                <input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                @error('attachment') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <button type="submit" class="btn-primary">Tambah entri</button>
         </form>
@@ -57,13 +67,26 @@
             @forelse ($logbooks as $entry)
                 <div class="card-soft p-5">
                     <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <p class="text-xs font-semibold uppercase tracking-wide text-brand-mid">{{ $entry->program->title }}</p>
                             <p class="mt-1 font-semibold text-ink">{{ $entry->title }}</p>
                             <p class="mt-1 text-xs text-ink-soft">{{ $entry->entry_date->translatedFormat('d M Y') }} · {{ $entry->hours }} jam</p>
-                            <p class="mt-2 text-sm text-ink-soft">{{ $entry->body }}</p>
+                            <div class="mt-3 space-y-2 text-sm">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-ink/50">Aktivitas</p>
+                                    <p class="mt-0.5 text-ink-soft whitespace-pre-line">{{ $entry->body }}</p>
+                                </div>
+                                @if ($entry->obstacles)
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-ink/50">Kendala</p>
+                                        <p class="mt-0.5 text-ink-soft whitespace-pre-line">{{ $entry->obstacles }}</p>
+                                    </div>
+                                @endif
+                            </div>
                             @if ($entry->attachment_path)
-                                <a href="{{ asset('storage/'.$entry->attachment_path) }}" target="_blank" class="mt-2 inline-block text-xs font-semibold text-brand-mid hover:underline">Lihat lampiran</a>
+                                <a href="{{ media_url($entry->attachment_path) }}" target="_blank" class="mt-3 block">
+                                    <img src="{{ media_url($entry->attachment_path) }}" alt="Dokumentasi logbook" class="max-h-48 rounded-xl border border-brand/10 object-cover">
+                                </a>
                             @endif
                         </div>
                         <form method="POST" action="{{ route('logbook.destroy', $entry) }}">

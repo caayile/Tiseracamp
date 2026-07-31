@@ -4,7 +4,7 @@
 
 @section('content')
 <section class="mx-auto max-w-3xl px-4 py-10">
-    <a href="{{ route('learn.show', $discussion->program) }}" class="text-sm font-medium text-brand-deeper hover:underline">← Kembali ke kelas</a>
+    <x-back-nav :fallback="route('learn.show', $discussion->program)" class="mb-4" />
 
     <article class="card-soft mt-6 p-6">
         <h1 class="font-display text-2xl font-semibold">{{ $discussion->title }}</h1>

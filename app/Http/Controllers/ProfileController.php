@@ -81,7 +81,7 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $request->file('avatar')->store('avatars', media_disk());
         }
 
         if (! empty($data['password'])) {

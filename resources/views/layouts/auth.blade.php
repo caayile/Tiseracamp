@@ -8,13 +8,25 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-white text-ink antialiased">
-    <div class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
-        @if (session('success'))
-            <div class="mb-4 rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-brand-mid">
-                {{ session('success') }}
+    <div class="relative min-h-screen">
+        <img
+            src="{{ asset('images/auth-building.png') }}"
+            alt=""
+            class="fixed inset-0 h-full w-full object-cover"
+            aria-hidden="true"
+        >
+        <div class="fixed inset-0 bg-ink/45 backdrop-blur-[1px]"></div>
+
+        <main class="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:py-12">
+            <div class="w-full max-w-md rounded-[2rem] border border-white/35 bg-brand-mist/35 p-6 shadow-[0_30px_80px_-20px_rgba(11,31,42,0.65)] backdrop-blur-2xl sm:p-8">
+                @if (session('success'))
+                    <div class="mb-4 rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-brand-mid">
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @yield('content')
             </div>
-        @endif
-        @yield('content')
+        </main>
     </div>
 </body>
 </html>

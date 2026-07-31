@@ -1,3 +1,22 @@
+@php
+    $type = request('type');
+    $isHome = request()->routeIs('home');
+    $isMagang = (request()->routeIs('programs.index') && $type === 'internship')
+        || request()->routeIs('internships.*');
+    $isPrograms = request()->routeIs('programs.*') && ! $isMagang;
+    $isNews = request()->routeIs('news.*');
+    $isCareer = request()->routeIs('career.*');
+
+    if (request()->routeIs('programs.show')) {
+        $programType = \App\Models\Program::where('slug', request()->route('slug'))->value('type');
+        $isMagang = $programType === 'internship';
+        $isPrograms = $programType !== 'internship';
+    }
+
+    $navClass = 'inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-ink-soft transition hover:bg-brand/10 hover:text-ink';
+    $navActive = 'inline-flex items-center justify-center rounded-xl bg-brand/20 px-4 py-2 text-sm font-semibold text-ink shadow-[0_6px_16px_-8px_rgba(11,31,42,0.45)] ring-1 ring-brand/30 -translate-y-0.5';
+@endphp
+
 <header class="sticky top-0 z-40 border-b border-ink/8 bg-white/90 backdrop-blur-xl">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <a href="{{ route('home') }}" class="group flex items-center gap-3">
@@ -5,12 +24,13 @@
         </a>
 
         <nav class="hidden items-center gap-1 md:flex">
-            <a href="{{ route('home') }}" class="btn-ghost">Beranda</a>
-            <a href="{{ route('programs.index') }}" class="btn-ghost {{ request()->routeIs('programs.*') ? 'text-ink font-semibold' : '' }}">Bootcamp & Program</a>
-            <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="btn-ghost">Magang</a>
+            <a href="{{ route('home') }}" class="{{ $isHome ? $navActive : $navClass }}">Beranda</a>
+            <a href="{{ route('programs.index') }}" class="{{ $isPrograms ? $navActive : $navClass }}">Bootcamp & Program</a>
+            <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="{{ $isMagang ? $navActive : $navClass }}">Magang</a>
+            <a href="{{ route('news.index') }}" class="{{ $isNews ? $navActive : $navClass }}">Berita</a>
             @auth
                 @if (auth()->user()->isStudent())
-                    <a href="{{ route('career.index') }}" class="btn-ghost">Karier</a>
+                    <a href="{{ route('career.index') }}" class="{{ $isCareer ? $navActive : $navClass }}">Karier</a>
                 @endif
             @endauth
         </nav>
@@ -42,11 +62,14 @@
 
     <div class="hidden border-t border-ink/8 bg-white px-4 py-4 md:hidden" data-nav-panel>
         <div class="mx-auto flex max-w-6xl flex-col gap-2">
-            <a href="{{ route('home') }}" class="btn-ghost justify-start">Beranda</a>
-            <a href="{{ route('programs.index') }}" class="btn-ghost justify-start">Program</a>
-            <a href="{{ route('programs.index', ['type' => 'bootcamp']) }}" class="btn-ghost justify-start">Bootcamp</a>
-            <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="btn-ghost justify-start">Magang</a>
+            <a href="{{ route('home') }}" class="{{ ($isHome ? $navActive : $navClass).' justify-start' }}">Beranda</a>
+            <a href="{{ route('programs.index') }}" class="{{ ($isPrograms ? $navActive : $navClass).' justify-start' }}">Bootcamp & Program</a>
+            <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="{{ ($isMagang ? $navActive : $navClass).' justify-start' }}">Magang</a>
+            <a href="{{ route('news.index') }}" class="{{ ($isNews ? $navActive : $navClass).' justify-start' }}">Berita</a>
             @auth
+                @if (auth()->user()->isStudent())
+                    <a href="{{ route('career.index') }}" class="{{ ($isCareer ? $navActive : $navClass).' justify-start' }}">Karier</a>
+                @endif
                 <div class="flex items-center gap-2 px-1 py-1">
                     @include('partials.notification-bell')
                     @include('partials.profile-menu')

@@ -27,7 +27,7 @@
             @endif
 
             @if ($submission->file_url)
-                <a href="{{ str_starts_with($submission->file_url, 'http') ? $submission->file_url : asset('storage/'.$submission->file_url) }}" target="_blank" class="btn-secondary mt-3 text-sm">Lihat file</a>
+                <a href="{{ media_url($submission->file_url) }}" target="_blank" class="btn-secondary mt-3 text-sm">Lihat file</a>
             @endif
 
             @if ($submission->status !== 'reviewed' || $submission->assignment->kind === 'assignment')

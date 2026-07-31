@@ -64,6 +64,7 @@ class InternshipApplicationController extends Controller
             'semester' => ['required', 'string', 'max:40'],
             'education_level' => ['required', 'in:D3,D4,S1'],
             'portfolio_url' => ['nullable', 'url', 'max:255'],
+            'portfolio_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'cv' => [$existing?->cv_path ? 'nullable' : 'required', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
             'transcript' => [$existing?->transcript_path ? 'nullable' : 'required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'cover_letter' => [$existing?->cover_letter_path ? 'nullable' : 'required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'],
@@ -71,17 +72,22 @@ class InternshipApplicationController extends Controller
 
         $cvPath = $existing?->cv_path;
         if ($request->hasFile('cv')) {
-            $cvPath = $request->file('cv')->store('internship-docs/cv', 'public');
+            $cvPath = $request->file('cv')->store('internship-docs/cv', media_disk());
         }
 
         $transcriptPath = $existing?->transcript_path;
         if ($request->hasFile('transcript')) {
-            $transcriptPath = $request->file('transcript')->store('internship-docs/transcripts', 'public');
+            $transcriptPath = $request->file('transcript')->store('internship-docs/transcripts', media_disk());
         }
 
         $coverLetterPath = $existing?->cover_letter_path;
         if ($request->hasFile('cover_letter')) {
-            $coverLetterPath = $request->file('cover_letter')->store('internship-docs/cover-letters', 'public');
+            $coverLetterPath = $request->file('cover_letter')->store('internship-docs/cover-letters', media_disk());
+        }
+
+        $portfolioPath = $existing?->portfolio_path;
+        if ($request->hasFile('portfolio_file')) {
+            $portfolioPath = $request->file('portfolio_file')->store('internship-docs/portfolios', media_disk());
         }
 
         $application = InternshipApplication::updateOrCreate(
@@ -96,6 +102,7 @@ class InternshipApplicationController extends Controller
                 'motivation' => '',
                 'experience' => null,
                 'portfolio_url' => $data['portfolio_url'] ?? null,
+                'portfolio_path' => $portfolioPath,
                 'cv_path' => $cvPath,
                 'transcript_path' => $transcriptPath,
                 'cover_letter_path' => $coverLetterPath,

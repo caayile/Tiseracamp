@@ -20,6 +20,7 @@
                     <p class="font-semibold text-ink">{{ $certificate->enrollment->program->title }}</p>
                     <p class="mt-1 text-sm text-brand-deeper">Kode: {{ $certificate->code }}</p>
                     <p class="text-xs text-ink-soft">{{ $certificate->issued_at?->translatedFormat('d M Y') }}</p>
+                    <a href="{{ route('learn.certificate', $certificate->enrollment->program) }}" target="_blank" class="btn-secondary mt-3 inline-flex text-xs">Cetak sertifikat</a>
                 </div>
             @empty
                 <p class="mt-3 text-sm text-ink-soft">Selesaikan program untuk mendapat sertifikat.</p>

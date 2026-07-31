@@ -5,6 +5,7 @@
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-6xl px-4 py-10">
+        <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
         <p class="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark">Ruang siswa</p>
         <h1 class="section-title mt-2">Chat dengan Mentor</h1>
         <p class="mt-2 text-ink-soft">Tanyakan materi, tugas, atau jadwal mentoring. Inbox ini khusus siswa.</p>

@@ -5,6 +5,7 @@
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-6xl px-4 py-10">
+        <x-back-nav :fallback="route('home')" class="mb-4" />
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Dashboard siswa</p>
         <h1 class="section-title mt-2">Halo, {{ auth()->user()->name }}</h1>
         <p class="mt-2 text-ink-soft">Pantau progress bootcamp & magang kamu di satu tempat.</p>
@@ -54,7 +55,7 @@
                                 <div class="mt-5 flex flex-wrap gap-2">
                                     <a href="{{ route('learn.show', $enrollment->program) }}" class="btn-primary">Masuk kelas</a>
                                     @if ($enrollment->certificate)
-                                        <span class="btn-secondary">Sertifikat: {{ $enrollment->certificate->code }}</span>
+                                        <a href="{{ route('learn.certificate', $enrollment->program) }}" target="_blank" class="btn-secondary">Cetak sertifikat</a>
                                     @endif
                                 </div>
                             </div>

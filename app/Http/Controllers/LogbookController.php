@@ -7,7 +7,6 @@ use App\Models\LogbookEntry;
 use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class LogbookController extends Controller
 {
@@ -18,8 +17,9 @@ class LogbookController extends Controller
             'entry_date' => ['required', 'date'],
             'title' => ['required', 'string', 'max:160'],
             'body' => ['required', 'string', 'max:5000'],
+            'obstacles' => ['nullable', 'string', 'max:5000'],
             'hours' => ['required', 'integer', 'min:1', 'max:24'],
-            'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
+            'attachment' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $enrollment = Enrollment::where('user_id', auth()->id())
@@ -31,7 +31,7 @@ class LogbookController extends Controller
 
         $path = null;
         if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('logbooks', 'public');
+            $path = $request->file('attachment')->store('logbooks', media_disk());
         }
 
         LogbookEntry::create([
@@ -41,6 +41,7 @@ class LogbookController extends Controller
             'entry_date' => $data['entry_date'],
             'title' => $data['title'],
             'body' => $data['body'],
+            'obstacles' => $data['obstacles'] ?? null,
             'hours' => $data['hours'],
             'attachment_path' => $path,
         ]);

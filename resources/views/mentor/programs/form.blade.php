@@ -97,7 +97,7 @@
                 <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
                     <p class="line-clamp-2 font-display text-sm font-bold uppercase text-white">Judul Program Kamu</p>
                     @if ($mentor->avatar)
-                        <img src="{{ asset('storage/'.$mentor->avatar) }}" class="h-12 w-12 shrink-0 rounded-xl border-2 border-[#27CCF5]/80 object-cover" alt="">
+                        <img src="{{ media_url($mentor->avatar) }}" class="h-12 w-12 shrink-0 rounded-xl border-2 border-[#27CCF5]/80 object-cover" alt="">
                     @else
                         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[#27CCF5]/80 bg-[#0B1F2A]/40 font-display text-xs font-bold text-[#27CCF5]">{{ strtoupper($initials) }}</div>
                     @endif

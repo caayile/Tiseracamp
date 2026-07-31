@@ -5,6 +5,7 @@
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-6xl px-4 py-10">
+        <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
         <h1 class="section-title">Notifikasi</h1>
         <p class="mt-2 text-ink-soft">Update terbaru tentang kelas, pembayaran, dan pesan.</p>
     </div>

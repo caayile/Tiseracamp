@@ -3,23 +3,23 @@
 @section('title', 'Pembayaran')
 
 @section('content')
-<section class="relative overflow-hidden border-b border-[#0B1F2A]/5" style="background: linear-gradient(160deg, #0B1F2A, #062A3A 60%, #065A7A);">
-    <div class="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-[#27CCF5]/20 blur-3xl"></div>
-    <div class="relative mx-auto max-w-6xl px-4 py-12">
-        <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#27CCF5]">Pembayaran</p>
-        <h1 class="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Riwayat & status invoice</h1>
-        <p class="mt-2 max-w-xl text-sm text-[#7DE6FA]/75">Pantau bukti transfer, status verifikasi, dan akses kelas setelah pembayaran lunas.</p>
+<section class="mesh-bg border-b border-brand/10">
+    <div class="mx-auto max-w-6xl px-4 py-12">
+        <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Pembayaran</p>
+        <h1 class="mt-2 font-display text-3xl font-bold text-ink sm:text-4xl">Riwayat & status invoice</h1>
+        <p class="mt-2 max-w-xl text-sm text-ink-soft">Pantau bukti transfer, status verifikasi, dan akses kelas setelah pembayaran lunas.</p>
     </div>
 </section>
 
-<section class="bg-[#F3F8FB] py-10">
+<section class="bg-surface py-10">
     <div class="mx-auto max-w-6xl px-4">
         @if ($payments->isEmpty())
-            <div class="rounded-3xl border border-dashed border-[#27CCF5]/40 bg-white p-12 text-center shadow-sm">
-                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0B1F2A] text-2xl text-[#27CCF5]">Rp</div>
-                <p class="mt-4 font-display text-xl font-semibold text-[#0B1F2A]">Belum ada pembayaran</p>
-                <p class="mt-2 text-sm text-slate-500">Daftar program berbayar untuk melihat invoice di sini.</p>
-                <a href="{{ route('programs.index') }}" class="mt-6 inline-flex rounded-xl bg-[#27CCF5] px-5 py-2.5 text-sm font-semibold text-[#0B1F2A]">Jelajahi program</a>
+            <div class="rounded-3xl border border-dashed border-brand/40 bg-white p-12 text-center shadow-sm">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-mist text-2xl font-bold text-brand-mid">Rp</div>
+                <p class="mt-4 font-display text-xl font-semibold text-ink">Belum ada pembayaran</p>
+                <p class="mt-2 text-sm text-ink-soft">Daftar program berbayar untuk melihat invoice di sini.</p>
+                <a href="{{ route('programs.index') }}" class="btn-primary mt-6 inline-flex">Jelajahi program</a>
             </div>
         @else
             <div class="grid gap-5 md:grid-cols-2">
@@ -57,9 +57,9 @@
                             </div>
 
                             <div class="flex flex-wrap gap-2 pt-2">
-                                <a href="{{ route('payments.invoice', $payment) }}" class="inline-flex flex-1 items-center justify-center rounded-xl bg-[#0B1F2A] px-4 py-2.5 text-sm font-semibold text-[#27CCF5] transition hover:bg-[#065A7A]">Lihat invoice</a>
+                                <a href="{{ route('payments.invoice', $payment) }}" class="btn-primary flex-1 justify-center">Lihat invoice</a>
                                 @if ($payment->status === 'paid')
-                                    <a href="{{ route('learn.show', $payment->program) }}" class="inline-flex flex-1 items-center justify-center rounded-xl bg-[#27CCF5] px-4 py-2.5 text-sm font-semibold text-[#0B1F2A]">Masuk kelas</a>
+                                    <a href="{{ route('learn.show', $payment->program) }}" class="btn-secondary flex-1 justify-center">Masuk kelas</a>
                                 @endif
                             </div>
                         </div>

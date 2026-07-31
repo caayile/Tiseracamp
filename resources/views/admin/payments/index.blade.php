@@ -29,7 +29,7 @@
                     <td class="px-5 py-3">
                         <span class="badge">{{ str_replace('_', ' ', $payment->status) }}</span>
                         @if ($payment->proof_path)
-                            <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="mt-1 block text-xs text-brand-deeper hover:underline">Lihat bukti</a>
+                            <a href="{{ media_url($payment->proof_path) }}" target="_blank" class="mt-1 block text-xs text-brand-deeper hover:underline">Lihat bukti</a>
                         @endif
                     </td>
                     <td class="px-5 py-3">
