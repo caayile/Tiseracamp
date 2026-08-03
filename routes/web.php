@@ -50,12 +50,15 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 });
 
+Route::get('/verify-email/{id}/{hash}', [AuthController::class, 'verifyFromLink'])
+    ->middleware('signed')
+    ->name('verification.verify');
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/verify-email', [AuthController::class, 'showVerify'])->name('verify.show');
-    Route::post('/verify-email', [AuthController::class, 'verify'])->name('verify.submit');
-    Route::post('/verify-email/resend', [AuthController::class, 'resendOtp'])->name('verify.resend');
+    Route::post('/verify-email/resend', [AuthController::class, 'resendVerification'])->name('verify.resend');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

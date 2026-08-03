@@ -37,4 +37,36 @@ class Payment extends Model
     {
         return 'Rp '.number_format($this->amount, 0, ',', '.');
     }
+
+    /**
+     * Activate student enrollment so they can enter the class after payment is approved.
+     */
+    public function grantClassAccess(): Enrollment
+    {
+        $this->loadMissing('program.batches');
+
+        $enrollment = Enrollment::firstOrNew([
+            'user_id' => $this->user_id,
+            'program_id' => $this->program_id,
+        ]);
+
+        if (! $enrollment->exists) {
+            $enrollment->progress = 0;
+            $enrollment->enrolled_at = now();
+            $enrollment->batch_id = $this->program?->batches
+                ?->firstWhere('status', 'active')
+                ?->id
+                ?? $this->program?->batches?->first()?->id;
+        }
+
+        $enrollment->status = 'active';
+        $enrollment->enrolled_at ??= now();
+        $enrollment->save();
+
+        if ($this->enrollment_id !== $enrollment->id) {
+            $this->forceFill(['enrollment_id' => $enrollment->id])->save();
+        }
+
+        return $enrollment;
+    }
 }

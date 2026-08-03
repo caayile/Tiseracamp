@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ResetPasswordMail;
+use App\Mail\VerifyAccountMail;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -10,8 +12,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -42,6 +48,10 @@ class AuthController extends Controller
 
         ActivityLog::record($user, 'login');
 
+        if (! $user->email_verified_at) {
+            return redirect()->route('verify.show');
+        }
+
         return redirect()->intended(route($user->dashboardRoute()));
     }
 
@@ -59,9 +69,8 @@ class AuthController extends Controller
             'role' => ['required', 'in:student,mentor'],
             'phone' => ['nullable', 'string', 'max:30'],
             'expertise' => ['nullable', 'string', 'max:500'],
+            'terms' => ['accepted'],
         ]);
-
-        $otp = (string) random_int(100000, 999999);
 
         $user = User::create([
             'name' => $data['name'],
@@ -73,54 +82,82 @@ class AuthController extends Controller
                 ? array_values(array_filter(array_map('trim', explode(',', $data['expertise'] ?? ''))))
                 : null,
             'status' => 'active',
-            'otp_code' => $otp,
-            'otp_expires_at' => now()->addMinutes(30),
         ]);
 
         Auth::login($user);
         ActivityLog::record($user, 'register');
 
+        $mailSent = $this->sendVerificationMail($user);
+
+        $message = $mailSent
+            ? 'Akun dibuat. Cek email kamu lalu klik tombol Verifikasi Akun.'
+            : 'Akun dibuat, tapi email verifikasi gagal terkirim. Klik kirim ulang di halaman berikutnya.';
+
         return redirect()
             ->route('verify.show')
-            ->with('success', "Akun dibuat. Kode OTP verifikasi: {$otp} (demo — cek juga di halaman verifikasi).");
+            ->with('success', $message);
     }
 
     public function showVerify(): View|RedirectResponse
     {
-        if (auth()->user()?->email_verified_at) {
-            return redirect()->route(auth()->user()->dashboardRoute());
+        $user = auth()->user();
+
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        if ($user->email_verified_at) {
+            return redirect()->route($user->dashboardRoute());
         }
 
         return view('auth.verify');
     }
 
-    public function verify(Request $request): RedirectResponse
+    public function verifyFromLink(Request $request, int $id, string $hash): RedirectResponse
     {
-        $data = $request->validate(['otp_code' => ['required', 'digits:6']]);
-        $user = $request->user();
-
-        if ($user->otp_code !== $data['otp_code'] || ($user->otp_expires_at && $user->otp_expires_at->isPast())) {
-            return back()->withErrors(['otp_code' => 'OTP salah atau sudah kedaluwarsa.']);
+        if (! $request->hasValidSignature()) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Link verifikasi tidak valid atau sudah kedaluwarsa. Silakan login lalu kirim ulang email.']);
         }
 
-        $user->update([
-            'email_verified_at' => now(),
-            'otp_code' => null,
-            'otp_expires_at' => null,
-        ]);
+        $user = User::findOrFail($id);
 
-        return redirect()->route($user->dashboardRoute())->with('success', 'Email berhasil diverifikasi.');
+        if (! hash_equals($hash, sha1($user->email))) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Link verifikasi tidak valid.']);
+        }
+
+        if (! $user->email_verified_at) {
+            $user->forceFill([
+                'email_verified_at' => now(),
+                'otp_code' => null,
+                'otp_expires_at' => null,
+            ])->save();
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()
+            ->route($user->dashboardRoute())
+            ->with('success', 'Email berhasil diverifikasi. Selamat datang!');
     }
 
-    public function resendOtp(Request $request): RedirectResponse
+    public function resendVerification(Request $request): RedirectResponse
     {
-        $otp = (string) random_int(100000, 999999);
-        $request->user()->update([
-            'otp_code' => $otp,
-            'otp_expires_at' => now()->addMinutes(30),
-        ]);
+        $user = $request->user();
 
-        return back()->with('success', "OTP baru: {$otp}");
+        if ($user->email_verified_at) {
+            return redirect()->route($user->dashboardRoute());
+        }
+
+        $mailSent = $this->sendVerificationMail($user);
+
+        return $mailSent
+            ? back()->with('success', 'Email verifikasi sudah dikirim ulang. Cek inbox / spam.')
+            : back()->withErrors(['email' => 'Gagal mengirim email. Periksa konfigurasi MAIL di .env.']);
     }
 
     public function showForgot(): View
@@ -143,9 +180,20 @@ class AuthController extends Controller
             ['token' => Hash::make($token), 'created_at' => now()]
         );
 
-        return redirect()
-            ->route('password.reset', ['token' => $token, 'email' => $user->email])
-            ->with('success', 'Token reset dibuat (mode demo). Silakan atur password baru.');
+        $resetUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
+
+        try {
+            Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl));
+        } catch (Throwable $e) {
+            Log::error('Reset password mail failed', [
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors(['email' => 'Gagal mengirim email reset. Periksa konfigurasi MAIL di .env.']);
+        }
+
+        return back()->with('success', 'Link reset password sudah dikirim ke email kamu.');
     }
 
     public function showReset(Request $request, string $token): View
@@ -184,5 +232,30 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    private function sendVerificationMail(User $user): bool
+    {
+        $verifyUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->email),
+            ]
+        );
+
+        try {
+            Mail::to($user->email)->send(new VerifyAccountMail($user, $verifyUrl));
+
+            return true;
+        } catch (Throwable $e) {
+            Log::error('Verification mail failed', [
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

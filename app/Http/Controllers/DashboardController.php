@@ -9,6 +9,7 @@ use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonNote;
 use App\Models\LessonProgress;
+use App\Models\Payment;
 use App\Models\Program;
 use App\Models\Submission;
 use Illuminate\Http\RedirectResponse;
@@ -81,7 +82,7 @@ class DashboardController extends Controller
 
     public function learn(Program $program): View
     {
-        $enrollment = Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+        $enrollment = $this->requireEnrollmentForLearning($program);
         $program->load(['modules.lessons.assignment', 'mentor']);
 
         $flatLessons = $program->modules->flatMap->lessons->values();
@@ -168,7 +169,7 @@ class DashboardController extends Controller
 
     public function lesson(Program $program, Lesson $lesson): View|RedirectResponse
     {
-        $enrollment = Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+        $enrollment = $this->requireEnrollmentForLearning($program);
         abort_unless($lesson->module->program_id === $program->id, 404);
 
         $program->load(['modules.lessons']);
@@ -220,7 +221,7 @@ class DashboardController extends Controller
 
     public function saveNote(Request $request, Program $program, Lesson $lesson): RedirectResponse
     {
-        Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+        $this->requireEnrollmentForLearning($program);
         abort_unless($lesson->module->program_id === $program->id, 404);
 
         $program->load(['modules.lessons']);
@@ -250,7 +251,7 @@ class DashboardController extends Controller
 
     public function completeLesson(Program $program, Lesson $lesson): RedirectResponse
     {
-        $enrollment = Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+        $enrollment = $this->requireEnrollmentForLearning($program);
         abort_unless($lesson->module->program_id === $program->id, 404);
 
         $program->load(['modules.lessons']);
@@ -276,7 +277,7 @@ class DashboardController extends Controller
 
     public function submitAssignment(Request $request, Program $program, Lesson $lesson): RedirectResponse
     {
-        Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+        $this->requireEnrollmentForLearning($program);
         abort_unless($lesson->module->program_id === $program->id, 404);
 
         $program->load(['modules.lessons']);
@@ -347,6 +348,47 @@ class DashboardController extends Controller
         }
 
         return back()->with('success', 'Tugas berhasil dikirim.');
+    }
+
+    /**
+     * Ensure the student has an active enrollment. If payment is already paid
+     * but enrollment is missing, open class access automatically.
+     */
+    private function requireEnrollmentForLearning(Program $program): Enrollment
+    {
+        $enrollment = Enrollment::where('user_id', auth()->id())
+            ->where('program_id', $program->id)
+            ->first();
+
+        if ($enrollment) {
+            if ($enrollment->status !== 'active' && $enrollment->status !== 'completed') {
+                $hasPaid = Payment::where('user_id', auth()->id())
+                    ->where('program_id', $program->id)
+                    ->where('status', 'paid')
+                    ->exists();
+
+                if ($hasPaid || $program->isFree()) {
+                    $enrollment->update([
+                        'status' => 'active',
+                        'enrolled_at' => $enrollment->enrolled_at ?? now(),
+                    ]);
+                }
+            }
+
+            return $enrollment;
+        }
+
+        $payment = Payment::where('user_id', auth()->id())
+            ->where('program_id', $program->id)
+            ->where('status', 'paid')
+            ->latest('paid_at')
+            ->first();
+
+        if ($payment) {
+            return $payment->grantClassAccess();
+        }
+
+        abort(403, 'Akses kelas belum dibuka. Selesaikan pembayaran dan tunggu verifikasi admin.');
     }
 
     /**

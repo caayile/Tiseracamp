@@ -36,14 +36,17 @@
                         <form method="POST" action="{{ route('admin.payments.verify', $payment) }}" class="space-y-2">
                             @csrf
                             <select name="status" class="input-field py-1 text-xs">
-                                <option value="paid" @selected($payment->status === 'paid')>Paid</option>
-                                <option value="waiting_verification" @selected($payment->status === 'waiting_verification')>Waiting</option>
-                                <option value="rejected" @selected($payment->status === 'rejected')>Rejected</option>
-                                <option value="refunded" @selected($payment->status === 'refunded')>Refunded</option>
+                                <option value="paid" @selected($payment->status === 'paid')>Terima / Paid — buka akses kelas</option>
+                                <option value="waiting_verification" @selected($payment->status === 'waiting_verification')>Menunggu verifikasi</option>
+                                <option value="rejected" @selected($payment->status === 'rejected')>Tolak</option>
+                                <option value="refunded" @selected($payment->status === 'refunded')>Refund</option>
                             </select>
                             <input type="text" name="admin_note" value="{{ $payment->admin_note }}" class="input-field py-1 text-xs" placeholder="Catatan admin">
-                            <button class="btn-primary w-full text-xs" type="submit">Verifikasi</button>
+                            <button class="btn-primary w-full text-xs" type="submit">Simpan verifikasi</button>
                         </form>
+                        @if ($payment->status === 'paid' && $payment->enrollment)
+                            <p class="mt-2 text-[11px] font-medium text-emerald-700">Akses kelas aktif</p>
+                        @endif
                     </td>
                 </tr>
             @empty
