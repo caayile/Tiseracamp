@@ -16,6 +16,11 @@ class InternshipApplicationController extends Controller
     {
         abort_unless($program->type === 'internship' && $program->is_published && $program->approval_status === 'approved', 404);
 
+        if (! $program->isInternshipOpen()) {
+            return redirect()->route('programs.show', $program->slug)
+                ->with('error', 'Lowongan magang ini sedang ditutup.');
+        }
+
         if (Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->exists()) {
             return redirect()->route('learn.show', $program);
         }
@@ -42,6 +47,11 @@ class InternshipApplicationController extends Controller
     public function store(Request $request, Program $program): RedirectResponse
     {
         abort_unless($program->type === 'internship' && $program->is_published && $program->approval_status === 'approved', 404);
+
+        if (! $program->isInternshipOpen()) {
+            return redirect()->route('programs.show', $program->slug)
+                ->with('error', 'Lowongan magang ini sedang ditutup.');
+        }
 
         if (Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->exists()) {
             return redirect()->route('learn.show', $program);

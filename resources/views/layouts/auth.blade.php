@@ -23,7 +23,7 @@
         </div>
 
         <main class="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:py-12">
-            <div class="auth-card w-full max-w-md rounded-[2rem] border border-white/35 bg-brand-mist/35 p-6 shadow-[0_30px_80px_-20px_rgba(11,31,42,0.65)] backdrop-blur-2xl sm:p-8">
+            <div class="auth-card w-full max-w-md rounded-[2rem] border border-white/35 p-6 shadow-[0_30px_80px_-20px_rgba(11,31,42,0.65)] sm:p-8">
                 @if (session('success'))
                     <div class="mb-4 rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-brand-mid">
                         {{ session('success') }}

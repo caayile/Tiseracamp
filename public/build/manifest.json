@@ -1,0 +1,93 @@
+{
+  "_caveat-600-normal-DUjB8dgm.woff": {
+    "file": "assets/caveat-600-normal-DUjB8dgm.woff",
+    "src": "_caveat-600-normal-DUjB8dgm.woff"
+  },
+  "_caveat-600-normal-zlTlWIYU.woff2": {
+    "file": "assets/caveat-600-normal-zlTlWIYU.woff2",
+    "src": "_caveat-600-normal-zlTlWIYU.woff2"
+  },
+  "_caveat-700-normal-D8_1Nw6V.woff2": {
+    "file": "assets/caveat-700-normal-D8_1Nw6V.woff2",
+    "src": "_caveat-700-normal-D8_1Nw6V.woff2"
+  },
+  "_caveat-700-normal-cPyBTTZN.woff": {
+    "file": "assets/caveat-700-normal-cPyBTTZN.woff",
+    "src": "_caveat-700-normal-cPyBTTZN.woff"
+  },
+  "_fonts-D8cD5wS4.css": {
+    "file": "assets/fonts-D8cD5wS4.css",
+    "src": "_fonts-D8cD5wS4.css"
+  },
+  "_plus-jakarta-sans-400-normal-BDKaGhyp.woff": {
+    "file": "assets/plus-jakarta-sans-400-normal-BDKaGhyp.woff",
+    "src": "_plus-jakarta-sans-400-normal-BDKaGhyp.woff"
+  },
+  "_plus-jakarta-sans-400-normal-Dhut76fR.woff2": {
+    "file": "assets/plus-jakarta-sans-400-normal-Dhut76fR.woff2",
+    "src": "_plus-jakarta-sans-400-normal-Dhut76fR.woff2"
+  },
+  "_plus-jakarta-sans-500-normal-Bf-nb4oT.woff2": {
+    "file": "assets/plus-jakarta-sans-500-normal-Bf-nb4oT.woff2",
+    "src": "_plus-jakarta-sans-500-normal-Bf-nb4oT.woff2"
+  },
+  "_plus-jakarta-sans-500-normal-DYtqi0QS.woff": {
+    "file": "assets/plus-jakarta-sans-500-normal-DYtqi0QS.woff",
+    "src": "_plus-jakarta-sans-500-normal-DYtqi0QS.woff"
+  },
+  "_plus-jakarta-sans-600-normal-BR_Ojra4.woff": {
+    "file": "assets/plus-jakarta-sans-600-normal-BR_Ojra4.woff",
+    "src": "_plus-jakarta-sans-600-normal-BR_Ojra4.woff"
+  },
+  "_plus-jakarta-sans-600-normal-DLTa1BUW.woff2": {
+    "file": "assets/plus-jakarta-sans-600-normal-DLTa1BUW.woff2",
+    "src": "_plus-jakarta-sans-600-normal-DLTa1BUW.woff2"
+  },
+  "_plus-jakarta-sans-700-normal-CfpNZvy6.woff2": {
+    "file": "assets/plus-jakarta-sans-700-normal-CfpNZvy6.woff2",
+    "src": "_plus-jakarta-sans-700-normal-CfpNZvy6.woff2"
+  },
+  "_plus-jakarta-sans-700-normal-DqEcQeE5.woff": {
+    "file": "assets/plus-jakarta-sans-700-normal-DqEcQeE5.woff",
+    "src": "_plus-jakarta-sans-700-normal-DqEcQeE5.woff"
+  },
+  "_sora-500-normal-01eiPEn0.woff2": {
+    "file": "assets/sora-500-normal-01eiPEn0.woff2",
+    "src": "_sora-500-normal-01eiPEn0.woff2"
+  },
+  "_sora-500-normal-w58xtEt9.woff": {
+    "file": "assets/sora-500-normal-w58xtEt9.woff",
+    "src": "_sora-500-normal-w58xtEt9.woff"
+  },
+  "_sora-600-normal-1_7fyUAY.woff": {
+    "file": "assets/sora-600-normal-1_7fyUAY.woff",
+    "src": "_sora-600-normal-1_7fyUAY.woff"
+  },
+  "_sora-600-normal-Cdg4DaK0.woff2": {
+    "file": "assets/sora-600-normal-Cdg4DaK0.woff2",
+    "src": "_sora-600-normal-Cdg4DaK0.woff2"
+  },
+  "_sora-700-normal-9waGdLWo.woff2": {
+    "file": "assets/sora-700-normal-9waGdLWo.woff2",
+    "src": "_sora-700-normal-9waGdLWo.woff2"
+  },
+  "_sora-700-normal-BKPfQAnC.woff": {
+    "file": "assets/sora-700-normal-BKPfQAnC.woff",
+    "src": "_sora-700-normal-BKPfQAnC.woff"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-Ceun3icj.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BLJ8lnKt.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}

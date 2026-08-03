@@ -19,38 +19,18 @@
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.72),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(39,204,245,0.22),transparent_40%)]"></div>
 
             {{-- Search di atas --}}
-            <form method="GET" action="{{ route('programs.index') }}" class="hero-search relative z-10 reveal mb-10">
-                <div class="grid gap-3 lg:grid-cols-[1.1fr_1fr_1.2fr_auto]">
-                    <label class="block rounded-2xl bg-surface px-4 py-3">
-                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Kategori</span>
-                        <select name="category" class="w-full bg-transparent text-sm font-semibold text-ink outline-none">
-                            <option value="">Semua kategori</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->slug }}">{{ $category->name }}</option>
-                            @endforeach
-                        </select>
-                    </label>
+            <form method="GET" action="{{ route('programs.index') }}" class="relative z-10 reveal mb-10">
+                <div class="flex items-center gap-2 rounded-full border border-ink/10 bg-panel p-1.5 pl-4 shadow-[0_18px_40px_-24px_rgba(11,31,42,0.4)] sm:gap-3 sm:p-2 sm:pl-6">
+                    <input type="search" name="q" value="{{ request('q') }}"
+                           placeholder="Judul, kata kunci, skill..."
+                           class="min-w-0 flex-1 bg-transparent py-2.5 text-sm font-medium text-ink outline-none placeholder:text-ink-soft/55 sm:text-[15px]">
 
-                    <label class="block rounded-2xl bg-surface px-4 py-3">
-                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Jenis</span>
-                        <select name="type" class="w-full bg-transparent text-sm font-semibold text-ink outline-none">
-                            <option value="">Bootcamp & Magang</option>
-                            <option value="bootcamp">Bootcamp</option>
-                            <option value="internship">Magang</option>
-                        </select>
-                    </label>
-
-                    <label class="block rounded-2xl bg-surface px-4 py-3">
-                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Kata kunci</span>
-                        <input type="search" name="q" placeholder="Contoh: Data Science, UI/UX"
-                               class="w-full bg-transparent text-sm font-semibold text-ink outline-none placeholder:font-medium placeholder:text-ink-soft/60">
-                    </label>
-
-                    <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-4 text-sm font-bold uppercase tracking-wide text-ink transition hover:bg-brand-light lg:min-w-[160px]">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                    <button type="submit"
+                            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-ink transition hover:bg-brand-light sm:h-12 sm:w-12"
+                            aria-label="Cari">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                             <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
                         </svg>
-                        Cari
                     </button>
                 </div>
             </form>

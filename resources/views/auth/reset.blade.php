@@ -15,7 +15,8 @@
 
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Password baru</label>
-                <input type="password" name="password" class="input-field" required>
+                <input type="password" name="password" class="input-field" required minlength="8" placeholder="Min. 8 karakter, A-Z, a-z, angka, simbol">
+                <p class="mt-1.5 text-[11px] text-ink-soft">Wajib: huruf besar, huruf kecil, angka, dan simbol (!@# dll).</p>
                 @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
 

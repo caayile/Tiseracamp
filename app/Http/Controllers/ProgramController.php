@@ -12,30 +12,32 @@ class ProgramController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Program::published()->with(['partner', 'mentor', 'category']);
+        $type = $request->string('type')->toString();
+        // Halaman katalog dipisah: default bootcamp, ?type=internship untuk magang
+        $catalogType = $type === 'internship' ? 'internship' : 'bootcamp';
 
-        if ($type = $request->string('type')->toString()) {
-            $query->where('type', $type);
-        }
-
-        if ($level = $request->string('level')->toString()) {
-            $query->where('level', $level);
-        }
+        $query = Program::published()
+            ->with(['partner', 'mentor', 'category'])
+            ->where('type', $catalogType);
 
         if ($category = $request->string('category')->toString()) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $category));
         }
 
-        if ($search = $request->string('q')->toString()) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('excerpt', 'like', "%{$search}%");
+        if ($search = trim($request->string('q')->toString())) {
+            $needle = '%'.mb_strtolower($search).'%';
+            $query->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(title) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(excerpt, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(majors, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(division, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(location, \'\')) LIKE ?', [$needle]);
             });
         }
 
         $programs = $query->latest()->paginate(9)->withQueryString();
 
-        return view('programs.index', compact('programs'));
+        return view('programs.index', compact('programs', 'catalogType'));
     }
 
     public function show(string $slug): View

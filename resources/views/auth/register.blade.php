@@ -60,11 +60,12 @@
             <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </span>
-            <input type="password" name="password" id="password" class="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-11 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25" placeholder="Minimal 8 karakter" required>
+            <input type="password" name="password" id="password" class="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-11 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25" placeholder="Min. 8 karakter, A-Z, a-z, angka, simbol" required minlength="8">
             <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" data-toggle-pass="password" aria-label="Tampilkan password">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             </button>
         </div>
+        <p class="mt-1.5 text-[11px] text-ink-soft">Wajib: huruf besar, huruf kecil, angka, dan simbol (!@# dll), minimal 8 karakter.</p>
         @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
     </div>
 

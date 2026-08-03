@@ -4,8 +4,8 @@
 @section('heading', 'Kelola User')
 
 @section('content')
-<div class="grid gap-6 lg:grid-cols-[1fr_320px]">
-    <div class="card-soft overflow-hidden">
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div class="card-soft min-w-0 overflow-hidden">
         <div class="border-b border-brand/10 px-5 py-4">
             <form method="GET" class="flex flex-wrap gap-2">
                 <select name="role" class="input-field w-auto" onchange="this.form.submit()">
@@ -16,51 +16,60 @@
                 </select>
             </form>
         </div>
-        <table class="min-w-full text-left text-sm">
-            <thead class="bg-brand-mist/60 text-ink-soft">
-                <tr>
-                    <th class="px-5 py-3 font-medium">Nama</th>
-                    <th class="px-5 py-3 font-medium">Email</th>
-                    <th class="px-5 py-3 font-medium">Role</th>
-                    <th class="px-5 py-3 font-medium">Status</th>
-                    <th class="px-5 py-3 font-medium"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($users as $user)
-                    <tr class="border-t border-brand/10">
-                        <td class="px-5 py-3 font-medium">{{ $user->name }}</td>
-                        <td class="px-5 py-3">{{ $user->email }}</td>
-                        <td class="px-5 py-3">
-                            <form method="POST" action="{{ route('admin.users.update', $user) }}" class="flex items-center gap-2">
-                                @csrf
-                                @method('PUT')
-                                <select name="role" class="input-field w-auto py-1 text-xs">
-                                    @foreach (['student', 'mentor', 'admin'] as $role)
-                                        <option value="{{ $role }}" @selected($user->role === $role)>{{ ucfirst($role) }}</option>
-                                    @endforeach
-                                </select>
-                                <select name="status" class="input-field w-auto py-1 text-xs">
-                                    <option value="active" @selected($user->status === 'active')>Active</option>
-                                    <option value="suspended" @selected($user->status === 'suspended')>Suspended</option>
-                                </select>
-                                <button class="btn-ghost text-xs" type="submit">Update</button>
-                            </form>
-                        </td>
-                        <td class="px-5 py-3"><span class="badge">{{ $user->status }}</span></td>
-                        <td class="px-5 py-3">
-                            @if ($user->id !== auth()->id())
-                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Hapus user ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn-ghost text-xs text-red-600" type="submit">Hapus</button>
-                                </form>
-                            @endif
-                        </td>
+
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px] text-left text-sm">
+                <thead class="bg-brand-mist/60 text-ink-soft">
+                    <tr>
+                        <th class="px-4 py-3 font-medium">Nama</th>
+                        <th class="px-4 py-3 font-medium">Email</th>
+                        <th class="px-4 py-3 font-medium">Role</th>
+                        <th class="px-4 py-3 font-medium">Status</th>
+                        <th class="px-4 py-3 font-medium text-right">Aksi</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($users as $user)
+                        <tr class="border-t border-brand/10">
+                            <td class="px-4 py-3 font-medium text-ink">{{ $user->name }}</td>
+                            <td class="max-w-[200px] truncate px-4 py-3 text-ink-soft" title="{{ $user->email }}">{{ $user->email }}</td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ route('admin.users.update', $user) }}" id="user-update-{{ $user->id }}">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="role" class="input-field w-auto min-w-[7.5rem] py-1.5 text-xs">
+                                        @foreach (['student', 'mentor', 'admin'] as $role)
+                                            <option value="{{ $role }}" @selected($user->role === $role)>{{ ucfirst($role) }}</option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <select name="status" form="user-update-{{ $user->id }}" class="input-field w-auto min-w-[7.5rem] py-1.5 text-xs">
+                                        <option value="active" @selected($user->status === 'active')>Active</option>
+                                        <option value="suspended" @selected($user->status === 'suspended')>Suspended</option>
+                                    </select>
+                                    <span class="badge">{{ $user->status }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap items-center justify-end gap-2">
+                                    <button class="btn-ghost text-xs" type="submit" form="user-update-{{ $user->id }}">Update</button>
+                                    @if ($user->id !== auth()->id())
+                                        <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Hapus user ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn-ghost text-xs text-red-600" type="submit">Hapus</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
         <div class="px-5 py-4">{{ $users->links() }}</div>
     </div>
 

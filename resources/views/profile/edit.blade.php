@@ -123,7 +123,8 @@
             <div class="space-y-4">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium">Password baru</label>
-                    <input type="password" name="password" class="input-field">
+                    <input type="password" name="password" class="input-field" minlength="8" placeholder="Min. 8 karakter, A-Z, a-z, angka, simbol">
+                    <p class="mt-1.5 text-[11px] text-ink-soft">Kosongkan jika tidak diganti. Jika diisi: huruf besar, kecil, angka, dan simbol.</p>
                     @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>

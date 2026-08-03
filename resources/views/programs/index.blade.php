@@ -1,34 +1,38 @@
 @extends('layouts.app')
 
-@section('title', 'Katalog Program')
+@section('title', $catalogType === 'internship' ? 'Lowongan Magang' : 'Bootcamp & Program')
 
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-6xl px-4 py-12">
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-mid">Katalog</p>
         <h1 class="section-title mt-2">
-            {{ request('type') === 'internship' ? 'Lowongan Magang' : 'Bootcamp & Program' }}
+            {{ $catalogType === 'internship' ? 'Lowongan Magang' : 'Bootcamp & Program' }}
         </h1>
         <p class="mt-3 max-w-2xl text-ink-soft">
-            {{ request('type') === 'internship'
-                ? 'Jelajahi program magang online bersama partner industri.'
-                : 'Pilih jalur belajar yang sesuai — dari skill intensive hingga magang online bersama partner.' }}
+            {{ $catalogType === 'internship'
+                ? 'Jelajahi lowongan magang bersama partner industri.'
+                : 'Pilih jalur belajar yang sesuai — skill intensive bersama mentor industri.' }}
         </p>
 
-        <form method="GET" class="mt-8 grid gap-3 rounded-2xl border border-brand/15 bg-white/80 p-4 shadow-sm md:grid-cols-[1fr_auto_auto_auto]">
-            <input type="search" name="q" value="{{ request('q') }}" placeholder="Cari program..." class="input-field">
-            <select name="type" class="input-field">
-                <option value="">Semua tipe</option>
-                <option value="bootcamp" @selected(request('type') === 'bootcamp')>Bootcamp</option>
-                <option value="internship" @selected(request('type') === 'internship')>Magang</option>
-            </select>
-            <select name="level" class="input-field">
-                <option value="">Semua level</option>
-                @foreach (['Beginner', 'Intermediate', 'Advanced'] as $level)
-                    <option value="{{ $level }}" @selected(request('level') === $level)>{{ $level }}</option>
-                @endforeach
-            </select>
-            <button class="btn-primary" type="submit">Filter</button>
+        <form method="GET" class="mt-8">
+            @if ($catalogType === 'internship')
+                <input type="hidden" name="type" value="internship">
+            @endif
+
+            <div class="flex items-center gap-2 rounded-full border border-ink/10 bg-panel p-1.5 pl-4 shadow-[0_18px_40px_-24px_rgba(11,31,42,0.4)] sm:gap-3 sm:p-2 sm:pl-6">
+                <input type="search" name="q" value="{{ request('q') }}"
+                       placeholder="{{ $catalogType === 'internship' ? 'Role, kata kunci, divisi...' : 'Judul, kata kunci, skill...' }}"
+                       class="min-w-0 flex-1 bg-transparent py-2.5 text-sm font-medium text-ink outline-none placeholder:text-ink-soft/55 sm:text-[15px]">
+
+                <button type="submit"
+                        class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-ink transition hover:bg-brand-light sm:h-12 sm:w-12"
+                        aria-label="Cari">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
         </form>
     </div>
 </section>
@@ -41,7 +45,7 @@
             </div>
         @empty
             <div class="card-soft col-span-full p-10 text-center text-ink-soft">
-                Belum ada program yang cocok dengan filter ini.
+                Belum ada {{ $catalogType === 'internship' ? 'lowongan magang' : 'program' }} yang cocok dengan pencarian ini.
             </div>
         @endforelse
     </div>

@@ -7,6 +7,7 @@ use App\Models\InternshipApplication;
 use App\Models\LogbookEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -64,7 +65,7 @@ class ProfileController extends Controller
             'education_level' => ['nullable', 'in:D3,D4,S1'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'expertise' => ['nullable', 'string', 'max:500'],
-            'password' => ['nullable', 'confirmed', 'min:8'],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 

@@ -38,7 +38,6 @@ class ProgramController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:160'],
-            'type' => ['required', 'in:bootcamp,internship'],
             'level' => ['required', 'string'],
             'duration_months' => ['required', 'integer', 'min:1'],
             'price' => ['required', 'integer', 'min:0'],
@@ -57,7 +56,7 @@ class ProgramController extends Controller
         Program::create([
             'title' => $data['title'],
             'slug' => Str::slug($data['title']).'-'.Str::random(4),
-            'type' => $data['type'],
+            'type' => 'bootcamp',
             'level' => $data['level'],
             'duration_months' => $data['duration_months'],
             'price' => $data['price'],
@@ -67,12 +66,13 @@ class ProgramController extends Controller
             'thumbnail' => $thumbnailPath,
             'benefits' => collect(preg_split('/\r\n|\r|\n/', $data['benefits_text'] ?? ''))
                 ->map(fn ($l) => trim($l))->filter()->values()->all(),
+            'qualifications' => [],
             'mentor_id' => auth()->id(),
             'is_published' => false,
             'approval_status' => 'pending',
         ]);
 
-        return redirect()->route('mentor.programs.index')->with('success', 'Course diajukan. Menunggu approve admin.');
+        return redirect()->route('mentor.programs.index')->with('success', 'Bootcamp diajukan. Menunggu approve admin.');
     }
 
     public function curriculum(Program $program): View

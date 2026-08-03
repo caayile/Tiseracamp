@@ -141,8 +141,11 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::post('/programs', [AdminProgramController::class, 'store'])->name('programs.store');
     Route::get('/programs/{program}/edit', [AdminProgramController::class, 'edit'])->name('programs.edit');
     Route::put('/programs/{program}', [AdminProgramController::class, 'update'])->name('programs.update');
+    Route::get('/programs/{program}/publikasi', [AdminProgramController::class, 'publikasi'])->name('programs.publikasi');
+    Route::put('/programs/{program}/publikasi', [AdminProgramController::class, 'updatePublikasi'])->name('programs.publikasi.update');
     Route::delete('/programs/{program}', [AdminProgramController::class, 'destroy'])->name('programs.destroy');
     Route::post('/programs/{program}/approve', [AdminProgramController::class, 'approve'])->name('programs.approve');
+    Route::post('/programs/{program}/toggle-open', [AdminProgramController::class, 'toggleOpen'])->name('programs.toggle-open');
     Route::get('/programs/{program}/curriculum', [AdminProgramController::class, 'curriculum'])->name('programs.curriculum');
     Route::post('/programs/{program}/modules', [AdminProgramController::class, 'storeModule'])->name('modules.store');
     Route::post('/programs/{program}/batches', [AdminBatchController::class, 'store'])->name('batches.store');

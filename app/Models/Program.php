@@ -11,16 +11,24 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 class Program extends Model
 {
     protected $fillable = [
-        'title', 'slug', 'type', 'level', 'duration_months', 'price', 'thumbnail',
-        'excerpt', 'description', 'benefits', 'partner_id', 'category_id', 'mentor_id',
-        'is_published', 'is_featured', 'approval_status',
+        'title', 'slug', 'type', 'level', 'education_level', 'majors', 'division',
+        'location', 'deadline', 'duration_months', 'price', 'thumbnail',
+        'excerpt', 'description', 'benefits', 'qualifications', 'required_documents',
+        'preferred_skills', 'responsibilities', 'partner_id',
+        'category_id', 'mentor_id', 'is_published', 'is_open', 'is_featured', 'approval_status',
     ];
 
     protected function casts(): array
     {
         return [
             'benefits' => 'array',
+            'qualifications' => 'array',
+            'required_documents' => 'array',
+            'preferred_skills' => 'array',
+            'responsibilities' => 'array',
+            'deadline' => 'date',
             'is_published' => 'boolean',
+            'is_open' => 'boolean',
             'is_featured' => 'boolean',
         ];
     }
@@ -100,5 +108,31 @@ class Program extends Model
     public function formattedDuration(): string
     {
         return $this->duration_months.' bulan';
+    }
+
+    public function isInternshipOpen(): bool
+    {
+        if ($this->type !== 'internship') {
+            return false;
+        }
+
+        if (! $this->is_open) {
+            return false;
+        }
+
+        if (! $this->is_published || $this->approval_status !== 'approved') {
+            return false;
+        }
+
+        if ($this->deadline && $this->deadline->copy()->endOfDay()->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function internshipStatusLabel(): string
+    {
+        return $this->isInternshipOpen() ? 'Terbuka' : 'Tertutup';
     }
 }

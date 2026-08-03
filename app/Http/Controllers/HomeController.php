@@ -16,6 +16,7 @@ class HomeController extends Controller
     {
         $featured = Program::published()
             ->with(['partner', 'mentor'])
+            ->where('type', 'bootcamp')
             ->where('is_featured', true)
             ->latest()
             ->take(3)
@@ -23,6 +24,7 @@ class HomeController extends Controller
 
         $programs = Program::published()
             ->with(['partner', 'mentor'])
+            ->where('type', 'bootcamp')
             ->latest()
             ->take(6)
             ->get();
