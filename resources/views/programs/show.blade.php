@@ -81,9 +81,9 @@
 <section class="mx-auto grid max-w-6xl gap-8 px-4 py-14 lg:grid-cols-[1.2fr_0.8fr]">
     <div class="reveal space-y-6">
         @if ($program->type === 'internship')
-            <div class="overflow-hidden rounded-3xl bg-[#E8F2EC] p-6 sm:p-8">
-                <h2 class="text-center font-display text-2xl font-bold text-[#3D4A2E]">Proses Pendaftaran Magang</h2>
-                <p class="mt-2 text-center text-sm text-[#5C6B4A]">Ikuti langkah-langkah berikut untuk bergabung dalam program magang kami</p>
+            <div class="overflow-hidden rounded-3xl bg-brand-mist p-6 sm:p-8">
+                <h2 class="text-center font-display text-2xl font-bold text-ink">Proses Pendaftaran Magang</h2>
+                <p class="mt-2 text-center text-sm text-ink-soft">Ikuti langkah-langkah berikut untuk bergabung dalam program magang kami</p>
                 @php
                     $processSteps = [
                         ['Isi Formulir', 'Lengkapi data diri'],
@@ -94,14 +94,14 @@
                     ];
                 @endphp
                 <div class="relative mx-auto mt-8 max-w-4xl">
-                    <div class="absolute left-[10%] right-[10%] top-6 hidden h-px bg-[#8B7355]/35 md:block"></div>
+                    <div class="absolute left-[10%] right-[10%] top-6 hidden h-px bg-ink/25 md:block"></div>
                     <div class="grid grid-cols-2 gap-5 md:grid-cols-5">
                         @foreach ($processSteps as $i => $step)
                             <div class="text-center">
-                                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#8B7355] bg-white text-sm font-bold text-[#3D4A2E]">{{ $i + 1 }}</div>
-                                <p class="mt-3 text-sm font-semibold text-[#3D4A2E]">{{ $step[0] }}</p>
-                                <p class="mt-1 text-xs text-[#5C6B4A]">{{ $step[1] }}</p>
-                                <p class="mt-2 text-[10px] font-semibold uppercase tracking-wide text-[#8B7355]">Step {{ $i + 1 }}</p>
+                                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-ink/30 bg-panel text-sm font-bold text-ink">{{ $i + 1 }}</div>
+                                <p class="mt-3 text-sm font-semibold text-ink">{{ $step[0] }}</p>
+                                <p class="mt-1 text-xs text-ink-soft">{{ $step[1] }}</p>
+                                <p class="mt-2 text-[10px] font-semibold uppercase tracking-wide text-brand-mid">Step {{ $i + 1 }}</p>
                             </div>
                         @endforeach
                     </div>

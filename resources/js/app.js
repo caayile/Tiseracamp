@@ -1,4 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const applyTheme = (theme) => {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        try {
+            localStorage.setItem('ts-theme', theme);
+        } catch (e) {}
+    };
+
+    const currentTheme = () => (
+        document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    );
+
+    document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+        button.addEventListener('click', () => {
+            applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+        });
+    });
+
     const reveals = document.querySelectorAll('.reveal');
 
     if (reveals.length && 'IntersectionObserver' in window) {

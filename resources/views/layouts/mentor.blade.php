@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Mentor') — Tiga Serangkai</title>
+    @include('partials.theme-init')
     @include('partials.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-[#F7FBFD]">
+<body class="min-h-screen bg-surface text-ink">
     @php
         $mentor = auth()->user();
         $initials = collect(explode(' ', $mentor->name))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('');
@@ -52,7 +53,7 @@
 
         {{-- Main --}}
         <div class="flex min-h-screen flex-col">
-            <header class="sticky top-0 z-30 border-b border-brand/10 bg-white/80 backdrop-blur-xl">
+            <header class="sticky top-0 z-30 border-b border-brand/10 bg-panel/80 backdrop-blur-xl">
                 <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
                     <div class="min-w-0">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-dark">Mentor Panel</p>
@@ -60,6 +61,7 @@
                     </div>
 
                     <div class="flex items-center gap-2 sm:gap-4">
+                        @include('partials.theme-toggle')
                         @include('partials.notification-bell')
 
                         <a href="{{ route('mentor.programs.create') }}"

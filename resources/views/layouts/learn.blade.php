@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title') — Belajar | Tiga Serangkai</title>
+    @include('partials.theme-init')
     @include('partials.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

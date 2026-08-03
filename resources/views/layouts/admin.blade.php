@@ -4,12 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin') — Tiga Serangkai</title>
+    @include('partials.theme-init')
     @include('partials.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-surface">
+<body class="min-h-screen bg-surface text-ink">
     <div class="min-h-screen md:grid md:grid-cols-[240px_1fr]">
-        <aside class="border-r border-brand/10 bg-ink text-white">
+        <aside class="border-r border-brand/10 bg-[#0B1F2A] text-white">
             <div class="border-b border-white/10 px-5 py-5">
                 <x-brand-logo class="h-14 w-auto brightness-0 invert" />
                 <p class="mt-2 text-xs text-white/60">Admin Panel</p>
@@ -28,9 +29,10 @@
         </aside>
 
         <div>
-            <header class="flex items-center justify-between border-b border-brand/10 bg-white/80 px-6 py-4 backdrop-blur">
-                <h1 class="font-display text-xl font-semibold">@yield('heading', 'Admin')</h1>
+            <header class="flex items-center justify-between border-b border-brand/10 bg-panel/80 px-6 py-4 backdrop-blur">
+                <h1 class="font-display text-xl font-semibold text-ink">@yield('heading', 'Admin')</h1>
                 <div class="flex items-center gap-3">
+                    @include('partials.theme-toggle')
                     @include('partials.notification-bell')
                     <span class="text-sm text-ink-soft">{{ auth()->user()->name }}</span>
                 </div>

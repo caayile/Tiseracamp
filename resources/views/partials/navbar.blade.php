@@ -17,7 +17,7 @@
     $navActive = 'inline-flex items-center justify-center rounded-xl bg-brand/20 px-4 py-2 text-sm font-semibold text-ink shadow-[0_6px_16px_-8px_rgba(11,31,42,0.45)] ring-1 ring-brand/30 -translate-y-0.5';
 @endphp
 
-<header class="sticky top-0 z-40 border-b border-ink/8 bg-white/90 backdrop-blur-xl">
+<header class="sticky top-0 z-40 border-b border-ink/8 bg-panel/90 backdrop-blur-xl">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <a href="{{ route('home') }}" class="group flex items-center gap-3">
             <x-brand-logo class="h-11 w-auto transition group-hover:scale-105" />
@@ -36,6 +36,7 @@
         </nav>
 
         <div class="hidden items-center gap-2 md:flex">
+            @include('partials.theme-toggle')
             @auth
                 @if (auth()->user()->isAdmin())
                     <a href="{{ route('admin.dashboard') }}" class="btn-ghost">Admin</a>
@@ -55,12 +56,15 @@
             @endauth
         </div>
 
-        <button type="button" class="btn-secondary md:hidden" data-nav-toggle aria-expanded="false" aria-label="Menu">
-            Menu
-        </button>
+        <div class="flex items-center gap-2 md:hidden">
+            @include('partials.theme-toggle')
+            <button type="button" class="btn-secondary" data-nav-toggle aria-expanded="false" aria-label="Menu">
+                Menu
+            </button>
+        </div>
     </div>
 
-    <div class="hidden border-t border-ink/8 bg-white px-4 py-4 md:hidden" data-nav-panel>
+    <div class="hidden border-t border-ink/8 bg-panel px-4 py-4 md:hidden" data-nav-panel>
         <div class="mx-auto flex max-w-6xl flex-col gap-2">
             <a href="{{ route('home') }}" class="{{ ($isHome ? $navActive : $navClass).' justify-start' }}">Beranda</a>
             <a href="{{ route('programs.index') }}" class="{{ ($isPrograms ? $navActive : $navClass).' justify-start' }}">Bootcamp & Program</a>

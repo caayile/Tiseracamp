@@ -132,7 +132,7 @@
     </div>
 </section>
 
-<section class="bg-[#E8F4F8] py-16 md:py-20">
+<section class="bg-brand-mist py-16 md:py-20">
     <div class="mx-auto max-w-6xl px-4">
         <div class="reveal mb-12 text-center md:mb-16">
             <h2 class="font-display text-2xl font-bold text-ink sm:text-3xl md:text-4xl">Proses Pendaftaran Magang</h2>
@@ -178,7 +178,7 @@
                 <div class="gap-3" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));">
                     @foreach ($steps as $i => $step)
                         <div class="relative flex flex-col items-center text-center">
-                            <div class="relative z-[1] flex items-center justify-center rounded-full border border-ink/30 bg-white shadow-sm" style="width: 72px; height: 72px;">
+                            <div class="relative z-[1] flex items-center justify-center rounded-full border border-ink/30 bg-panel shadow-sm" style="width: 72px; height: 72px;">
                                 <svg class="h-7 w-7 text-ink md:h-8 md:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                                     {!! $step['icon'] !!}
                                 </svg>

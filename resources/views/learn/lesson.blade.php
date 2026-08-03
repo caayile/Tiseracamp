@@ -11,7 +11,7 @@
 
 <div class="flex min-h-screen flex-col bg-surface text-ink">
     {{-- Top bar --}}
-    <header class="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-brand/15 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+    <header class="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-brand/15 bg-panel/95 px-4 py-3 shadow-sm backdrop-blur">
         <div class="flex min-w-0 items-center gap-3">
             <a href="{{ route('learn.show', $program) }}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-brand-mid transition hover:bg-brand-mist hover:text-ink" title="Kembali">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -30,6 +30,7 @@
         </div>
 
         <div class="flex items-center gap-2">
+            @include('partials.theme-toggle')
             <span class="hidden items-center gap-1 rounded-lg bg-[#27CCF5]/10 px-2.5 py-1.5 text-xs font-semibold text-brand sm:inline-flex">
                 <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
                 {{ $enrollment->progress }}%

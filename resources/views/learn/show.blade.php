@@ -10,7 +10,7 @@
 @endphp
 
 <div class="flex min-h-screen flex-col bg-surface text-ink">
-    <header class="sticky top-0 z-30 border-b border-brand/15 bg-white/95 px-4 py-4 shadow-sm backdrop-blur sm:px-6">
+    <header class="sticky top-0 z-30 border-b border-brand/15 bg-panel/95 px-4 py-4 shadow-sm backdrop-blur sm:px-6">
         <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
             <div class="min-w-0">
                 <x-back-nav :fallback="route('dashboard')" force />
@@ -18,6 +18,7 @@
                 <p class="mt-1 text-sm text-ink-soft">Progress {{ $enrollment->progress }}%</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
+                @include('partials.theme-toggle')
                 @if ($program->mentor)
                     <form method="POST" action="{{ route('chat.start', $program) }}">
                         @csrf
