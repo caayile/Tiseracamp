@@ -126,10 +126,7 @@
 
             <div class="relative z-[1] flex h-full">
                 <div class="relative w-[42%] shrink-0 self-end">
-                    @if ($program->thumbnail)
-                        <img src="{{ media_url($program->thumbnail) }}"
-                             alt="" class="h-full max-h-full w-full object-cover object-top">
-                    @elseif ($mentor?->avatar)
+                    @if ($mentor?->avatar)
                         <img src="{{ media_url($mentor->avatar) }}" alt="{{ $mentor->name }}"
                              class="h-full w-full object-cover object-top">
                     @else
@@ -148,7 +145,7 @@
                         {{ \Illuminate\Support\Str::before($program->title, ':') ?: $program->title }}
                     </p>
                     <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/70">
-                        {{ $program->typeLabel() }} Intensive
+                        {{ $mentor?->name ? 'Mentor '.$mentor->name : $program->typeLabel().' Intensive' }}
                     </p>
                     <ul class="mt-2 space-y-0.5 text-[10px] leading-snug text-ink-soft sm:text-[11px]">
                         @forelse (array_slice($program->benefits ?? [], 0, 3) as $benefit)
@@ -159,8 +156,8 @@
                             <li class="flex gap-1"><span class="text-brand-mid">•</span> Sertifikat digital</li>
                         @endforelse
                     </ul>
-                    @if ($program->partner)
-                        <p class="mt-2 text-[9px] font-bold uppercase tracking-wider text-ink/40">{{ $program->partner->name }}</p>
+                    @if ($program->category)
+                        <p class="mt-2 text-[9px] font-bold uppercase tracking-wider text-ink/40">{{ $program->category->name }}</p>
                     @endif
                 </div>
             </div>

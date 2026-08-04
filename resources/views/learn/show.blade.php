@@ -107,6 +107,18 @@
                     </div>
                 @endif
 
+                @if ($enrollment->canWriteTestimonial())
+                    <div class="mt-6 rounded-xl border border-brand/25 bg-white p-4 shadow-sm ring-1 ring-brand/10">
+                        <h3 class="font-display text-lg font-semibold text-ink">Bagikan ceritamu</h3>
+                        <p class="mt-1 text-sm text-ink-soft">
+                            {{ $program->typeLabel() }} selesai — tulis testimoni singkat agar tampil di beranda.
+                        </p>
+                        <a href="{{ route('testimonials.create', $enrollment) }}" class="btn-primary mt-4 inline-flex">
+                            Tulis testimoni {{ strtolower($program->typeLabel()) }}
+                        </a>
+                    </div>
+                @endif
+
                 @if ($enrollment->isCompleted())
                     <div id="rating" class="mt-6 rounded-xl border border-brand/20 bg-brand-mist/40 p-4">
                         <h3 class="font-display text-lg font-semibold text-ink">Rating mentor</h3>

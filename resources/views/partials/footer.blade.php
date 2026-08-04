@@ -24,11 +24,14 @@
             <p class="text-base font-bold text-white">Navigasi</p>
             <nav class="mt-4 flex flex-col gap-2.5 text-sm text-white/80">
                 <a href="{{ route('home') }}" class="transition hover:text-brand">Beranda</a>
-                <a href="{{ route('programs.index') }}" class="transition hover:text-brand">Center of Excellence</a>
+                <a href="{{ route('programs.index') }}" class="transition hover:text-brand">Bootcamp & Program</a>
+                <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="transition hover:text-brand">Magang</a>
                 <a href="{{ route('news.index') }}" class="transition hover:text-brand">Berita</a>
-                <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="transition hover:text-brand">Lowongan Magang</a>
-                <a href="{{ route('programs.index') }}" class="transition hover:text-brand">Galeri</a>
-                <a href="{{ route('home') }}#faq" class="transition hover:text-brand">Pusat Informasi</a>
+                @auth
+                    @if (auth()->user()->isStudent())
+                        <a href="{{ route('career.index') }}" class="transition hover:text-brand">Karier</a>
+                    @endif
+                @endauth
             </nav>
         </div>
 

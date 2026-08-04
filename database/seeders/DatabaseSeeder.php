@@ -70,14 +70,15 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
-        $categories = collect(['Web Development', 'Data', 'Design', 'Marketing'])
+        $categories = collect(['Web Development', 'Data', 'Design', 'Marketing', 'Product', 'Career Soft Skills'])
             ->map(fn ($name) => Category::create(['name' => $name, 'slug' => Str::slug($name)]));
 
         $partners = collect([
-            ['name' => 'Nusa Digital', 'website' => 'https://example.com'],
-            ['name' => 'Orbit Labs', 'website' => 'https://example.com'],
-            ['name' => 'Merdeka Tech', 'website' => 'https://example.com'],
-            ['name' => 'Cahaya Soft', 'website' => 'https://example.com'],
+            ['name' => 'Universitas Sebelas Maret', 'logo' => 'logosmitra/logo-uns.png', 'website' => 'https://uns.ac.id'],
+            ['name' => 'Universitas Muhammadiyah Surakarta', 'logo' => 'logosmitra/logo-ums.png', 'website' => 'https://ums.ac.id'],
+            ['name' => 'UIN Raden Mas Said Surakarta', 'logo' => 'logosmitra/logo-uin.png', 'website' => 'https://uinsaid.ac.id'],
+            ['name' => 'Universitas Duta Bangsa Surakarta', 'logo' => 'logosmitra/logo-udb.jpg', 'website' => 'https://udb.ac.id'],
+            ['name' => 'Tiga Serangkai University', 'logo' => 'logosmitra/logo-tsu.png', 'website' => 'http://www.tsu.ac.id/'],
         ])->map(fn ($p) => Partner::create($p));
 
         $catalog = [

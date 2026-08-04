@@ -43,7 +43,7 @@
            class="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-brand/35 bg-brand-mist/60 p-6 text-center transition hover:border-brand hover:bg-brand/10">
             <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-ink text-3xl font-light text-brand">+</span>
             <p class="font-display text-base font-semibold text-ink">Tambah Program</p>
-            <p class="text-xs text-ink-soft">Upload banner & highlight benefit</p>
+            <p class="text-xs text-ink-soft">Foto mentor + highlight benefit</p>
         </a>
     </div>
 @endif

@@ -201,50 +201,103 @@
         })();
     </script>
 @else
-    <section class="hero-gradient border-b border-brand/10">
-        <div class="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[1.2fr_0.8fr] md:items-start">
-            <div class="reveal">
-                <x-back-nav :fallback="route('programs.index')" class="mb-4" />
-                <div class="flex flex-wrap gap-2">
-                    <span class="badge">{{ $program->typeLabel() }}</span>
-                    <span class="rounded-lg bg-white/70 px-2.5 py-1 text-xs font-medium text-ink-soft">{{ $program->level }}</span>
-                    <span class="rounded-lg bg-white/70 px-2.5 py-1 text-xs font-medium text-ink-soft">{{ $program->formattedDuration() }}</span>
-                </div>
-                <h1 class="mt-4 font-display text-3xl font-bold text-ink md:text-5xl">{{ $program->title }}</h1>
-                <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft">{{ $program->excerpt }}</p>
-            </div>
-            <div class="card-soft reveal p-6">
-                <p class="text-sm text-ink-soft">Investasi program</p>
-                <p class="mt-1 font-display text-3xl font-bold text-ink">{{ $program->formattedPrice() }}</p>
-                <ul class="mt-5 space-y-2">
-                    @foreach (($program->benefits ?? []) as $benefit)
-                        <li class="flex items-start gap-2 text-sm text-ink">
-                            <span class="mt-1 h-2 w-2 rounded-full bg-brand"></span>
-                            {{ $benefit }}
-                        </li>
-                    @endforeach
-                </ul>
-                <div class="mt-6">
-                    @auth
-                        @if ($enrolled)
-                            <a href="{{ route('learn.show', $program) }}" class="btn-primary w-full">Lanjut belajar</a>
+    @php
+        $mentor = $program->mentor;
+        $mentorInitials = $mentor
+            ? collect(explode(' ', $mentor->name))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('')
+            : 'TS';
+        $benefits = $program->benefits ?? [];
+    @endphp
+
+    <section class="border-b border-brand/10 bg-surface">
+        <div class="mx-auto max-w-6xl px-4 py-10 md:py-14">
+            <x-back-nav :fallback="route('programs.index')" class="mb-6" />
+
+            <div class="reveal overflow-hidden rounded-[1.75rem] border border-ink/8 bg-panel shadow-[0_22px_50px_-30px_rgba(11,31,42,0.4)]">
+                <div class="grid md:grid-cols-[0.9fr_1.1fr]">
+                    {{-- Foto mentor --}}
+                    <div class="relative min-h-[280px] bg-gradient-to-br from-ink via-[#0A3A4A] to-brand-mid md:min-h-[420px]">
+                        @if ($mentor?->avatar)
+                            <img src="{{ media_url($mentor->avatar) }}"
+                                 alt="{{ $mentor->name }}"
+                                 class="absolute inset-0 h-full w-full object-cover object-top">
+                            <div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent"></div>
                         @else
-                            <form method="POST" action="{{ route('programs.enroll', $program) }}">
-                                @csrf
-                                <button class="btn-primary w-full" type="submit">Daftar program</button>
-                            </form>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="flex h-28 w-28 items-center justify-center rounded-3xl bg-brand/20 font-display text-4xl font-bold text-brand">
+                                    {{ strtoupper($mentorInitials) }}
+                                </span>
+                            </div>
                         @endif
-                    @else
-                        <a href="{{ route('login') }}" class="btn-primary w-full">Masuk untuk daftar</a>
-                    @endauth
+                        <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">Mentor</p>
+                            <p class="mt-1 font-display text-xl font-bold text-white sm:text-2xl">{{ $mentor?->name ?? 'Tiga Serangkai' }}</p>
+                            @if ($mentor?->expertise)
+                                <p class="mt-1 line-clamp-2 text-sm text-white/75">{{ collect($mentor->expertise)->take(3)->implode(' · ') }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Benefit + CTA --}}
+                    <div class="flex flex-col p-6 sm:p-8 md:p-10">
+                        <div class="flex flex-wrap gap-2">
+                            <span class="badge">{{ $program->typeLabel() }}</span>
+                            @if ($program->category)
+                                <span class="rounded-lg bg-brand-mist px-2.5 py-1 text-xs font-semibold text-brand-mid">{{ $program->category->name }}</span>
+                            @endif
+                            <span class="rounded-lg bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft">{{ $program->level }}</span>
+                            <span class="rounded-lg bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft">{{ $program->formattedDuration() }}</span>
+                        </div>
+
+                        <h1 class="mt-4 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl md:text-4xl">{{ $program->title }}</h1>
+                        @if ($program->excerpt)
+                            <p class="mt-3 text-sm leading-relaxed text-ink-soft sm:text-base">{{ $program->excerpt }}</p>
+                        @endif
+
+                        <div class="mt-6">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-brand-mid">Yang kamu dapatkan</p>
+                            <ul class="mt-3 space-y-2.5">
+                                @forelse ($benefits as $benefit)
+                                    <li class="flex items-start gap-2.5 text-sm text-ink">
+                                        <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand-mid">
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                        </span>
+                                        <span>{{ $benefit }}</span>
+                                    </li>
+                                @empty
+                                    <li class="text-sm text-ink-soft">Benefit akan diumumkan mentor.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+
+                        <div class="mt-auto border-t border-ink/8 pt-6">
+                            <p class="text-sm text-ink-soft">Investasi program</p>
+                            <p class="mt-1 font-display text-3xl font-bold text-ink">{{ $program->formattedPrice() }}</p>
+                            <div class="mt-5">
+                                @auth
+                                    @if ($enrolled)
+                                        <a href="{{ route('learn.show', $program) }}" class="btn-primary w-full justify-center sm:w-auto">Lanjut belajar</a>
+                                    @else
+                                        <form method="POST" action="{{ route('programs.enroll', $program) }}">
+                                            @csrf
+                                            <button class="btn-primary w-full justify-center sm:w-auto" type="submit">Daftar program</button>
+                                        </form>
+                                    @endif
+                                @else
+                                    <a href="{{ route('login') }}" class="btn-primary w-full justify-center sm:w-auto">Masuk untuk daftar</a>
+                                @endauth
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
-    <section class="mx-auto max-w-6xl px-4 py-14">
-        <div class="card-soft p-6">
-            <h2 class="font-display text-xl font-semibold">Tentang program</h2>
-            <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{{ $program->description }}</p>
+
+    <section class="mx-auto max-w-6xl px-4 py-12 md:py-14">
+        <div class="card-soft p-6 sm:p-8">
+            <h2 class="font-display text-xl font-semibold text-ink">Tentang program</h2>
+            <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{{ $program->description ?: 'Deskripsi belum diisi.' }}</p>
         </div>
     </section>
 @endif

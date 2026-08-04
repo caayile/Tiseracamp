@@ -19,7 +19,7 @@
             ])
             ->all();
 
-        \Illuminate\Support\Facades\Cache::put($cacheKey, $bellRows, now()->addSeconds(20));
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $bellRows, now()->addSeconds(90));
     }
 
     $recentNotifications = collect($bellRows)->map(function ($row) {

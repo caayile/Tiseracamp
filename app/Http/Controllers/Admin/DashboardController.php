@@ -8,28 +8,50 @@ use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Program;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     public function index(): View
     {
-        $paid = Payment::where('status', 'paid')->sum('amount');
-        $enrollments = Enrollment::count();
-        $completed = Enrollment::where('status', 'completed')->count();
+        $roleCounts = User::query()
+            ->select('role', DB::raw('count(*) as total'))
+            ->whereIn('role', ['student', 'mentor'])
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
+        $enrollmentStats = Enrollment::query()
+            ->selectRaw("count(*) as total")
+            ->selectRaw("count(*) filter (where status = 'active') as active")
+            ->selectRaw("count(*) filter (where status = 'completed') as completed")
+            ->first();
+
+        $totalEnrollments = (int) ($enrollmentStats->total ?? 0);
+        $completed = (int) ($enrollmentStats->completed ?? 0);
 
         return view('admin.dashboard', [
             'stats' => [
-                'users' => User::where('role', 'student')->count(),
-                'mentors' => User::where('role', 'mentor')->count(),
+                'users' => (int) ($roleCounts['student'] ?? 0),
+                'mentors' => (int) ($roleCounts['mentor'] ?? 0),
                 'programs' => Program::count(),
-                'active_enrollments' => Enrollment::where('status', 'active')->count(),
-                'revenue' => $paid,
-                'completion_rate' => $enrollments ? round(($completed / $enrollments) * 100) : 0,
+                'active_enrollments' => (int) ($enrollmentStats->active ?? 0),
+                'revenue' => (float) Payment::where('status', 'paid')->sum('amount'),
+                'completion_rate' => $totalEnrollments ? round(($completed / $totalEnrollments) * 100) : 0,
             ],
-            'recentEnrollments' => Enrollment::with(['user', 'program'])->latest()->take(6)->get(),
-            'pendingPayments' => Payment::with(['user', 'program'])->where('status', 'waiting_verification')->latest()->take(5)->get(),
-            'logs' => ActivityLog::with('user')->latest()->take(8)->get(),
+            'recentEnrollments' => Enrollment::with(['user:id,name,email', 'program:id,title'])
+                ->latest()
+                ->take(6)
+                ->get(),
+            'pendingPayments' => Payment::with(['user:id,name,email', 'program:id,title'])
+                ->where('status', 'waiting_verification')
+                ->latest()
+                ->take(5)
+                ->get(),
+            'logs' => ActivityLog::with('user:id,name')
+                ->latest()
+                ->take(8)
+                ->get(),
         ]);
     }
 }

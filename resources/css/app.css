@@ -11,6 +11,7 @@
     --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
     --font-script: 'Caveat', ui-serif, cursive;
+    --font-signature: 'Great Vibes', cursive;
 
     /* Biru tua + cyan #27CCF5 */
     --color-brand: #27ccf5;
@@ -247,6 +248,10 @@
         font-family: var(--font-script);
     }
 
+    .font-signature {
+        font-family: var(--font-signature);
+    }
+
     .hero-marketplace {
         background:
             linear-gradient(135deg, color-mix(in srgb, var(--color-brand-mist) 90%, transparent), color-mix(in srgb, var(--color-brand) 45%, transparent)),
@@ -337,6 +342,48 @@
     .pulse-soft {
         animation: pulse-soft 2.8s ease-in-out infinite;
     }
+
+    .partners-marquee {
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    }
+
+    .partners-marquee__track {
+        width: max-content;
+        animation: partners-marquee 32s linear infinite;
+    }
+
+    .partners-marquee:hover .partners-marquee__track {
+        animation-play-state: paused;
+    }
+
+    .testimonials-marquee {
+        mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    }
+
+    .testimonials-marquee__track--left {
+        animation: testimonials-marquee-left 48s linear infinite;
+    }
+
+    .testimonials-marquee__track--right {
+        animation: testimonials-marquee-right 56s linear infinite;
+    }
+
+    .testimonials-marquee:hover .testimonials-marquee__track--left,
+    .testimonials-marquee:hover .testimonials-marquee__track--right,
+    [data-testimonial-marquee].is-paused .testimonials-marquee__track--left,
+    [data-testimonial-marquee].is-paused .testimonials-marquee__track--right {
+        animation-play-state: paused;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .partners-marquee__track,
+        .testimonials-marquee__track--left,
+        .testimonials-marquee__track--right {
+            animation: none;
+        }
+    }
 }
 
 @keyframes float-slow {
@@ -346,6 +393,33 @@
     }
     50% {
         transform: translateY(-12px);
+    }
+}
+
+@keyframes partners-marquee {
+    from {
+        transform: translateX(-50%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes testimonials-marquee-left {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes testimonials-marquee-right {
+    from {
+        transform: translateX(-50%);
+    }
+    to {
+        transform: translateX(0);
     }
 }
 

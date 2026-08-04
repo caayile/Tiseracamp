@@ -63,6 +63,14 @@
                                     @if ($enrollment->isCompleted() && ! $enrollment->student_feedback_at)
                                         <a href="{{ route('learn.show', $enrollment->program) }}#rating" class="btn-secondary">⭐ Rate mentor</a>
                                     @endif
+                                    @if ($enrollment->canWriteTestimonial())
+                                        <a href="{{ route('testimonials.create', $enrollment) }}" class="btn-secondary">Tulis testimoni {{ strtolower($enrollment->program->typeLabel()) }}</a>
+                                    @endif
+                                    @if ($enrollment->testimonial)
+                                        <span class="inline-flex items-center rounded-xl border border-brand/20 bg-brand-mist px-3 py-2 text-xs font-semibold text-ink">
+                                            ✓ Testimoni terkirim
+                                        </span>
+                                    @endif
                                     @if ($enrollment->mentor_rating)
                                         <span class="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-surface px-3 py-2 text-xs font-semibold text-ink">
                                             Dari mentor: <x-star-display :value="$enrollment->mentor_rating" size="sm" :show-number="false" />

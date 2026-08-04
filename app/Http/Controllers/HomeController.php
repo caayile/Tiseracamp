@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Faq;
 use App\Models\Partner;
 use App\Models\Program;
+use App\Models\Testimonial;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -30,11 +31,20 @@ class HomeController extends Controller
             ->get();
 
         $categories = Category::query()->orderBy('name')->get();
-        $partners = Partner::latest()->take(8)->get();
+        $partners = Partner::query()
+            ->whereNotNull('logo')
+            ->orderBy('name')
+            ->get();
         $banners = Banner::where('is_active', true)->latest()->take(3)->get();
         $faqs = Faq::where('is_published', true)->orderBy('sort_order')->take(6)->get();
         $articles = Article::where('is_published', true)->latest('published_at')->latest('id')->take(3)->get();
+        $testimonials = Testimonial::query()
+            ->with(['user:id,name,university,avatar', 'program:id,title,type'])
+            ->where('is_published', true)
+            ->latest()
+            ->take(18)
+            ->get();
 
-        return view('home', compact('featured', 'programs', 'categories', 'partners', 'banners', 'faqs', 'articles'));
+        return view('home', compact('featured', 'programs', 'categories', 'partners', 'banners', 'faqs', 'articles', 'testimonials'));
     }
 }

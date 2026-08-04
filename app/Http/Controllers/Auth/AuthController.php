@@ -10,12 +10,9 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 use Throwable;
@@ -97,8 +94,8 @@ class AuthController extends Controller
         $mailSent = $this->sendVerificationMail($user);
 
         $message = $mailSent
-            ? 'Akun dibuat. Cek email kamu lalu klik tombol Verifikasi Akun.'
-            : 'Akun dibuat, tapi email verifikasi gagal terkirim. Klik kirim ulang di halaman berikutnya.';
+            ? 'Akun berhasil dibuat. Cek inbox email kamu (dan folder spam) lalu klik Verifikasi Akun.'
+            : 'Akun berhasil dibuat, tapi email verifikasi belum terkirim. Silakan klik kirim ulang di halaman berikutnya.';
 
         return redirect()
             ->route('verify.show')
@@ -163,8 +160,8 @@ class AuthController extends Controller
         $mailSent = $this->sendVerificationMail($user);
 
         return $mailSent
-            ? back()->with('success', 'Email verifikasi sudah dikirim ulang. Cek inbox / spam.')
-            : back()->withErrors(['email' => 'Gagal mengirim email. Periksa konfigurasi MAIL di .env.']);
+            ? back()->with('success', 'Email verifikasi sudah dikirim ulang. Cek inbox, dan jangan lupa buka folder Spam jika belum muncul.')
+            : back()->withErrors(['email' => 'Gagal mengirim email saat ini. Coba lagi beberapa saat lagi.']);
     }
 
     public function showForgot(): View
@@ -178,57 +175,141 @@ class AuthController extends Controller
         $user = User::where('email', $data['email'])->first();
 
         if (! $user) {
-            return back()->withErrors(['email' => 'Email tidak ditemukan.']);
+            return back()->withErrors(['email' => 'Email tidak ditemukan.'])->onlyInput('email');
         }
 
-        $token = Str::random(64);
-        DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $user->email],
-            ['token' => Hash::make($token), 'created_at' => now()]
-        );
-
-        $resetUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
-
-        try {
-            Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl));
-        } catch (Throwable $e) {
-            Log::error('Reset password mail failed', [
-                'email' => $user->email,
-                'error' => $e->getMessage(),
-            ]);
-
-            return back()->withErrors(['email' => 'Gagal mengirim email reset. Periksa konfigurasi MAIL di .env.']);
+        if (! $this->sendPasswordOtp($user)) {
+            return back()->withErrors(['email' => 'Gagal mengirim OTP. Coba lagi beberapa saat lagi.'])->onlyInput('email');
         }
 
-        return back()->with('success', 'Link reset password sudah dikirim ke email kamu.');
+        $request->session()->put('password_reset_email', $user->email);
+        $request->session()->forget('password_reset_verified');
+
+        return redirect()
+            ->route('password.otp')
+            ->with('success', 'Kode OTP sudah dikirim. Cek inbox email, dan jangan lupa buka folder Spam jika belum muncul.');
     }
 
-    public function showReset(Request $request, string $token): View
+    public function showOtp(Request $request): View|RedirectResponse
     {
-        return view('auth.reset', [
-            'token' => $token,
-            'email' => $request->string('email')->toString(),
+        $email = $request->session()->get('password_reset_email');
+
+        if (! $email) {
+            return redirect()->route('password.request');
+        }
+
+        if ($request->session()->get('password_reset_verified')) {
+            return redirect()->route('password.reset');
+        }
+
+        return view('auth.forgot-otp', ['email' => $email]);
+    }
+
+    public function verifyOtp(Request $request): RedirectResponse
+    {
+        $email = $request->session()->get('password_reset_email');
+
+        if (! $email) {
+            return redirect()->route('password.request');
+        }
+
+        $data = $request->validate([
+            'otp' => ['required', 'digits:6'],
         ]);
+
+        $user = User::where('email', $email)->first();
+
+        if (! $user || ! $user->otp_code || ! $user->otp_expires_at) {
+            return back()->withErrors(['otp' => 'OTP tidak ditemukan. Silakan kirim ulang.']);
+        }
+
+        if ($user->otp_expires_at->isPast()) {
+            return back()->withErrors(['otp' => 'OTP sudah kedaluwarsa. Silakan kirim ulang.']);
+        }
+
+        if (! hash_equals((string) $user->otp_code, (string) $data['otp'])) {
+            return back()->withErrors(['otp' => 'Kode OTP salah. Coba lagi.']);
+        }
+
+        $user->forceFill([
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ])->save();
+
+        $request->session()->put('password_reset_verified', true);
+
+        return redirect()
+            ->route('password.reset')
+            ->with('success', 'OTP berhasil diverifikasi. Silakan buat password baru.');
+    }
+
+    public function resendOtp(Request $request): RedirectResponse
+    {
+        $email = $request->session()->get('password_reset_email');
+
+        if (! $email) {
+            return redirect()->route('password.request');
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (! $user) {
+            return redirect()->route('password.request')->withErrors(['email' => 'Email tidak ditemukan.']);
+        }
+
+        if (! $this->sendPasswordOtp($user)) {
+            return back()->withErrors(['email' => 'Gagal mengirim OTP. Coba lagi beberapa saat lagi.']);
+        }
+
+        $request->session()->forget('password_reset_verified');
+
+        return back()->with('success', 'Kode OTP baru sudah dikirim. Cek inbox dan folder Spam jika belum muncul.');
+    }
+
+    public function showReset(Request $request): View|RedirectResponse
+    {
+        $email = $request->session()->get('password_reset_email');
+        $verified = $request->session()->get('password_reset_verified');
+
+        if (! $email) {
+            return redirect()->route('password.request');
+        }
+
+        if (! $verified) {
+            return redirect()->route('password.otp');
+        }
+
+        return view('auth.reset', ['email' => $email]);
     }
 
     public function reset(Request $request): RedirectResponse
     {
+        $email = $request->session()->get('password_reset_email');
+        $verified = $request->session()->get('password_reset_verified');
+
+        if (! $email || ! $verified) {
+            return redirect()->route('password.request');
+        }
+
         $data = $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $row = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
+        $user = User::where('email', $email)->first();
 
-        if (! $row || ! Hash::check($data['token'], $row->token)) {
-            return back()->withErrors(['email' => 'Token reset tidak valid.']);
+        if (! $user) {
+            return redirect()->route('password.request')->withErrors(['email' => 'Email tidak ditemukan.']);
         }
 
-        User::where('email', $data['email'])->update(['password' => $data['password']]);
-        DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+        $user->forceFill([
+            'password' => $data['password'],
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ])->save();
 
-        return redirect()->route('login')->with('success', 'Password berhasil diubah. Silakan masuk.');
+        $request->session()->forget(['password_reset_email', 'password_reset_verified']);
+
+        return redirect()->route('login')->with('success', 'Password berhasil diubah. Silakan masuk dengan password baru.');
     }
 
     public function logout(Request $request): RedirectResponse
@@ -239,6 +320,30 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    private function sendPasswordOtp(User $user): bool
+    {
+        $otp = (string) random_int(100000, 999999);
+        $expiresMinutes = 10;
+
+        $user->forceFill([
+            'otp_code' => $otp,
+            'otp_expires_at' => now()->addMinutes($expiresMinutes),
+        ])->save();
+
+        try {
+            Mail::to($user->email)->send(new ResetPasswordMail($user, $otp, $expiresMinutes));
+
+            return true;
+        } catch (Throwable $e) {
+            Log::error('Reset password OTP mail failed', [
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     private function sendVerificationMail(User $user): bool

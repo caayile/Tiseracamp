@@ -220,13 +220,48 @@ class ProgramController extends Controller
             'title' => ['required', 'string', 'max:160'],
             'type' => ['required', 'in:video,text,quiz,pdf,article,recording'],
             'content' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'video_url' => ['nullable', 'url'],
             'file_url' => ['nullable', 'url'],
+            'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
+        if ($data['type'] === 'pdf' && ! $request->hasFile('pdf_file') && blank($data['file_url'] ?? null)) {
+            return back()
+                ->withInput()
+                ->withErrors(['pdf_file' => 'Upload file PDF atau tempel link PDF.']);
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('image') && in_array($data['type'], ['text', 'article'], true)) {
+            $imagePath = $request->file('image')->store('lesson-images', media_disk());
+        }
+
+        $content = $data['content'] ?? null;
+        if ($data['type'] === 'pdf') {
+            $description = trim((string) ($data['description'] ?? ''));
+            $content = $description !== '' ? nl2br(e($description)) : null;
+        }
+
+        $fileUrl = $data['file_url'] ?? null;
+        $fileType = null;
+        if ($data['type'] === 'pdf' && $request->hasFile('pdf_file')) {
+            $fileUrl = $request->file('pdf_file')->store('lesson-pdfs', media_disk());
+            $fileType = 'pdf';
+        } elseif (filled($fileUrl) && str_contains(strtolower($fileUrl), '.pdf')) {
+            $fileType = 'pdf';
+        }
+
         $module->lessons()->create([
-            ...$data,
+            'title' => $data['title'],
+            'type' => $data['type'],
+            'content' => $content,
+            'video_url' => $data['video_url'] ?? null,
+            'file_url' => $fileUrl,
+            'file_type' => $fileType,
+            'image_path' => $imagePath,
             'duration_minutes' => $data['duration_minutes'] ?? 10,
             'sort_order' => $module->lessons()->count() + 1,
         ]);

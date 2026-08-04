@@ -33,7 +33,8 @@ class GradeController extends Controller
             'programs' => $programs,
             'enrollments' => $enrollments,
             'programId' => $programId,
-            'aspectDefaults' => Enrollment::gradeAspectDefaults(),
+            'projectWeight' => Enrollment::projectWeight(),
+            'sikapWeight' => Enrollment::sikapWeight(),
         ]);
     }
 
@@ -43,47 +44,89 @@ class GradeController extends Controller
         abort_unless($enrollment->program?->type === 'internship', 404);
 
         $data = $request->validate([
-            'final_score' => ['required', 'integer', 'min:0', 'max:100'],
             'grade_note' => ['nullable', 'string', 'max:2000'],
-            'aspect_name' => ['nullable', 'array'],
-            'aspect_name.*' => ['nullable', 'string', 'max:80'],
-            'aspect_score' => ['nullable', 'array'],
-            'aspect_score.*' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'project_name' => ['nullable', 'array'],
+            'project_name.*' => ['nullable', 'string', 'max:120'],
+            'project_score' => ['nullable', 'array'],
+            'project_score.*' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'sikap_name' => ['nullable', 'array'],
+            'sikap_name.*' => ['nullable', 'string', 'max:120'],
+            'sikap_score' => ['nullable', 'array'],
+            'sikap_score.*' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
-        $aspects = [];
-        $names = $data['aspect_name'] ?? [];
-        $scores = $data['aspect_score'] ?? [];
-
-        foreach ($names as $i => $name) {
+        $project = [];
+        foreach ($data['project_name'] ?? [] as $i => $name) {
             $name = trim((string) $name);
             if ($name === '') {
                 continue;
             }
-            $aspects[] = [
+            $score = $data['project_score'][$i] ?? null;
+            if ($score === null || $score === '') {
+                continue;
+            }
+            $score = (int) $score;
+            $project[] = [
                 'aspect' => $name,
-                'score' => (int) ($scores[$i] ?? 0),
+                'score' => $score,
+                'letter' => Enrollment::letterFromScore($score),
             ];
         }
 
+        $sikap = [];
+        foreach ($data['sikap_name'] ?? [] as $i => $name) {
+            $name = trim((string) $name);
+            if ($name === '') {
+                continue;
+            }
+            $score = $data['sikap_score'][$i] ?? null;
+            if ($score === null || $score === '') {
+                continue;
+            }
+            $score = (int) $score;
+            $sikap[] = [
+                'aspect' => $name,
+                'score' => $score,
+                'letter' => Enrollment::letterFromScore($score),
+            ];
+        }
+
+        if ($project === [] || $sikap === []) {
+            return back()
+                ->withInput()
+                ->withErrors(['project_name' => 'Isi minimal 1 kompetensi Project dan 1 aspek Sikap beserta nilainya.']);
+        }
+
+        $groups = ['project' => $project, 'sikap' => $sikap];
+        $final = Enrollment::computeFinalScore($groups);
+
+        abort_if($final === null, 422);
+
         $enrollment->update([
-            'final_score' => $data['final_score'],
-            'grade_predicate' => Enrollment::predicateFromScore((int) $data['final_score']),
+            'final_score' => $final,
+            'grade_predicate' => Enrollment::predicateFromScore($final).' ('.Enrollment::letterFromScore($final).')',
             'grade_note' => $data['grade_note'] ?? null,
-            'grade_aspects' => $aspects ?: null,
+            'grade_aspects' => $groups,
             'graded_by' => auth()->id(),
             'graded_at' => now(),
         ]);
 
+        $enrollment->markCompleted();
+
+        $link = $enrollment->canWriteTestimonial()
+            ? route('testimonials.create', $enrollment)
+            : route('internships.grade', $enrollment->program);
+
         AppNotification::create([
             'user_id' => $enrollment->user_id,
             'title' => 'Nilai magang tersedia',
-            'body' => 'Nilai '.$enrollment->program->title.': '.$data['final_score'].' ('.$enrollment->grade_predicate.')',
+            'body' => 'Nilai '.$enrollment->program->title.': '.$final.' ('.Enrollment::letterFromScore($final).').'
+                .($enrollment->canWriteTestimonial() ? ' Kamu juga bisa menulis testimoni di beranda.' : ''),
             'type' => 'info',
-            'link' => route('internships.grade', $enrollment->program),
+            'link' => $link,
         ]);
 
-        return back()->with('success', 'Nilai peserta disimpan.');
+        return back()->with('success', 'Nilai peserta disimpan. Nilai akhir: '.$final.' ('.Enrollment::letterFromScore($final).').');
     }
 
     public function print(Enrollment $enrollment): View
@@ -96,6 +139,9 @@ class GradeController extends Controller
             'enrollment' => $enrollment,
             'user' => $enrollment->user,
             'program' => $enrollment->program,
+            'groups' => $enrollment->gradedAspectGroups(),
+            'projectWeight' => Enrollment::projectWeight(),
+            'sikapWeight' => Enrollment::sikapWeight(),
             'backUrl' => route('admin.grades.index'),
         ]);
     }

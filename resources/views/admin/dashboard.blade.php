@@ -15,6 +15,15 @@
     ];
 @endphp
 
+<div class="mb-6 flex flex-wrap gap-2">
+    <a href="{{ route('admin.applications.index') }}" class="btn-secondary text-sm">Seleksi Magang</a>
+    <a href="{{ route('admin.grades.index') }}" class="btn-secondary text-sm">Nilai Magang</a>
+    <a href="{{ route('admin.schedules.index') }}" class="btn-secondary text-sm">Sesi Magang</a>
+    <a href="{{ route('admin.chat.index') }}" class="btn-secondary text-sm">Chat Magang</a>
+    <a href="{{ route('admin.content.index') }}" class="btn-secondary text-sm">Berita</a>
+    <a href="{{ route('admin.payments.index') }}" class="btn-primary text-sm">Verifikasi Bayar</a>
+</div>
+
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     @foreach ($stats as $key => $value)
         <div class="card-soft p-5">

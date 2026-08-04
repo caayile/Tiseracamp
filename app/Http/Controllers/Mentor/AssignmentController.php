@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mentor;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
+use App\Models\Assignment;
 use App\Models\Lesson;
 use App\Models\Program;
 use App\Models\QuizQuestion;
@@ -14,6 +15,43 @@ use Illuminate\View\View;
 
 class AssignmentController extends Controller
 {
+    public function storeQuestion(Request $request, Assignment $assignment): RedirectResponse
+    {
+        abort_unless($assignment->lesson->module->program->mentor_id === auth()->id(), 403);
+        abort_unless($assignment->isQuiz(), 422);
+
+        $data = $request->validate([
+            'question' => ['required', 'string', 'max:500'],
+            'option_0' => ['required', 'string', 'max:255'],
+            'option_1' => ['required', 'string', 'max:255'],
+            'option_2' => ['nullable', 'string', 'max:255'],
+            'option_3' => ['nullable', 'string', 'max:255'],
+            'correct_index' => ['required', 'integer', 'min:0', 'max:3'],
+        ]);
+
+        $options = array_values(array_filter([
+            $data['option_0'],
+            $data['option_1'],
+            $data['option_2'] ?? null,
+            $data['option_3'] ?? null,
+        ], fn ($v) => filled($v)));
+
+        $correct = (int) $data['correct_index'];
+        if ($correct >= count($options)) {
+            $correct = 0;
+        }
+
+        QuizQuestion::create([
+            'assignment_id' => $assignment->id,
+            'question' => $data['question'],
+            'options' => $options,
+            'correct_index' => $correct,
+            'points' => 10,
+        ]);
+
+        return back()->with('success', 'Soal quiz ditambahkan.');
+    }
+
     public function store(Request $request, Lesson $lesson): RedirectResponse
     {
         abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);

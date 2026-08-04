@@ -194,6 +194,9 @@ class InternshipApplicationController extends Controller
             'enrollment' => $enrollment,
             'user' => $enrollment->user,
             'program' => $program,
+            'groups' => $enrollment->gradedAspectGroups(),
+            'projectWeight' => Enrollment::projectWeight(),
+            'sikapWeight' => Enrollment::sikapWeight(),
             'backUrl' => route('dashboard'),
         ]);
     }

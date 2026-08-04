@@ -1,15 +1,17 @@
 <x-mail::message>
-# Reset Password
+# Kode OTP Reset Password
 
 Halo **{{ $user->name }}**,
 
-Kami menerima permintaan reset password untuk akun Tiga Serangkai.
+Gunakan kode OTP berikut untuk mengatur ulang password akun Tiga Serangkai:
 
-<x-mail::button :url="$resetUrl">
-Atur Password Baru
-</x-mail::button>
+<x-mail::panel>
+**{{ $otp }}**
+</x-mail::panel>
 
-Link berlaku terbatas. Jika kamu tidak meminta reset, abaikan email ini.
+Kode berlaku **{{ $expiresMinutes }} menit**. Jangan bagikan kode ini ke siapa pun.
+
+Jika kamu tidak meminta reset password, abaikan email ini.
 
 Thanks,<br>
 {{ config('app.name') }}

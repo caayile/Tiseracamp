@@ -15,13 +15,14 @@ class ResetPasswordMail extends Mailable
 
     public function __construct(
         public User $user,
-        public string $resetUrl,
+        public string $otp,
+        public int $expiresMinutes = 10,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Reset Password — Tiga Serangkai',
+            subject: 'Kode OTP Reset Password — Tiga Serangkai',
         );
     }
 

@@ -30,7 +30,7 @@ class DashboardController extends Controller
             return redirect()->route('mentor.dashboard');
         }
 
-        $enrollments = Enrollment::with(['program.mentor', 'program.partner', 'certificate', 'batch'])
+        $enrollments = Enrollment::with(['program.mentor', 'program.partner', 'certificate', 'batch', 'testimonial'])
             ->where('user_id', $user->id)
             ->latest()
             ->get();
@@ -98,7 +98,7 @@ class DashboardController extends Controller
 
         $discussions = Discussion::with('user')->where('program_id', $program->id)->latest()->take(5)->get();
         $schedules = ClassSchedule::where('program_id', $program->id)->orderBy('starts_at')->take(5)->get();
-        $enrollment->load('certificate');
+        $enrollment->load(['certificate', 'testimonial']);
 
         return view('learn.show', compact(
             'program',
@@ -270,7 +270,23 @@ class DashboardController extends Controller
             ['completed_at' => now()]
         );
 
+        $wasIncomplete = ! $enrollment->isCompleted();
         $enrollment->recalculateProgress();
+        $enrollment->refresh();
+
+        if ($wasIncomplete && $enrollment->isCompleted() && $enrollment->canWriteTestimonial()) {
+            AppNotification::create([
+                'user_id' => auth()->id(),
+                'title' => $program->typeLabel().' selesai',
+                'body' => 'Selamat! Kamu sudah menyelesaikan '.$program->title.'. Yuk tulis testimoni untuk beranda.',
+                'type' => 'success',
+                'link' => route('testimonials.create', $enrollment),
+            ]);
+
+            return redirect()
+                ->route('learn.show', $program)
+                ->with('success', $program->typeLabel().' selesai! Kamu bisa menulis testimoni sekarang.');
+        }
 
         return back()->with('success', 'Materi ditandai selesai.');
     }

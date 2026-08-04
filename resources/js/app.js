@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.querySelectorAll('select:not([multiple])').forEach((select, index) => {
-        if (select.closest('.custom-select') || Number(select.getAttribute('size') || 1) > 1) return;
+        if (select.closest('.custom-select') || select.hasAttribute('data-native-select') || Number(select.getAttribute('size') || 1) > 1) return;
 
         const wrapper = document.createElement('div');
         wrapper.className = `custom-select${select.classList.contains('w-auto') ? ' custom-select--auto' : ''}`;
@@ -269,6 +269,84 @@ document.addEventListener('DOMContentLoaded', () => {
         syncPanels();
     });
 
+    document.querySelectorAll('[data-quiz-builder]').forEach((builder) => {
+        const list = builder.querySelector('[data-quiz-questions]');
+        const addBtn = builder.querySelector('[data-quiz-add]');
+        if (!list || !addBtn) return;
+
+        const renumber = () => {
+            [...list.querySelectorAll('[data-quiz-item]')].forEach((item, index) => {
+                item.querySelector('[data-quiz-num]')?.replaceChildren(document.createTextNode(String(index + 1)));
+                item.querySelectorAll('input, select').forEach((field) => {
+                    if (!field.name) return;
+                    if (field.name.includes('[question]')) {
+                        field.name = `questions[${index}][question]`;
+                    } else if (field.name.includes('[correct_index]')) {
+                        field.name = `questions[${index}][correct_index]`;
+                    } else {
+                        const opt = field.name.match(/\[options\]\[(\d+)\]/);
+                        if (opt) {
+                            field.name = `questions[${index}][options][${opt[1]}]`;
+                        }
+                    }
+                });
+
+                const removeBtn = item.querySelector('[data-quiz-remove]');
+                if (removeBtn) {
+                    removeBtn.classList.toggle('hidden', list.querySelectorAll('[data-quiz-item]').length <= 1);
+                }
+            });
+        };
+
+        addBtn.addEventListener('click', () => {
+            const first = list.querySelector('[data-quiz-item]');
+            if (!first) return;
+
+            // Ambil select asli (bukan wrapper custom-select yang rusak kalau di-clone)
+            const sourceSelect = first.querySelector('select[data-native-select], select');
+            const clone = first.cloneNode(true);
+
+            // Kalau custom-select ikut ter-clone, ganti lagi jadi select biasa
+            clone.querySelectorAll('.custom-select').forEach((wrapper) => {
+                const native = wrapper.querySelector('select');
+                if (!native || !sourceSelect) return;
+                const fresh = sourceSelect.cloneNode(true);
+                fresh.removeAttribute('aria-hidden');
+                fresh.tabIndex = 0;
+                fresh.classList.remove('custom-select__native');
+                fresh.classList.add('input-field', 'mt-2', 'max-w-xs');
+                fresh.setAttribute('data-native-select', '');
+                fresh.selectedIndex = 0;
+                wrapper.replaceWith(fresh);
+            });
+
+            clone.querySelectorAll('input').forEach((input) => {
+                if (input.type === 'text') input.value = '';
+            });
+            clone.querySelectorAll('select').forEach((select) => {
+                select.setAttribute('data-native-select', '');
+                select.selectedIndex = 0;
+                select.classList.remove('custom-select__native');
+                select.removeAttribute('aria-hidden');
+                select.tabIndex = 0;
+            });
+
+            list.appendChild(clone);
+            renumber();
+        });
+
+        list.addEventListener('click', (event) => {
+            const btn = event.target.closest('[data-quiz-remove]');
+            if (!btn) return;
+            const item = btn.closest('[data-quiz-item]');
+            if (!item || list.querySelectorAll('[data-quiz-item]').length <= 1) return;
+            item.remove();
+            renumber();
+        });
+
+        renumber();
+    });
+
     document.querySelectorAll('[data-rich-form]').forEach((form) => {
         const editor = form.querySelector('[data-rich-editor]');
         const input = form.querySelector('[data-rich-input]');
@@ -289,7 +367,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         form.addEventListener('submit', () => {
-            input.value = editor.innerHTML.trim();
+            const type = form.querySelector('[data-lesson-type]:checked')?.value
+                || form.querySelector('select[name="type"]')?.value
+                || '';
+            if (['text', 'article'].includes(type)) {
+                input.value = editor.innerHTML.trim();
+            }
         });
     });
 
@@ -338,5 +421,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         root.addEventListener('mouseleave', () => paint(Number(input.value || 0)));
         paint(Number(input.value || 0));
+    });
+
+    document.querySelectorAll('[data-testimonial-marquee]').forEach((root) => {
+        root.querySelectorAll('.testimonial-card').forEach((card) => {
+            card.addEventListener('mouseenter', () => root.classList.add('is-paused'));
+            card.addEventListener('mouseleave', () => root.classList.remove('is-paused'));
+            card.addEventListener('focusin', () => root.classList.add('is-paused'));
+            card.addEventListener('focusout', () => root.classList.remove('is-paused'));
+        });
     });
 });

@@ -15,9 +15,17 @@
     "file": "assets/caveat-700-normal-cPyBTTZN.woff",
     "src": "_caveat-700-normal-cPyBTTZN.woff"
   },
-  "_fonts-D8cD5wS4.css": {
-    "file": "assets/fonts-D8cD5wS4.css",
-    "src": "_fonts-D8cD5wS4.css"
+  "_fonts-Cd8GDlNx.css": {
+    "file": "assets/fonts-Cd8GDlNx.css",
+    "src": "_fonts-Cd8GDlNx.css"
+  },
+  "_great-vibes-400-normal-BAZ173uY.woff": {
+    "file": "assets/great-vibes-400-normal-BAZ173uY.woff",
+    "src": "_great-vibes-400-normal-BAZ173uY.woff"
+  },
+  "_great-vibes-400-normal-q5-78SH_.woff2": {
+    "file": "assets/great-vibes-400-normal-q5-78SH_.woff2",
+    "src": "_great-vibes-400-normal-q5-78SH_.woff2"
   },
   "_plus-jakarta-sans-400-normal-BDKaGhyp.woff": {
     "file": "assets/plus-jakarta-sans-400-normal-BDKaGhyp.woff",
@@ -76,7 +84,7 @@
     "src": "_sora-700-normal-BKPfQAnC.woff"
   },
   "resources/css/app.css": {
-    "file": "assets/app-oKcXWqLM.css",
+    "file": "assets/app-DzVo_qQK.css",
     "name": "app",
     "names": [
       "app.css"
@@ -85,7 +93,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DvhplAjl.js",
+    "file": "assets/app-B-wEzGpW.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

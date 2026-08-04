@@ -30,7 +30,6 @@
                     ['route' => 'mentor.submissions', 'label' => 'Review Tugas', 'match' => 'mentor.submissions*'],
                     ['route' => 'mentor.schedules.index', 'label' => 'Jadwal Mentoring', 'match' => 'mentor.schedules.*'],
                     ['route' => 'mentor.chat.index', 'label' => 'Chat Siswa', 'match' => 'mentor.chat.*'],
-                    ['route' => 'profile.edit', 'label' => 'Edit Profil', 'match' => 'profile.*'],
                 ];
             @endphp
             @foreach ($links as $link)
@@ -121,8 +120,9 @@
             <div class="flex gap-2 overflow-x-auto border-t border-brand/10 px-4 py-2 lg:hidden">
                 <a href="{{ route('mentor.dashboard') }}" class="btn-ghost whitespace-nowrap text-xs">Dashboard</a>
                 <a href="{{ route('mentor.programs.index') }}" class="btn-ghost whitespace-nowrap text-xs">Program</a>
-                <a href="{{ route('mentor.chat.index') }}" class="btn-ghost whitespace-nowrap text-xs">Chat</a>
+                <a href="{{ route('mentor.schedules.index') }}" class="btn-ghost whitespace-nowrap text-xs">Jadwal</a>
                 <a href="{{ route('mentor.submissions') }}" class="btn-ghost whitespace-nowrap text-xs">Tugas</a>
+                <a href="{{ route('mentor.chat.index') }}" class="btn-ghost whitespace-nowrap text-xs">Chat</a>
             </div>
         </header>
 

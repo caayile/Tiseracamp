@@ -105,7 +105,7 @@
                 @endforelse
             </ul>
 
-            <form method="POST" action="{{ route('admin.lessons.store', $module) }}" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form>
+            <form method="POST" action="{{ route('admin.lessons.store', $module) }}" enctype="multipart/form-data" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form>
                 @csrf
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">Tambah materi</p>
@@ -136,15 +136,41 @@
                 </div>
 
                 <div data-lesson-panel="video" class="{{ $defaultType === 'video' ? '' : 'hidden' }}">
-                    <input type="url" name="video_url" class="input-field" placeholder="URL video (opsional)">
+                    <input type="url" name="video_url" class="input-field" placeholder="Tempel link YouTube — otomatis di-embed di halaman belajar">
+                    <p class="mt-1.5 text-xs text-ink-soft">Boleh paste link biasa (watch / youtu.be / Shorts). Sistem otomatis ubah ke embed.</p>
                 </div>
 
-                <div data-lesson-panel="pdf" class="{{ $defaultType === 'pdf' ? '' : 'hidden' }}">
-                    <input type="url" name="file_url" class="input-field" placeholder="URL file PDF (opsional)">
+                <div data-lesson-panel="pdf" class="space-y-3 {{ $defaultType === 'pdf' ? '' : 'hidden' }}">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-ink">Deskripsi PDF</label>
+                        <textarea name="description" rows="4" class="input-field" placeholder="Jelaskan isi dokumen untuk siswa">{{ old('description') }}</textarea>
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-ink">Upload file PDF</label>
+                        <input type="file" name="pdf_file" accept="application/pdf,.pdf"
+                               class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                        <p class="mt-1 text-xs text-ink-soft">PDF maks. 15MB.</p>
+                        @error('pdf_file') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="relative py-1 text-center text-xs font-semibold uppercase tracking-wider text-ink-soft">
+                        <span class="relative z-10 bg-panel px-2">atau</span>
+                        <span class="absolute inset-x-0 top-1/2 h-px bg-ink/10"></span>
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-ink">Tempel link PDF</label>
+                        <input type="url" name="file_url" class="input-field" placeholder="https://.../materi.pdf" value="{{ old('file_url') }}">
+                        <p class="mt-1 text-xs text-ink-soft">Opsional jika sudah upload.</p>
+                        @error('file_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
                 </div>
 
-                <div data-lesson-panel="content" class="{{ in_array($defaultType, ['text', 'article'], true) ? '' : 'hidden' }}">
+                <div data-lesson-panel="content" class="space-y-3 {{ in_array($defaultType, ['text', 'article'], true) ? '' : 'hidden' }}">
                     <textarea name="content" rows="4" class="input-field" placeholder="Konten pengenalan / artikel"></textarea>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
+                        <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                        <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB.</p>
+                    </div>
                 </div>
 
                 <div data-lesson-panel="quiz" class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900 {{ $defaultType === 'quiz' ? '' : 'hidden' }}">

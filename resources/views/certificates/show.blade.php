@@ -59,15 +59,22 @@
                 </div>
 
                 <div class="mx-auto mt-12 flex max-w-3xl flex-wrap items-end justify-between gap-8">
-                    <div class="min-w-[180px] text-center">
-                        <div class="mx-auto mb-2 h-px w-40 bg-ink/30"></div>
-                        <p class="text-sm font-semibold text-ink">{{ $program->mentor?->name ?? 'Mentor Tiga Serangkai' }}</p>
-                        <p class="text-xs text-ink-soft">Mentor Program</p>
+                    <div class="min-w-[200px] text-center">
+                        @php $mentorName = $program->mentor?->name ?? 'Mentor Tiga Serangkai'; @endphp
+                        <p class="font-signature text-[1.65rem] leading-none text-ink sm:text-[1.85rem]">
+                            {{ $mentorName }}
+                        </p>
+                        <div class="mx-auto mt-1.5 h-px w-40 bg-ink/30"></div>
+                        <p class="mt-2 text-xs font-semibold text-ink">{{ $mentorName }}</p>
+                        <p class="text-[11px] text-ink-soft">Mentor Program</p>
                     </div>
-                    <div class="min-w-[180px] text-center">
-                        <div class="mx-auto mb-2 h-px w-40 bg-ink/30"></div>
-                        <p class="text-sm font-semibold text-ink">Tiga Serangkai</p>
-                        <p class="text-xs text-ink-soft">Center of Excellence</p>
+                    <div class="min-w-[200px] text-center">
+                        <p class="font-signature text-[1.65rem] leading-none text-ink sm:text-[1.85rem]">
+                            Tiga Serangkai
+                        </p>
+                        <div class="mx-auto mt-1.5 h-px w-40 bg-ink/30"></div>
+                        <p class="mt-2 text-xs font-semibold text-ink">Tiga Serangkai</p>
+                        <p class="text-[11px] text-ink-soft">Center of Excellence</p>
                     </div>
                 </div>
             </div>

@@ -183,21 +183,27 @@ class ScheduleController extends Controller
 
     private function notifyStudents(Collection $students, ClassSchedule $schedule, Program $program, bool $updated = false): int
     {
-        $count = 0;
-        $when = $schedule->starts_at->translatedFormat('d M Y, H:i');
-
-        foreach ($students as $student) {
-            AppNotification::create([
-                'user_id' => $student->id,
-                'title' => $updated ? 'Update sesi magang' : 'Sesi magang terjadwal',
-                'body' => $schedule->title.' · '.$when.' · '.$program->title,
-                'type' => 'schedule',
-                'link' => route('schedules.index'),
-            ]);
-            $count++;
+        if ($students->isEmpty()) {
+            return 0;
         }
 
-        return $count;
+        $when = $schedule->starts_at->translatedFormat('d M Y, H:i');
+        $now = now();
+        $rows = $students->map(fn (User $student) => [
+            'user_id' => $student->id,
+            'title' => $updated ? 'Update sesi magang' : 'Sesi magang terjadwal',
+            'body' => $schedule->title.' · '.$when.' · '.$program->title,
+            'type' => 'schedule',
+            'link' => route('schedules.index'),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            AppNotification::insert($chunk);
+        }
+
+        return count($rows);
     }
 
     private function blastChat(
@@ -207,33 +213,81 @@ class ScheduleController extends Controller
         int $staffId,
         bool $updated = false
     ): int {
+        if ($students->isEmpty()) {
+            return 0;
+        }
+
         $body = $this->scheduleMessage($schedule, $program, $updated);
-        $count = 0;
+        $studentIds = $students->pluck('id')->all();
+        $now = now();
 
-        foreach ($students as $student) {
-            $conversation = Conversation::firstOrCreate([
-                'program_id' => $program->id,
-                'student_id' => $student->id,
-                'mentor_id' => $staffId,
-            ]);
+        $existing = Conversation::query()
+            ->where('program_id', $program->id)
+            ->where('mentor_id', $staffId)
+            ->whereIn('student_id', $studentIds)
+            ->get()
+            ->keyBy('student_id');
 
-            Message::create([
+        $missing = [];
+        foreach ($studentIds as $studentId) {
+            if (! $existing->has($studentId)) {
+                $missing[] = [
+                    'program_id' => $program->id,
+                    'student_id' => $studentId,
+                    'mentor_id' => $staffId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        foreach (array_chunk($missing, 200) as $chunk) {
+            Conversation::insert($chunk);
+        }
+
+        $conversations = Conversation::query()
+            ->where('program_id', $program->id)
+            ->where('mentor_id', $staffId)
+            ->whereIn('student_id', $studentIds)
+            ->get()
+            ->keyBy('student_id');
+
+        $messages = [];
+        $notifications = [];
+        $adminId = auth()->id();
+
+        foreach ($studentIds as $studentId) {
+            $conversation = $conversations->get($studentId);
+            if (! $conversation) {
+                continue;
+            }
+
+            $messages[] = [
                 'conversation_id' => $conversation->id,
-                'user_id' => auth()->id(),
+                'user_id' => $adminId,
                 'body' => $body,
-            ]);
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
 
-            AppNotification::create([
-                'user_id' => $student->id,
+            $notifications[] = [
+                'user_id' => $studentId,
                 'title' => $updated ? 'Chat: update sesi magang' : 'Chat: sesi magang baru',
                 'body' => $schedule->title.' — buka chat untuk link Meet',
                 'type' => 'chat',
                 'link' => route('chat.show', $conversation),
-            ]);
-
-            $count++;
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
-        return $count;
+        foreach (array_chunk($messages, 200) as $chunk) {
+            Message::insert($chunk);
+        }
+        foreach (array_chunk($notifications, 200) as $chunk) {
+            AppNotification::insert($chunk);
+        }
+
+        return count($messages);
     }
 }

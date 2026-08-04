@@ -46,13 +46,7 @@ class ProgramController extends Controller
             'description' => ['nullable', 'string'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'benefits_text' => ['nullable', 'string'],
-            'thumbnail' => ['nullable', 'image', 'max:4096'],
         ]);
-
-        $thumbnailPath = null;
-        if ($request->hasFile('thumbnail')) {
-            $thumbnailPath = $request->file('thumbnail')->store('program-banners', media_disk());
-        }
 
         Program::create([
             'title' => $data['title'],
@@ -64,7 +58,7 @@ class ProgramController extends Controller
             'excerpt' => $data['excerpt'] ?? null,
             'description' => $data['description'] ?? null,
             'category_id' => $data['category_id'] ?? null,
-            'thumbnail' => $thumbnailPath,
+            'thumbnail' => null,
             'benefits' => collect(preg_split('/\r\n|\r|\n/', $data['benefits_text'] ?? ''))
                 ->map(fn ($l) => trim($l))->filter()->values()->all(),
             'qualifications' => [],
@@ -80,7 +74,7 @@ class ProgramController extends Controller
     {
         abort_unless($program->mentor_id === auth()->id(), 403);
         abort_unless($program->type === 'bootcamp', 404);
-        $program->load(['modules.lessons.assignment']);
+        $program->load(['modules.lessons.assignment.questions']);
 
         return view('mentor.programs.curriculum', compact('program'));
     }
@@ -106,24 +100,55 @@ class ProgramController extends Controller
             'content' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url'],
             'file_url' => ['nullable', 'url'],
+            'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
             'instructions' => ['nullable', 'string'],
-            'question' => ['nullable', 'string', 'max:500'],
-            'option_0' => ['nullable', 'string', 'max:255'],
-            'option_1' => ['nullable', 'string', 'max:255'],
-            'option_2' => ['nullable', 'string', 'max:255'],
-            'option_3' => ['nullable', 'string', 'max:255'],
-            'correct_index' => ['nullable', 'integer', 'min:0', 'max:3'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'questions' => ['nullable', 'array', 'max:50'],
+            'questions.*.question' => ['nullable', 'string', 'max:500'],
+            'questions.*.options' => ['nullable', 'array', 'max:4'],
+            'questions.*.options.*' => ['nullable', 'string', 'max:255'],
+            'questions.*.correct_index' => ['nullable', 'integer', 'min:0', 'max:3'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $data['content'] = $this->sanitizeRichText($data['content'] ?? null);
+        if ($data['type'] === 'pdf' && ! $request->hasFile('pdf_file') && blank($data['file_url'] ?? null)) {
+            return back()
+                ->withInput()
+                ->withErrors(['pdf_file' => 'Upload file PDF atau tempel link PDF.']);
+        }
+
+        $content = in_array($data['type'], ['text', 'article'], true)
+            ? $this->sanitizeRichText($data['content'] ?? null)
+            : null;
+
+        if ($data['type'] === 'pdf') {
+            $description = trim((string) ($data['description'] ?? ''));
+            $content = $description !== '' ? nl2br(e($description)) : null;
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('image') && in_array($data['type'], ['text', 'article'], true)) {
+            $imagePath = $request->file('image')->store('lesson-images', media_disk());
+        }
+
+        $fileUrl = $data['file_url'] ?? null;
+        $fileType = null;
+        if ($data['type'] === 'pdf' && $request->hasFile('pdf_file')) {
+            $fileUrl = $request->file('pdf_file')->store('lesson-pdfs', media_disk());
+            $fileType = 'pdf';
+        } elseif (filled($fileUrl) && str_contains(strtolower($fileUrl), '.pdf')) {
+            $fileType = 'pdf';
+        }
 
         $lesson = $module->lessons()->create([
             'title' => $data['title'],
             'type' => $data['type'],
-            'content' => $data['content'] ?? null,
+            'content' => $content,
             'video_url' => $data['video_url'] ?? null,
-            'file_url' => $data['file_url'] ?? null,
+            'file_url' => $fileUrl,
+            'file_type' => $fileType,
+            'image_path' => $imagePath,
             'duration_minutes' => $data['duration_minutes'] ?? ($data['type'] === 'text' ? 10 : 15),
             'sort_order' => $module->lessons()->count() + 1,
         ]);
@@ -135,23 +160,51 @@ class ProgramController extends Controller
                 'kind' => 'quiz',
             ]);
 
-            if (filled($data['question'] ?? null)) {
+            $saved = 0;
+            foreach ($data['questions'] ?? [] as $row) {
+                $question = trim((string) ($row['question'] ?? ''));
+                if ($question === '') {
+                    continue;
+                }
+
+                $options = collect($row['options'] ?? [])
+                    ->map(fn ($opt) => trim((string) $opt))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (count($options) < 2) {
+                    continue;
+                }
+
+                $correct = (int) ($row['correct_index'] ?? 0);
+                if ($correct < 0 || $correct >= count($options)) {
+                    $correct = 0;
+                }
+
                 QuizQuestion::create([
                     'assignment_id' => $assignment->id,
-                    'question' => $data['question'],
-                    'options' => array_values(array_filter([
-                        $data['option_0'] ?? null,
-                        $data['option_1'] ?? null,
-                        $data['option_2'] ?? null,
-                        $data['option_3'] ?? null,
-                    ])),
-                    'correct_index' => (int) ($data['correct_index'] ?? 0),
+                    'question' => $question,
+                    'options' => $options,
+                    'correct_index' => $correct,
                     'points' => 10,
                 ]);
+                $saved++;
             }
+
+            if ($saved === 0) {
+                $assignment->delete();
+                $lesson->delete();
+
+                return back()
+                    ->withInput()
+                    ->withErrors(['questions' => 'Quiz minimal 1 soal dengan pertanyaan dan 2 opsi.']);
+            }
+
+            return back()->with('success', "Quiz ditambahkan ({$saved} soal).");
         }
 
-        return back()->with('success', $data['type'] === 'quiz' ? 'Quiz ditambahkan di akhir modul.' : 'Materi ditambahkan.');
+        return back()->with('success', 'Materi ditambahkan.');
     }
 
     private function sanitizeRichText(?string $html): ?string

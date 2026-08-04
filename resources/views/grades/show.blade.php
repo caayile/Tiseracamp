@@ -3,114 +3,203 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Nilai Magang — {{ $user->name }}</title>
-    @include('partials.theme-init')
+    <title>Daftar Nilai — {{ $user->name }}</title>
     @include('partials.favicon')
-    @vite(['resources/css/app.css'])
     <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Times New Roman", Times, serif;
+            color: #111;
+            background: #f3f8fb;
+        }
+        .no-print {
+            font-family: system-ui, sans-serif;
+        }
+        .sheet {
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            background: #fff;
+            padding: 28px 32px 36px;
+            border: 1px solid #ccc;
+        }
+        h1 {
+            margin: 0 0 14px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .meta {
+            margin-bottom: 16px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .meta strong { font-weight: 700; }
+        table.nilai {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table.nilai th,
+        table.nilai td {
+            border: 1px solid #111;
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+        table.nilai thead th {
+            font-weight: 700;
+            text-align: center;
+            background: #f7f7f7;
+        }
+        table.nilai .cat {
+            font-weight: 700;
+            text-align: left;
+            background: #fafafa;
+        }
+        table.nilai .num,
+        table.nilai .score,
+        table.nilai .letter {
+            text-align: center;
+            width: 56px;
+        }
+        table.nilai .letter { width: 90px; }
+        table.nilai .score { width: 110px; }
+        table.nilai .final-label {
+            text-align: center;
+            font-weight: 700;
+        }
+        table.nilai .final-score,
+        table.nilai .final-letter {
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .toolbar {
+            max-width: 800px;
+            margin: 16px auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 0 8px;
+        }
+        .toolbar a, .toolbar button {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid #0b9bc4;
+            background: #27ccf5;
+            color: #0b1f2a;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .toolbar a.secondary {
+            background: #fff;
+            color: #065a7a;
+        }
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .grade-sheet { box-shadow: none !important; border: 1px solid #0B1F2A !important; }
+            body { background: #fff; }
+            .sheet {
+                border: none;
+                margin: 0;
+                max-width: none;
+                padding: 0;
+            }
         }
         @page { size: A4 portrait; margin: 14mm; }
     </style>
 </head>
-<body class="min-h-screen bg-surface text-ink antialiased">
-    <div class="no-print mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <a href="{{ $backUrl ?? route('dashboard') }}" class="text-sm font-medium text-brand-mid hover:underline">← Kembali</a>
-        <button type="button" onclick="window.print()" class="btn-primary">Cetak / Simpan PDF</button>
+<body>
+@php
+    $groups = $groups ?? $enrollment->gradedAspectGroups();
+    $projectWeight = $projectWeight ?? \App\Models\Enrollment::projectWeight();
+    $sikapWeight = $sikapWeight ?? \App\Models\Enrollment::sikapWeight();
+    $finalLetter = \App\Models\Enrollment::letterFromScore((int) $enrollment->final_score);
+@endphp
+
+    <div class="toolbar no-print">
+        <a href="{{ $backUrl ?? route('dashboard') }}" class="secondary">← Kembali</a>
+        <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
     </div>
 
-    <div class="mx-auto max-w-3xl px-4 pb-10">
-        <div class="grade-sheet overflow-hidden rounded-2xl border border-ink/15 bg-white p-8 shadow-lg sm:p-10">
-            <div class="flex flex-wrap items-start justify-between gap-4 border-b border-ink/10 pb-6">
-                <div>
-                    <x-brand-logo class="h-12 w-auto" />
-                    <p class="mt-3 text-xs font-bold uppercase tracking-[0.22em] text-brand-mid">Laporan Nilai Magang</p>
-                    <h1 class="mt-1 font-display text-2xl font-bold text-ink">Transkrip Penilaian</h1>
-                </div>
-                <div class="text-right text-xs text-ink-soft">
-                    <p>Dicetak {{ now()->translatedFormat('d F Y') }}</p>
-                    @if ($enrollment->graded_at)
-                        <p class="mt-1">Dinilai {{ $enrollment->graded_at->translatedFormat('d F Y') }}</p>
-                    @endif
-                </div>
-            </div>
+    <div class="sheet">
+        <h1>Daftar Nilai</h1>
 
-            <div class="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Nama peserta</p>
-                    <p class="mt-1 font-semibold text-ink">{{ $user->name }}</p>
-                </div>
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Email</p>
-                    <p class="mt-1 font-semibold text-ink">{{ $user->email }}</p>
-                </div>
-                <div class="sm:col-span-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Program magang</p>
-                    <p class="mt-1 font-semibold text-ink">{{ $program->title }}</p>
-                </div>
-            </div>
-
-            <div class="mt-8 grid gap-4 sm:grid-cols-2">
-                <div class="rounded-2xl bg-brand-mist/80 p-5 text-center">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Nilai akhir</p>
-                    <p class="mt-2 font-display text-5xl font-bold text-ink">{{ $enrollment->final_score }}</p>
-                    <p class="mt-1 text-sm text-ink-soft">dari 100</p>
-                </div>
-                <div class="rounded-2xl border border-brand/20 bg-white p-5 text-center">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Predikat</p>
-                    <p class="mt-4 font-display text-2xl font-bold text-brand-mid">{{ $enrollment->grade_predicate }}</p>
-                </div>
-            </div>
-
-            @if (! empty($enrollment->grade_aspects))
-                <div class="mt-8">
-                    <h2 class="font-display text-lg font-semibold text-ink">Rincian aspek</h2>
-                    <table class="mt-3 w-full text-left text-sm">
-                        <thead>
-                            <tr class="border-b border-ink/10 text-xs uppercase tracking-wide text-ink-soft">
-                                <th class="py-2 font-semibold">Aspek</th>
-                                <th class="py-2 text-right font-semibold">Nilai</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($enrollment->grade_aspects as $aspect)
-                                <tr class="border-b border-ink/5">
-                                    <td class="py-2.5 text-ink">{{ $aspect['aspect'] ?? '-' }}</td>
-                                    <td class="py-2.5 text-right font-semibold text-ink">{{ $aspect['score'] ?? '-' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+        <div class="meta">
+            <div><strong>Nama:</strong> {{ $user->name }}</div>
+            <div><strong>Program:</strong> {{ $program->title }}</div>
+            @if ($user->university)
+                <div><strong>Kampus:</strong> {{ $user->university }}</div>
             @endif
-
-            @if ($enrollment->grade_note)
-                <div class="mt-8 rounded-xl bg-surface p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Catatan</p>
-                    <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink">{{ $enrollment->grade_note }}</p>
-                </div>
+            @if ($user->major)
+                <div><strong>Prodi:</strong> {{ $user->major }}</div>
             @endif
-
-            <div class="mt-12 flex flex-wrap items-end justify-between gap-8">
-                <div class="min-w-[160px] text-center">
-                    <div class="mx-auto mb-2 h-px w-36 bg-ink/30"></div>
-                    <p class="text-sm font-semibold text-ink">{{ $enrollment->grader?->name ?? 'Admin Tiga Serangkai' }}</p>
-                    <p class="text-xs text-ink-soft">Penilai</p>
-                </div>
-                <div class="min-w-[160px] text-center">
-                    <div class="mx-auto mb-2 h-px w-36 bg-ink/30"></div>
-                    <p class="text-sm font-semibold text-ink">Tiga Serangkai</p>
-                    <p class="text-xs text-ink-soft">Center of Excellence</p>
-                </div>
-            </div>
         </div>
 
-        <p class="no-print mt-4 text-center text-xs text-ink-soft">
-            Tip: di dialog cetak, pilih <strong>Save as PDF</strong> / Microsoft Print to PDF.
-        </p>
+        <table class="nilai">
+            <thead>
+                <tr>
+                    <th class="num">No</th>
+                    <th>Kompetensi</th>
+                    <th class="score">Nilai dalam Angka</th>
+                    <th class="letter">Nilai Dalam Huruf</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="4" class="cat">Project ({{ $projectWeight }}%)</td>
+                </tr>
+                @foreach ($groups['project'] as $i => $row)
+                    <tr>
+                        <td class="num">{{ $i + 1 }}</td>
+                        <td>{{ $row['aspect'] }}</td>
+                        <td class="score">{{ $row['score'] ?? '—' }}</td>
+                        <td class="letter">{{ $row['letter'] ?? ($row['score'] !== null ? \App\Models\Enrollment::letterFromScore($row['score']) : '—') }}</td>
+                    </tr>
+                @endforeach
+
+                <tr>
+                    <td colspan="4" class="cat">Sikap ({{ $sikapWeight }}%)</td>
+                </tr>
+                @foreach ($groups['sikap'] as $i => $row)
+                    <tr>
+                        <td class="num">{{ $i + 1 }}</td>
+                        <td>{{ $row['aspect'] }}</td>
+                        <td class="score">{{ $row['score'] ?? '—' }}</td>
+                        <td class="letter">{{ $row['letter'] ?? ($row['score'] !== null ? \App\Models\Enrollment::letterFromScore($row['score']) : '—') }}</td>
+                    </tr>
+                @endforeach
+
+                <tr>
+                    <td colspan="2" class="final-label">Nilai Akhir</td>
+                    <td class="final-score">{{ $enrollment->final_score }}</td>
+                    <td class="final-letter">{{ $finalLetter }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        @if ($enrollment->grade_note)
+            <p style="margin-top:18px;font-size:13px;"><strong>Catatan:</strong> {{ $enrollment->grade_note }}</p>
+        @endif
+
+        <div style="margin-top:36px;display:flex;justify-content:space-between;gap:24px;font-size:13px;">
+            <div style="text-align:center;min-width:180px;">
+                <div style="border-top:1px solid #111;margin:48px auto 6px;width:160px;"></div>
+                <strong>{{ $enrollment->grader?->name ?? 'Admin Tiga Serangkai' }}</strong><br>
+                Penilai
+            </div>
+            <div style="text-align:center;min-width:180px;">
+                <div style="border-top:1px solid #111;margin:48px auto 6px;width:160px;"></div>
+                <strong>Tiga Serangkai</strong><br>
+                Center of Excellence
+            </div>
+        </div>
     </div>
+
+    <p class="no-print" style="text-align:center;font-size:12px;color:#4a6573;font-family:system-ui,sans-serif;">
+        Tip: di dialog cetak, pilih <strong>Save as PDF</strong> / Microsoft Print to PDF.
+    </p>
 </body>
 </html>

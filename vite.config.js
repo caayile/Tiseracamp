@@ -18,6 +18,9 @@ export default defineConfig({
                 bunny('Caveat', {
                     weights: [600, 700],
                 }),
+                bunny('Great Vibes', {
+                    weights: [400],
+                }),
             ],
         }),
         tailwindcss(),

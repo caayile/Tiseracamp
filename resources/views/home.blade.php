@@ -174,6 +174,44 @@
     </div>
 </section>
 
+@if (($partners ?? collect())->isNotEmpty())
+<section class="border-y border-brand/10 bg-panel py-14 md:py-16">
+    <div class="mx-auto max-w-6xl px-4">
+        <div class="reveal mb-10 text-center md:mb-12">
+            <p class="font-display text-[11px] font-bold uppercase tracking-[0.28em] text-brand-mid sm:text-xs">Kolaborasi</p>
+            <h2 class="mt-3 font-display text-[1.85rem] font-extrabold leading-tight tracking-tight text-ink sm:text-4xl md:text-[2.65rem]">
+                Mitra Tiga Serangkai
+            </h2>
+            <p class="mx-auto mt-3 max-w-2xl font-sans text-sm leading-relaxed text-ink-soft sm:text-[15px] sm:leading-7">
+                Kampus dan institusi yang berkolaborasi dalam program bootcamp & magang.
+            </p>
+        </div>
+    </div>
+
+    <div class="reveal partners-marquee overflow-hidden" aria-label="Logo mitra Tiga Serangkai">
+        <div class="partners-marquee__track flex items-stretch gap-5 py-1 pl-5 sm:gap-7 sm:pl-7">
+            @foreach ([1, 2] as $loopCopy)
+                @foreach ($partners as $partner)
+                    <a href="{{ $partner->website ?: '#' }}"
+                       @if ($partner->website) target="_blank" rel="noopener noreferrer" @endif
+                       class="group flex w-44 shrink-0 flex-col items-center justify-center gap-3 text-center sm:w-52"
+                       title="{{ $partner->name }}"
+                       @if ($loopCopy === 2) tabindex="-1" aria-hidden="true" @endif>
+                        <span class="flex h-28 w-full items-center justify-center rounded-2xl border border-ink/8 bg-white px-4 py-3 shadow-sm transition group-hover:border-brand/40 group-hover:shadow-md">
+                            <img src="{{ asset($partner->logo) }}"
+                                 alt="{{ $loopCopy === 1 ? $partner->name : '' }}"
+                                 class="max-h-20 w-auto max-w-full object-contain"
+                                 loading="lazy">
+                        </span>
+                        <span class="line-clamp-2 px-1 font-display text-[11px] font-semibold leading-snug text-ink-soft sm:text-xs">{{ $partner->name }}</span>
+                    </a>
+                @endforeach
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
 <section id="berita" class="mx-auto max-w-6xl px-4 py-16">
     <div class="reveal mb-10 text-center">
         <p class="font-display text-sm font-bold uppercase tracking-[0.28em] text-brand-dark">Berita</p>
@@ -233,6 +271,83 @@
         <div class="mt-6 sm:hidden">
             <a href="{{ route('news.index') }}" class="btn-secondary w-full justify-center">Semua berita</a>
         </div>
+    @endif
+</section>
+
+<section id="testimoni" class="relative overflow-hidden bg-brand-mist py-16 md:py-20">
+    <div class="pointer-events-none absolute inset-0 opacity-40" aria-hidden="true"
+         style="background-image: radial-gradient(circle at 12% 20%, rgba(39,204,245,0.28), transparent 28%), radial-gradient(circle at 88% 70%, rgba(6,90,122,0.12), transparent 32%);"></div>
+
+    <div class="relative mx-auto max-w-6xl px-4">
+        <div class="reveal mb-10 text-center md:mb-12">
+            <p class="font-display text-[11px] font-bold uppercase tracking-[0.28em] text-brand-mid sm:text-xs">Cerita pengalaman</p>
+            <h2 class="mt-3 font-display text-[1.85rem] font-extrabold leading-tight tracking-tight text-ink sm:text-4xl md:text-[2.65rem]">
+                Pengalaman Magang & Bootcamp
+            </h2>
+            <p class="mx-auto mt-3 max-w-2xl font-sans text-sm leading-relaxed text-ink-soft sm:text-[15px] sm:leading-7">
+                Dengarkan pengalaman nyata peserta setelah menyelesaikan magang atau bootcamp di Tiga Serangkai.
+            </p>
+            @if (($testimonials ?? collect())->isNotEmpty())
+                <p class="mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/80 px-3.5 py-1.5 font-display text-xs font-semibold text-brand-mid shadow-sm">
+                    <span class="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
+                    {{ $testimonials->count() }} cerita peserta
+                </p>
+            @endif
+        </div>
+    </div>
+
+    @if (($testimonials ?? collect())->isEmpty())
+        <div class="relative mx-auto max-w-xl px-4">
+            <div class="reveal rounded-2xl border border-dashed border-brand/30 bg-white/70 px-6 py-10 text-center">
+                <p class="font-display text-lg font-semibold text-ink">Belum ada testimoni</p>
+                <p class="mt-2 text-sm text-ink-soft">Setelah menyelesaikan magang atau bootcamp, peserta bisa membagikan ceritanya di sini.</p>
+            </div>
+        </div>
+    @else
+        @php
+            $rowA = $testimonials->values()->filter(fn ($_, $i) => $i % 2 === 0)->values();
+            $rowB = $testimonials->values()->filter(fn ($_, $i) => $i % 2 === 1)->values();
+            if ($rowB->isEmpty()) {
+                $rowB = $rowA->reverse()->values();
+            }
+            $useMarquee = $testimonials->count() >= 3;
+        @endphp
+
+        @if ($useMarquee)
+            <div class="reveal relative space-y-5" data-testimonial-marquee aria-label="Testimoni peserta">
+                <div class="testimonials-marquee overflow-hidden">
+                    <div class="testimonials-marquee__track testimonials-marquee__track--left flex w-max gap-4 py-1 pl-4 sm:gap-5 sm:pl-5">
+                        @foreach ([1, 2] as $copy)
+                            @foreach ($rowA as $testimonial)
+                                <div @if ($copy === 2) aria-hidden="true" @endif>
+                                    @include('partials.testimonial-card', ['testimonial' => $testimonial, 'compact' => true])
+                                </div>
+                            @endforeach
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="testimonials-marquee overflow-hidden">
+                    <div class="testimonials-marquee__track testimonials-marquee__track--right flex w-max gap-4 py-1 pl-4 sm:gap-5 sm:pl-5">
+                        @foreach ([1, 2] as $copy)
+                            @foreach ($rowB as $testimonial)
+                                <div @if ($copy === 2) aria-hidden="true" @endif>
+                                    @include('partials.testimonial-card', ['testimonial' => $testimonial, 'compact' => true])
+                                </div>
+                            @endforeach
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="relative mx-auto grid max-w-6xl gap-5 px-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($testimonials as $testimonial)
+                    <div class="reveal">
+                        @include('partials.testimonial-card', ['testimonial' => $testimonial])
+                    </div>
+                @endforeach
+            </div>
+        @endif
     @endif
 </section>
 

@@ -31,6 +31,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\TestimonialController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -46,7 +47,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendReset'])->name('password.email');
-    Route::get('/reset-password/{token}', [AuthController::class, 'showReset'])->name('password.reset');
+    Route::get('/forgot-password/otp', [AuthController::class, 'showOtp'])->name('password.otp');
+    Route::post('/forgot-password/otp', [AuthController::class, 'verifyOtp'])->name('password.otp.verify');
+    Route::post('/forgot-password/otp/resend', [AuthController::class, 'resendOtp'])->name('password.otp.resend');
+    Route::get('/reset-password', [AuthController::class, 'showReset'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
     Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
@@ -98,6 +102,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/chat/{conversation}', [ChatController::class, 'send'])->name('chat.send');
     Route::post('/programs/{program}/chat', [ChatController::class, 'start'])->name('chat.start');
 
+    Route::get('/testimonials/{enrollment}/create', [TestimonialController::class, 'create'])->name('testimonials.create');
+    Route::post('/testimonials/{enrollment}', [TestimonialController::class, 'store'])->name('testimonials.store');
+
     Route::get('/career', [CareerController::class, 'index'])->name('career.index');
     Route::post('/career/portfolio', [CareerController::class, 'storePortfolio'])->name('career.portfolio.store');
     Route::delete('/career/portfolio/{portfolio}', [CareerController::class, 'destroyPortfolio'])->name('career.portfolio.destroy');
@@ -122,6 +129,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::post('/programs/{program}/modules', [MentorProgramController::class, 'storeModule'])->name('modules.store');
     Route::post('/modules/{module}/lessons', [MentorProgramController::class, 'storeLesson'])->name('lessons.store');
     Route::post('/lessons/{lesson}/assignments', [MentorAssignmentController::class, 'store'])->name('assignments.store');
+    Route::post('/assignments/{assignment}/questions', [MentorAssignmentController::class, 'storeQuestion'])->name('assignments.questions');
     Route::get('/submissions', [MentorAssignmentController::class, 'submissions'])->name('submissions');
     Route::post('/submissions/{submission}/review', [MentorAssignmentController::class, 'review'])->name('submissions.review');
     Route::get('/schedules', [MentorScheduleController::class, 'index'])->name('schedules.index');

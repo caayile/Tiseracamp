@@ -14,8 +14,16 @@ class ScheduleController extends Controller
 {
     public function index(): View
     {
-        $schedules = ClassSchedule::with('program')->where('mentor_id', auth()->id())->orderByDesc('starts_at')->get();
-        $programs = Program::where('mentor_id', auth()->id())->where('type', 'bootcamp')->get();
+        $schedules = ClassSchedule::with('program:id,title')
+            ->where('mentor_id', auth()->id())
+            ->orderByDesc('starts_at')
+            ->get();
+
+        $programs = Program::query()
+            ->where('mentor_id', auth()->id())
+            ->where('type', 'bootcamp')
+            ->orderBy('title')
+            ->get(['id', 'title']);
 
         return view('mentor.schedules.index', compact('schedules', 'programs'));
     }
@@ -33,7 +41,8 @@ class ScheduleController extends Controller
             'materials_note' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $program = Program::findOrFail($data['program_id']);
+        $program = Program::with('enrollments:id,program_id,user_id')
+            ->findOrFail($data['program_id']);
         abort_unless($program->mentor_id === auth()->id(), 403);
 
         ClassSchedule::create([
@@ -42,14 +51,19 @@ class ScheduleController extends Controller
             'status' => 'scheduled',
         ]);
 
-        foreach ($program->enrollments as $enrollment) {
-            AppNotification::create([
-                'user_id' => $enrollment->user_id,
-                'title' => 'Jadwal kelas baru',
-                'body' => $data['title'].' — '.$program->title,
-                'type' => 'schedule',
-                'link' => route('schedules.index'),
-            ]);
+        $now = now();
+        $rows = $program->enrollments->map(fn ($enrollment) => [
+            'user_id' => $enrollment->user_id,
+            'title' => 'Jadwal kelas baru',
+            'body' => $data['title'].' — '.$program->title,
+            'type' => 'schedule',
+            'link' => route('schedules.index'),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            AppNotification::insert($chunk);
         }
 
         return back()->with('success', 'Jadwal dibuat.');

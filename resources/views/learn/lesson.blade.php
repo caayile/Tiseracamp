@@ -62,28 +62,49 @@
                 <h1 class="font-display text-3xl font-bold leading-tight text-ink md:text-4xl">{{ $lesson->title }}</h1>
 
                 <div class="prose prose-slate mt-8 max-w-none prose-a:text-brand-mid prose-strong:text-ink">
-                    @if ($lesson->type === 'video' && $lesson->video_url)
-                        <div class="not-prose mb-8 aspect-video overflow-hidden rounded-2xl border border-brand/20 bg-white shadow-lg">
-                            <iframe class="h-full w-full" src="{{ $lesson->video_url }}" title="{{ $lesson->title }}" allowfullscreen></iframe>
+                    @if (in_array($lesson->type, ['video', 'recording'], true) && $lesson->embedVideoUrl())
+                        <div class="not-prose mb-8 aspect-video overflow-hidden rounded-2xl border border-brand/20 bg-ink shadow-lg">
+                            <iframe
+                                class="h-full w-full"
+                                src="{{ $lesson->embedVideoUrl() }}"
+                                title="{{ $lesson->title }}"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen
+                                referrerpolicy="strict-origin-when-cross-origin"
+                            ></iframe>
+                        </div>
+                    @endif
+
+                    @if ($lesson->image_path)
+                        <div class="not-prose mb-8 overflow-hidden rounded-2xl border border-brand/15 bg-white shadow-sm">
+                            <img src="{{ media_url($lesson->image_path) }}"
+                                 alt="{{ $lesson->title }}"
+                                 class="max-h-[28rem] w-full object-contain bg-surface">
                         </div>
                     @endif
 
                     @if ($lesson->content)
-                        <div class="text-[15px] leading-8 text-ink-soft [&_div]:mb-3 [&_p]:mb-3">{!! $lesson->content !!}</div>
+                        <div class="mb-8 text-[15px] leading-8 text-ink-soft [&_div]:mb-3 [&_p]:mb-3">{!! $lesson->content !!}</div>
                     @endif
 
-                    @if ($lesson->type === 'pdf' || ($lesson->file_url && str_contains(strtolower($lesson->file_url), '.pdf')))
-                        <div class="not-prose mt-8 overflow-hidden rounded-2xl border border-brand/20 bg-white shadow-sm">
+                    @if ($lesson->isPdf())
+                        <div class="not-prose overflow-hidden rounded-2xl border border-brand/20 bg-white shadow-sm">
                             <div class="flex items-center justify-between border-b border-brand/15 px-4 py-3">
-                                <p class="text-sm font-semibold text-ink">Materi modul (tampil di halaman)</p>
-                                <span class="text-xs text-brand-mid">Inline viewer</span>
+                                <p class="text-sm font-semibold text-ink">Materi PDF</p>
+                                @if ($lesson->filePublicUrl())
+                                    <a href="{{ $lesson->filePublicUrl() }}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-brand-mid hover:underline">Buka di tab baru</a>
+                                @endif
                             </div>
-                            <iframe src="{{ $lesson->file_url }}#toolbar=0" class="h-[70vh] w-full bg-white" title="Materi PDF"></iframe>
+                            @if ($lesson->filePublicUrl())
+                                <iframe src="{{ $lesson->filePublicUrl() }}#toolbar=0" class="h-[70vh] w-full bg-white" title="Materi PDF"></iframe>
+                            @else
+                                <p class="px-4 py-8 text-center text-sm text-ink-soft">File PDF belum diisi.</p>
+                            @endif
                         </div>
-                    @elseif ($lesson->file_url && ! in_array($lesson->type, ['video']))
+                    @elseif ($lesson->filePublicUrl() && ! in_array($lesson->type, ['video', 'recording'], true))
                         <div class="not-prose mt-8 rounded-2xl border border-brand/20 bg-white p-5 shadow-sm">
                             <p class="text-sm text-ink-soft">Lampiran materi tersedia di bawah ini.</p>
-                            <iframe src="{{ $lesson->file_url }}" class="mt-4 h-64 w-full rounded-xl bg-white" title="Lampiran"></iframe>
+                            <iframe src="{{ $lesson->filePublicUrl() }}" class="mt-4 h-64 w-full rounded-xl bg-white" title="Lampiran"></iframe>
                         </div>
                     @endif
                 </div>
