@@ -132,7 +132,7 @@ class DashboardController extends Controller
 
         if ($program->mentor_id) {
             $avg = Enrollment::query()
-                ->where('program_id', $program->id)
+                ->whereHas('program', fn ($q) => $q->where('mentor_id', $program->mentor_id))
                 ->whereNotNull('student_rating')
                 ->avg('student_rating');
 
@@ -140,8 +140,8 @@ class DashboardController extends Controller
 
             AppNotification::create([
                 'user_id' => $program->mentor_id,
-                'title' => 'Feedback siswa baru',
-                'body' => auth()->user()->name.' memberi rating '.$data['student_rating'].'★ untuk '.$program->title,
+                'title' => 'Rating bintang dari siswa',
+                'body' => auth()->user()->name.' memberi '.$data['student_rating'].'★ untuk '.$program->title,
                 'type' => 'info',
                 'link' => route('mentor.programs.students', $program),
             ]);

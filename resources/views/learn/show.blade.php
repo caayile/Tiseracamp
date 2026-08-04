@@ -108,47 +108,48 @@
                 @endif
 
                 @if ($enrollment->isCompleted())
-                    <div class="mt-6 rounded-xl border border-brand/20 bg-white p-4">
-                        <h3 class="font-display text-lg font-semibold text-ink">Feedback untuk mentor</h3>
-                        <p class="mt-1 text-sm text-ink-soft">Berikan penilaian setelah menyelesaikan seluruh materi.</p>
+                    <div id="rating" class="mt-6 rounded-xl border border-brand/20 bg-brand-mist/40 p-4">
+                        <h3 class="font-display text-lg font-semibold text-ink">Rating mentor</h3>
+                        <p class="mt-1 text-sm text-ink-soft">Course selesai — beri bintang 1–5 untuk mentor secara manual.</p>
 
                         @if ($enrollment->student_feedback_at)
-                            <div class="mt-4 rounded-xl bg-brand-mist/70 p-4">
-                                <p class="text-sm font-semibold text-ink">Rating kamu: {{ $enrollment->student_rating }}★</p>
+                            <div class="mt-4 rounded-xl bg-white p-4 ring-1 ring-brand/10">
+                                <p class="text-sm font-semibold text-ink">Rating kamu</p>
+                                <div class="mt-2">
+                                    <x-star-display :value="$enrollment->student_rating" />
+                                </div>
                                 @if ($enrollment->student_feedback)
-                                    <p class="mt-2 text-sm text-ink-soft whitespace-pre-line">{{ $enrollment->student_feedback }}</p>
+                                    <p class="mt-3 text-sm text-ink-soft whitespace-pre-line">{{ $enrollment->student_feedback }}</p>
                                 @endif
                                 <p class="mt-2 text-xs text-ink-soft">Dikirim {{ $enrollment->student_feedback_at->diffForHumans() }}</p>
                             </div>
                         @else
-                            <form method="POST" action="{{ route('learn.feedback', $program) }}" class="mt-4 space-y-3">
+                            <form method="POST" action="{{ route('learn.feedback', $program) }}" class="mt-4 space-y-4 rounded-xl bg-white p-4 ring-1 ring-brand/10">
                                 @csrf
+                                <x-star-rating name="student_rating" label="Beri bintang untuk mentor" />
                                 <div>
-                                    <label class="mb-1.5 block text-sm font-medium">Rating mentor (1–5)</label>
-                                    <select name="student_rating" class="input-field" required>
-                                        <option value="">Pilih rating</option>
-                                        @for ($i = 5; $i >= 1; $i--)
-                                            <option value="{{ $i }}" @selected(old('student_rating') == $i)>{{ $i }} ★</option>
-                                        @endfor
-                                    </select>
-                                    @error('student_rating') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label class="mb-1.5 block text-sm font-medium">Pesan feedback <span class="font-normal text-ink-soft">(opsional)</span></label>
+                                    <label class="mb-1.5 block text-sm font-medium text-ink">Pesan <span class="font-normal text-ink-soft">(opsional)</span></label>
                                     <textarea name="student_feedback" rows="3" class="input-field" placeholder="Ceritakan pengalaman belajar bersama mentor...">{{ old('student_feedback') }}</textarea>
                                 </div>
-                                <button type="submit" class="btn-primary">Kirim feedback</button>
+                                <button type="submit" class="btn-primary">Kirim rating</button>
                             </form>
                         @endif
 
                         @if ($enrollment->mentor_rating)
-                            <div class="mt-4 rounded-xl border border-ink/10 bg-surface p-4">
-                                <p class="text-sm font-semibold text-ink">Rating dari mentor: {{ $enrollment->mentor_rating }}★</p>
-                                <p class="mt-1 text-sm text-ink-soft">{{ $enrollment->mentorRatingLabel() }}</p>
+                            <div class="mt-4 rounded-xl border border-ink/10 bg-white p-4">
+                                <p class="text-sm font-semibold text-ink">Rating dari mentor untuk kamu</p>
+                                <div class="mt-2">
+                                    <x-star-display :value="$enrollment->mentor_rating" />
+                                </div>
+                                @if ($enrollment->mentorRatingLabel())
+                                    <p class="mt-2 text-sm font-medium text-brand-mid">{{ $enrollment->mentorRatingLabel() }}</p>
+                                @endif
                                 @if ($enrollment->mentor_note)
                                     <p class="mt-2 text-sm text-ink-soft whitespace-pre-line">{{ $enrollment->mentor_note }}</p>
                                 @endif
                             </div>
+                        @elseif ($enrollment->isCompleted())
+                            <p class="mt-4 text-xs text-ink-soft">Menunggu mentor memberi rating bintang untuk performa kamu.</p>
                         @endif
                     </div>
                 @endif
@@ -161,10 +162,18 @@
                         <div>
                             <p class="font-medium text-ink">{{ $schedule->title }}</p>
                             <p class="text-xs text-ink-soft">{{ $schedule->starts_at->translatedFormat('d M Y, H:i') }}</p>
+                            @if ($schedule->materials_note)
+                                <p class="mt-1 text-xs text-ink-soft">{{ \Illuminate\Support\Str::limit($schedule->materials_note, 80) }}</p>
+                            @endif
                         </div>
-                        @if ($schedule->meeting_url)
-                            <a href="{{ $schedule->meeting_url }}" target="_blank" class="text-xs font-semibold text-[#27CCF5] hover:underline">Join</a>
-                        @endif
+                        <div class="flex flex-col items-end gap-1">
+                            @if ($schedule->meeting_url)
+                                <a href="{{ $schedule->meeting_url }}" target="_blank" class="text-xs font-semibold text-[#27CCF5] hover:underline">Join Meet</a>
+                            @endif
+                            @if ($schedule->materials_url)
+                                <a href="{{ $schedule->materials_url }}" target="_blank" class="text-xs font-semibold text-ink-soft hover:underline">Materi</a>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <p class="mt-3 text-sm text-ink-soft">Belum ada jadwal.</p>

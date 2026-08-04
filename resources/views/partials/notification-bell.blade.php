@@ -1,14 +1,38 @@
 @auth
 @php
-    $unreadNotifications = \App\Models\AppNotification::query()
-        ->where('user_id', auth()->id())
-        ->whereNull('read_at')
-        ->count();
-    $recentNotifications = \App\Models\AppNotification::query()
-        ->where('user_id', auth()->id())
-        ->latest()
-        ->limit(5)
-        ->get();
+    $cacheKey = 'notif-bell-'.auth()->id();
+    $bellRows = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+    if (! is_array($bellRows)) {
+        $bellRows = \App\Models\AppNotification::query()
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->limit(5)
+            ->get(['id', 'title', 'body', 'link', 'read_at', 'created_at'])
+            ->map(fn ($n) => [
+                'id' => $n->id,
+                'title' => $n->title,
+                'body' => $n->body,
+                'link' => $n->link,
+                'read_at' => $n->read_at?->toIso8601String(),
+                'created_at' => $n->created_at?->toIso8601String(),
+            ])
+            ->all();
+
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $bellRows, now()->addSeconds(20));
+    }
+
+    $recentNotifications = collect($bellRows)->map(function ($row) {
+        return (object) [
+            'id' => $row['id'],
+            'title' => $row['title'],
+            'body' => $row['body'],
+            'link' => $row['link'],
+            'read_at' => ! empty($row['read_at']) ? \Illuminate\Support\Carbon::parse($row['read_at']) : null,
+            'created_at' => ! empty($row['created_at']) ? \Illuminate\Support\Carbon::parse($row['created_at']) : null,
+        ];
+    });
+    $unreadNotifications = $recentNotifications->whereNull('read_at')->count();
 @endphp
 
 <div class="relative" data-notif-menu>
@@ -43,14 +67,14 @@
                     $target = $notification->link ?: route('notifications.index');
                 @endphp
                 @if (! $notification->read_at)
-                    <form method="POST" action="{{ route('notifications.read', $notification) }}">
+                    <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
                         @csrf
-                        <button type="submit" class="flex w-full gap-3 border-b border-ink/5 px-4 py-3 text-left transition hover:bg-brand/5 {{ $notification->read_at ? '' : 'bg-brand/[0.04]' }}">
+                        <button type="submit" class="flex w-full gap-3 border-b border-ink/5 px-4 py-3 text-left transition hover:bg-brand/5 bg-brand/[0.04]">
                             <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand"></span>
                             <span class="min-w-0 flex-1">
                                 <span class="block text-sm font-semibold text-ink">{{ $notification->title }}</span>
                                 <span class="mt-0.5 line-clamp-2 block text-xs text-ink-soft">{{ $notification->body }}</span>
-                                <span class="mt-1 block text-[11px] text-ink-soft">{{ $notification->created_at->diffForHumans() }}</span>
+                                <span class="mt-1 block text-[11px] text-ink-soft">{{ $notification->created_at?->diffForHumans() }}</span>
                             </span>
                         </button>
                     </form>
@@ -60,7 +84,7 @@
                         <span class="min-w-0 flex-1">
                             <span class="block text-sm font-medium text-ink">{{ $notification->title }}</span>
                             <span class="mt-0.5 line-clamp-2 block text-xs text-ink-soft">{{ $notification->body }}</span>
-                            <span class="mt-1 block text-[11px] text-ink-soft">{{ $notification->created_at->diffForHumans() }}</span>
+                            <span class="mt-1 block text-[11px] text-ink-soft">{{ $notification->created_at?->diffForHumans() }}</span>
                         </span>
                     </a>
                 @endif

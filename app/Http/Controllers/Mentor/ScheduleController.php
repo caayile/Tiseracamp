@@ -15,7 +15,7 @@ class ScheduleController extends Controller
     public function index(): View
     {
         $schedules = ClassSchedule::with('program')->where('mentor_id', auth()->id())->orderByDesc('starts_at')->get();
-        $programs = Program::where('mentor_id', auth()->id())->get();
+        $programs = Program::where('mentor_id', auth()->id())->where('type', 'bootcamp')->get();
 
         return view('mentor.schedules.index', compact('schedules', 'programs'));
     }
@@ -29,6 +29,8 @@ class ScheduleController extends Controller
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'meeting_url' => ['nullable', 'url'],
+            'materials_url' => ['nullable', 'url'],
+            'materials_note' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $program = Program::findOrFail($data['program_id']);

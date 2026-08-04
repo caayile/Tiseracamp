@@ -50,8 +50,9 @@
                                     <rect x="3" y="5" width="18" height="16" rx="2"/>
                                     <path d="M3 10h18M8 3v4M16 3v4"/>
                                 </svg>
-                                <time datetime="{{ $article->created_at->toDateString() }}">
-                                    {{ $article->created_at->locale('id')->translatedFormat('l, d F Y') }}
+                                <span>Dipublikasikan pada</span>
+                                <time datetime="{{ $article->publishedAt()->toDateString() }}">
+                                    {{ $article->publishedAt()->locale('id')->translatedFormat('l, d F Y') }}
                                 </time>
                             </p>
                             <h2 class="mt-3 font-display text-lg font-bold leading-snug text-ink">

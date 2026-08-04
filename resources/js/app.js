@@ -1,23 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const applyTheme = (theme) => {
-        const isDark = theme === 'dark';
-        document.documentElement.classList.toggle('dark', isDark);
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
-        try {
-            localStorage.setItem('ts-theme', theme);
-        } catch (e) {}
-    };
-
-    const currentTheme = () => (
-        document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-    );
-
-    document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
-        button.addEventListener('click', () => {
-            applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
-        });
-    });
+    // Theme toggle sudah di-handle di partials/theme-init (hindari double toggle)
 
     const reveals = document.querySelectorAll('.reveal');
 
@@ -318,5 +300,43 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[data-notif-toggle], [data-profile-toggle]').forEach((toggle) => {
             toggle.setAttribute('aria-expanded', 'false');
         });
+    });
+
+    // Rating bintang 1–5
+    document.querySelectorAll('[data-star-rating]').forEach((root) => {
+        const input = root.querySelector('[data-star-value]');
+        const label = root.querySelector('[data-star-label]');
+        const buttons = [...root.querySelectorAll('[data-star]')];
+
+        const paint = (value) => {
+            buttons.forEach((btn) => {
+                const star = Number(btn.dataset.star);
+                const path = btn.querySelector('[data-star-path]');
+                if (!path) return;
+                if (star <= value) {
+                    path.classList.add('fill-[#F5B301]', 'stroke-[#F5B301]');
+                    path.classList.remove('fill-transparent', 'stroke-ink/25');
+                } else {
+                    path.classList.remove('fill-[#F5B301]', 'stroke-[#F5B301]');
+                    path.classList.add('fill-transparent', 'stroke-ink/25');
+                }
+            });
+            if (label) {
+                label.textContent = value ? `${value} / 5` : 'Pilih bintang';
+            }
+        };
+
+        buttons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const value = Number(btn.dataset.star);
+                input.value = String(value);
+                paint(value);
+            });
+
+            btn.addEventListener('mouseenter', () => paint(Number(btn.dataset.star)));
+        });
+
+        root.addEventListener('mouseleave', () => paint(Number(input.value || 0)));
+        paint(Number(input.value || 0));
     });
 });

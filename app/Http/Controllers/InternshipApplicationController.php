@@ -147,9 +147,23 @@ class InternshipApplicationController extends Controller
                 'title' => 'Pendaftar magang baru',
                 'body' => $user->name.' mendaftar ke '.$program->title,
                 'type' => 'info',
-                'link' => route('mentor.applications.index'),
+                'link' => route('admin.applications.index'),
             ]);
         }
+
+        \App\Models\User::query()
+            ->where('role', 'admin')
+            ->where('status', 'active')
+            ->when($program->mentor_id, fn ($q) => $q->where('id', '!=', $program->mentor_id))
+            ->each(function ($admin) use ($user, $program) {
+                AppNotification::create([
+                    'user_id' => $admin->id,
+                    'title' => 'Pendaftar magang baru',
+                    'body' => $user->name.' mendaftar ke '.$program->title,
+                    'type' => 'info',
+                    'link' => route('admin.applications.index'),
+                ]);
+            });
 
         return redirect()
             ->route('internships.status', $program)
@@ -163,5 +177,24 @@ class InternshipApplicationController extends Controller
             ->firstOrFail();
 
         return view('internships.status', compact('program', 'application'));
+    }
+
+    public function grade(Program $program): View
+    {
+        abort_unless($program->type === 'internship', 404);
+
+        $enrollment = Enrollment::with(['user', 'program', 'grader'])
+            ->where('user_id', auth()->id())
+            ->where('program_id', $program->id)
+            ->firstOrFail();
+
+        abort_unless($enrollment->hasGrade(), 404, 'Nilai belum tersedia.');
+
+        return view('grades.show', [
+            'enrollment' => $enrollment,
+            'user' => $enrollment->user,
+            'program' => $program,
+            'backUrl' => route('dashboard'),
+        ]);
     }
 }

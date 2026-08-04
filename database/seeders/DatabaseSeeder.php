@@ -150,7 +150,8 @@ class DatabaseSeeder extends Seeder
                 'description' => $item['excerpt'].' Program Tiga Serangkai dirancang ala bootcamp modern dengan jalur magang yang terhubung ke partner industri.',
                 'partner_id' => $partners[$index % $partners->count()]->id,
                 'category_id' => $categories[$index % $categories->count()]->id,
-                'mentor_id' => $mentor->id,
+                // Magang dikelola admin — mentor hanya untuk bootcamp
+                'mentor_id' => $item['type'] === 'bootcamp' ? $mentor->id : null,
                 'is_published' => true,
                 'approval_status' => 'approved',
             ]);
@@ -251,6 +252,15 @@ class DatabaseSeeder extends Seeder
         ]);
         Faq::create(['question' => 'Apakah bisa daftar sebagai mentor?', 'answer' => 'Ya, pilih role Mentor saat register. Course yang dibuat mentor perlu approve admin.', 'sort_order' => 1]);
         Faq::create(['question' => 'Bagaimana pembayaran course berbayar?', 'answer' => 'Checkout lalu upload bukti transfer. Admin akan verifikasi sebelum akses kelas dibuka.', 'sort_order' => 2]);
+
+        \App\Models\Article::create([
+            'title' => 'Orientasi Mahasiswa Magang Baru',
+            'slug' => 'orientasi-mahasiswa-magang-baru-demo',
+            'excerpt' => 'Selamat datang di program magang Tiga Serangkai. Berikut ringkasan kegiatan orientasi.',
+            'body' => "Hari pertama orientasi fokus pada pengenalan budaya kerja, alur komunikasi dengan mentor, dan target pembelajaran selama masa magang.\n\nPeserta diminta menyiapkan dokumen pendukung, mengaktifkan akun learning, serta mengikuti sesi ice breaking bersama batch.",
+            'is_published' => true,
+            'published_at' => now()->subDays(3),
+        ]);
 
         unset($admin, $student);
     }

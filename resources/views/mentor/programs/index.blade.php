@@ -1,7 +1,7 @@
 @extends('layouts.mentor')
 
 @section('title', 'Program Saya')
-@section('heading', 'Bootcamp & Program')
+@section('heading', 'Bootcamp Saya')
 
 @section('content')
 <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -18,7 +18,7 @@
     <div class="overflow-hidden rounded-2xl border border-dashed border-brand/40 bg-white p-12 text-center">
         <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink font-display text-2xl text-brand">+</div>
         <p class="font-display text-xl font-semibold text-ink">Belum ada program</p>
-        <p class="mt-2 text-sm text-ink-soft">Buat bootcamp atau magang pertama kamu sekarang.</p>
+        <p class="mt-2 text-sm text-ink-soft">Buat bootcamp pertama kamu sekarang.</p>
         <a href="{{ route('mentor.programs.create') }}" class="btn-primary mt-6">Tambah Program</a>
     </div>
 @else

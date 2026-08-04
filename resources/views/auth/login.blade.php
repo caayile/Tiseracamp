@@ -68,8 +68,13 @@
 </p>
 
 <div class="mt-6 rounded-xl bg-brand-mist p-3 text-xs text-ink-soft">
-    <p class="font-semibold text-brand-mid">Demo (password: password)</p>
-    <p class="mt-1">siswa@tigaserangkai.test · mentor@tigaserangkai.test · admin@tigaserangkai.test</p>
+    <p class="font-semibold text-brand-mid">Akun demo (password: <span class="text-ink">password</span>)</p>
+    <ul class="mt-2 space-y-1 font-mono text-[11px] text-ink">
+        <li>siswa@tigaserangkai.test → dashboard siswa</li>
+        <li>mentor@tigaserangkai.test → panel mentor</li>
+        <li>admin@tigaserangkai.test → panel admin</li>
+    </ul>
+    <p class="mt-2 text-[11px]">Email harus lengkap sampai <strong>.test</strong>. Kalau role salah, jalankan: <code class="rounded bg-white px-1">php artisan demo:fix</code></p>
 </div>
 
 <script>

@@ -99,7 +99,7 @@ class GoogleAuthController extends Controller
         $request->session()->regenerate();
         ActivityLog::record($user, 'login_google');
 
-        return redirect()->intended(route($user->dashboardRoute()));
+        return redirect()->route($user->dashboardRoute());
     }
 
     private function isConfigured(): bool

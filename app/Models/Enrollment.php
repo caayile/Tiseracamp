@@ -23,6 +23,12 @@ class Enrollment extends Model
         'mentor_rating',
         'mentor_note',
         'mentor_rated_at',
+        'final_score',
+        'grade_predicate',
+        'grade_note',
+        'grade_aspects',
+        'graded_by',
+        'graded_at',
     ];
 
     protected function casts(): array
@@ -32,12 +38,41 @@ class Enrollment extends Model
             'completed_at' => 'datetime',
             'student_feedback_at' => 'datetime',
             'mentor_rated_at' => 'datetime',
+            'graded_at' => 'datetime',
+            'grade_aspects' => 'array',
         ];
     }
 
     public function isCompleted(): bool
     {
         return $this->progress >= 100 || $this->status === 'completed';
+    }
+
+    public function hasGrade(): bool
+    {
+        return $this->graded_at !== null && $this->final_score !== null;
+    }
+
+    public static function gradeAspectDefaults(): array
+    {
+        return [
+            'Kedisiplinan',
+            'Kemampuan teknis',
+            'Kerjasama & komunikasi',
+            'Inisiatif & tanggung jawab',
+            'Kualitas hasil kerja',
+        ];
+    }
+
+    public static function predicateFromScore(int $score): string
+    {
+        return match (true) {
+            $score >= 90 => 'Sangat Baik',
+            $score >= 80 => 'Baik',
+            $score >= 70 => 'Cukup',
+            $score >= 60 => 'Kurang',
+            default => 'Sangat Kurang',
+        };
     }
 
     public static function mentorRatingLabels(): array
@@ -73,6 +108,11 @@ class Enrollment extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(Batch::class);
+    }
+
+    public function grader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'graded_by');
     }
 
     public function certificate(): HasOne

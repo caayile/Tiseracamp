@@ -4,40 +4,111 @@
 @section('heading', 'Kelola Konten')
 
 @section('content')
+@php
+    $editing = $editingArticle ?? null;
+@endphp
+
 <div class="grid gap-6 xl:grid-cols-2">
     {{-- Berita --}}
-    <div class="card-soft p-5">
-        <h2 class="font-display text-lg font-semibold">Berita</h2>
-        <p class="mt-1 text-xs text-ink-soft">Hanya admin yang dapat menambah berita. Tampil di beranda & menu Berita.</p>
-        <form method="POST" action="{{ route('admin.content.articles') }}" enctype="multipart/form-data" class="mt-4 space-y-3">
-            @csrf
-            <input type="text" name="title" class="input-field" placeholder="Judul berita" required>
-            <input type="text" name="excerpt" class="input-field" placeholder="Ringkasan singkat">
+    <div class="card-soft p-5 xl:col-span-2">
+        <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <label class="mb-1.5 block text-sm font-medium text-ink">Thumbnail <span class="font-normal text-ink-soft">(opsional)</span></label>
-                <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
-                @error('thumbnail') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <h2 class="font-display text-lg font-semibold">Berita</h2>
+                <p class="mt-1 text-xs text-ink-soft">
+                    Field mengikuti halaman publik: judul, tanggal publikasi, gambar, lalu isi berita.
+                </p>
             </div>
-            <textarea name="body" rows="4" class="input-field" placeholder="Isi berita"></textarea>
-            <button class="btn-primary" type="submit">Publikasikan berita</button>
+            @if ($editing)
+                <a href="{{ route('admin.content.index') }}" class="text-sm font-semibold text-brand-mid hover:underline">Batal edit</a>
+            @endif
+        </div>
+
+        <form method="POST"
+              action="{{ $editing ? route('admin.content.articles.update', $editing) : route('admin.content.articles') }}"
+              enctype="multipart/form-data"
+              class="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+            @csrf
+            @if ($editing)
+                @method('PUT')
+            @endif
+
+            <div class="space-y-3">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink">Judul</label>
+                    <input type="text" name="title" value="{{ old('title', $editing?->title) }}" class="input-field" placeholder="Judul berita" required>
+                    @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink">Dipublikasikan pada</label>
+                    <input type="datetime-local"
+                           name="published_at"
+                           value="{{ old('published_at', optional($editing?->publishedAt())->format('Y-m-d\TH:i') ?? now()->format('Y-m-d\TH:i')) }}"
+                           class="input-field"
+                           required>
+                    @error('published_at') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink">Ringkasan <span class="font-normal text-ink-soft">(opsional)</span></label>
+                    <input type="text" name="excerpt" value="{{ old('excerpt', $editing?->excerpt) }}" class="input-field" placeholder="Ringkasan singkat di bawah judul">
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink">Isi berita</label>
+                    <textarea name="body" rows="10" class="input-field" placeholder="Tulis isi berita lengkap..." required>{{ old('body', $editing?->body) }}</textarea>
+                    @error('body') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink">Gambar</label>
+                    @if ($editing?->thumbnail)
+                        <img src="{{ media_url($editing->thumbnail) }}" alt="" class="mb-2 aspect-[16/10] w-full rounded-xl object-cover ring-1 ring-black/5">
+                    @endif
+                    <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                    <p class="mt-1 text-[11px] text-ink-soft">JPG/PNG/WebP, max 5MB. Tampil di kartu beranda & detail.</p>
+                    @error('thumbnail') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <label class="flex items-center gap-2 rounded-xl border border-ink/10 bg-surface px-3 py-2.5 text-sm text-ink">
+                    <input type="checkbox" name="is_published" value="1" class="rounded border-slate-300 text-brand focus:ring-brand" @checked(old('is_published', $editing?->is_published ?? true))>
+                    Tampilkan di halaman Berita
+                </label>
+
+                <button class="btn-primary w-full justify-center" type="submit">
+                    {{ $editing ? 'Simpan perubahan' : 'Publikasikan berita' }}
+                </button>
+            </div>
         </form>
-        <ul class="mt-4 space-y-2">
+
+        <ul class="mt-6 space-y-2 border-t border-brand/10 pt-4">
             @forelse ($articles as $article)
-                <li class="flex items-start justify-between gap-3 rounded-lg bg-brand-mist/50 px-3 py-2 text-sm">
+                <li class="flex items-start justify-between gap-3 rounded-xl bg-brand-mist/50 px-3 py-3 text-sm">
                     <div class="flex min-w-0 items-start gap-3">
                         @if ($article->thumbnail)
-                            <img src="{{ media_url($article->thumbnail) }}" alt="" class="h-12 w-16 shrink-0 rounded-lg object-cover">
+                            <img src="{{ media_url($article->thumbnail) }}" alt="" class="h-14 w-20 shrink-0 rounded-lg object-cover">
                         @endif
                         <div class="min-w-0">
                             <p class="font-medium text-ink">{{ $article->title }}</p>
-                            <p class="text-xs text-ink-soft">{{ $article->created_at->diffForHumans() }}</p>
+                            <p class="mt-0.5 text-xs text-ink-soft">
+                                Dipublikasikan pada {{ $article->publishedAt()->locale('id')->translatedFormat('l, d F Y') }}
+                                @unless ($article->is_published)
+                                    · <span class="font-semibold text-amber-700">Draft</span>
+                                @endunless
+                            </p>
                         </div>
                     </div>
-                    <form method="POST" action="{{ route('admin.content.articles.destroy', $article) }}" onsubmit="return confirm('Hapus berita ini?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-xs font-semibold text-red-600 hover:underline">Hapus</button>
-                    </form>
+                    <div class="flex shrink-0 items-center gap-3">
+                        <a href="{{ route('admin.content.index', ['edit' => $article->id]) }}" class="text-xs font-semibold text-brand-mid hover:underline">Edit</a>
+                        <a href="{{ route('news.show', $article->slug) }}" target="_blank" class="text-xs font-semibold text-ink-soft hover:underline">Lihat</a>
+                        <form method="POST" action="{{ route('admin.content.articles.destroy', $article) }}" onsubmit="return confirm('Hapus berita ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs font-semibold text-red-600 hover:underline">Hapus</button>
+                        </form>
+                    </div>
                 </li>
             @empty
                 <li class="text-sm text-ink-soft">Belum ada berita.</li>

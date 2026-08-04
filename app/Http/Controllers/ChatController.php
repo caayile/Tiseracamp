@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Enrollment;
 use App\Models\Message;
 use App\Models\Program;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -49,13 +50,18 @@ class ChatController extends Controller
 
     public function start(Program $program): RedirectResponse
     {
-        abort_unless($program->mentor_id, 404);
         Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->firstOrFail();
+
+        $staffId = $program->mentor_id;
+        if (! $staffId && $program->type === 'internship') {
+            $staffId = User::query()->where('role', 'admin')->where('status', 'active')->value('id');
+        }
+        abort_unless($staffId, 404, 'Belum ada PIC chat untuk program ini.');
 
         $conversation = Conversation::firstOrCreate([
             'program_id' => $program->id,
             'student_id' => auth()->id(),
-            'mentor_id' => $program->mentor_id,
+            'mentor_id' => $staffId,
         ]);
 
         return redirect()->route('chat.show', $conversation);
@@ -64,11 +70,17 @@ class ChatController extends Controller
     public function send(Request $request, Conversation $conversation): RedirectResponse
     {
         $user = auth()->user();
-        abort_unless(in_array($user->id, [$conversation->student_id, $conversation->mentor_id]), 403);
 
-        if ($user->isMentor()) {
+        if ($user->isMentor() && ! $user->isAdmin()) {
             return redirect()->route('mentor.chat.show', $conversation);
         }
+
+        abort_unless(
+            $user->id === $conversation->student_id
+            || $user->id === $conversation->mentor_id
+            || $user->isAdmin(),
+            403
+        );
 
         $data = $request->validate(['body' => ['required', 'string', 'max:2000']]);
         Message::create([
@@ -77,13 +89,24 @@ class ChatController extends Controller
             'body' => $data['body'],
         ]);
 
-        AppNotification::create([
-            'user_id' => $conversation->mentor_id,
-            'title' => 'Pesan dari siswa',
-            'body' => Str::limit($data['body'], 80),
-            'type' => 'chat',
-            'link' => route('mentor.chat.show', $conversation),
-        ]);
+        $recipientId = $user->id === $conversation->student_id
+            ? $conversation->mentor_id
+            : $conversation->student_id;
+
+        if ($recipientId && $recipientId !== $user->id) {
+            $recipient = User::find($recipientId);
+            $link = $recipient?->isAdmin()
+                ? route('admin.chat.show', $conversation)
+                : ($recipient?->isMentor() ? route('mentor.chat.show', $conversation) : route('chat.show', $conversation));
+
+            AppNotification::create([
+                'user_id' => $recipientId,
+                'title' => $user->isStudent() ? 'Pesan dari siswa' : 'Pesan baru',
+                'body' => Str::limit($data['body'], 80),
+                'type' => 'chat',
+                'link' => $link,
+            ]);
+        }
 
         return back();
     }

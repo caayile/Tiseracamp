@@ -274,12 +274,12 @@
 
     /* Sidebar admin/mentor: fixed, tidak ikut scroll konten */
     .panel-sidebar {
-        position: fixed;
+        position: fixed !important;
         top: 0;
         left: 0;
         bottom: 0;
         z-index: 40;
-        width: 18rem; /* 288px — lebar normal dashboard */
+        width: 18rem;
         overflow-x: hidden;
         overflow-y: auto;
         display: none;
@@ -288,26 +288,30 @@
     .panel-main {
         min-height: 100vh;
         margin-left: 0;
+        width: 100%;
     }
 
     @media (min-width: 768px) {
         .panel-sidebar.panel-sidebar-admin {
-            display: block;
+            display: flex !important;
+            flex-direction: column;
         }
 
         .panel-main-admin {
             margin-left: 18rem;
+            width: auto;
         }
     }
 
     @media (min-width: 1024px) {
         .panel-sidebar.panel-sidebar-mentor {
-            display: flex;
+            display: flex !important;
             flex-direction: column;
         }
 
         .panel-main-mentor {
             margin-left: 18rem;
+            width: auto;
         }
     }
 }

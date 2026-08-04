@@ -10,6 +10,11 @@
 
 @php $ratingLabels = \App\Models\Enrollment::mentorRatingLabels(); @endphp
 
+<div class="mb-4 rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
+    Setelah siswa menyelesaikan 100% course, beri <strong class="text-ink">rating bintang 1–5</strong> secara manual.
+    Siswa juga bisa memberi bintang untukmu dari halaman belajar mereka.
+</div>
+
 <div class="space-y-4">
     @forelse ($enrollments as $enrollment)
         <div class="card-soft p-5">
@@ -28,9 +33,12 @@
 
                     @if ($enrollment->student_rating)
                         <div class="mt-3 rounded-xl bg-brand-mist/60 p-3 text-sm">
-                            <p class="font-semibold text-ink">Feedback siswa: {{ $enrollment->student_rating }}★</p>
+                            <p class="font-semibold text-ink">Rating dari siswa untukmu</p>
+                            <div class="mt-1.5">
+                                <x-star-display :value="$enrollment->student_rating" size="sm" />
+                            </div>
                             @if ($enrollment->student_feedback)
-                                <p class="mt-1 text-ink-soft whitespace-pre-line">{{ $enrollment->student_feedback }}</p>
+                                <p class="mt-2 text-ink-soft whitespace-pre-line">{{ $enrollment->student_feedback }}</p>
                             @endif
                         </div>
                     @endif
@@ -40,8 +48,13 @@
                     @if ($enrollment->isCompleted())
                         @if ($enrollment->mentor_rated_at)
                             <div class="rounded-xl border border-brand/15 bg-surface p-4 text-sm">
-                                <p class="font-semibold text-ink">Rating kamu: {{ $enrollment->mentor_rating }}★</p>
-                                <p class="mt-1 text-ink-soft">{{ $enrollment->mentorRatingLabel() }}</p>
+                                <p class="font-semibold text-ink">Rating kamu untuk siswa</p>
+                                <div class="mt-2">
+                                    <x-star-display :value="$enrollment->mentor_rating" />
+                                </div>
+                                @if ($enrollment->mentorRatingLabel())
+                                    <p class="mt-2 font-medium text-brand-mid">{{ $enrollment->mentorRatingLabel() }}</p>
+                                @endif
                                 @if ($enrollment->mentor_note)
                                     <p class="mt-2 text-ink-soft whitespace-pre-line">{{ $enrollment->mentor_note }}</p>
                                 @endif
@@ -49,20 +62,21 @@
                         @else
                             <form method="POST" action="{{ route('mentor.enrollments.rate', $enrollment) }}" class="space-y-3 rounded-xl border border-brand/15 bg-surface p-4">
                                 @csrf
-                                <p class="text-sm font-semibold text-ink">Beri rating siswa</p>
-                                <select name="mentor_rating" class="input-field text-sm" required>
-                                    <option value="">Pilih rating</option>
-                                    @foreach ($ratingLabels as $value => $label)
-                                        <option value="{{ $value }}">{{ $value }}★ — {{ $label }}</option>
-                                    @endforeach
-                                </select>
+                                <p class="text-sm font-semibold text-ink">Beri rating bintang ke siswa</p>
+                                <x-star-rating name="mentor_rating" label="Pilih 1–5 bintang" />
+                                <div>
+                                    <label class="mb-1.5 block text-xs font-medium text-ink">Kategori (otomatis dari bintang)</label>
+                                    <p class="text-xs text-ink-soft">
+                                        5★ {{ $ratingLabels[5] }} · 4★ {{ $ratingLabels[4] }} · … · 1★ {{ $ratingLabels[1] }}
+                                    </p>
+                                </div>
                                 <textarea name="mentor_note" rows="2" class="input-field text-sm" placeholder="Catatan untuk siswa (opsional)"></textarea>
                                 <button type="submit" class="btn-primary w-full justify-center">Simpan rating</button>
                             </form>
                         @endif
                     @else
                         <p class="rounded-xl border border-dashed border-ink/15 px-4 py-3 text-sm text-ink-soft">
-                            Rating tersedia setelah siswa menyelesaikan 100% materi.
+                            Rating bintang tersedia setelah siswa menyelesaikan 100% materi.
                         </p>
                     @endif
                 </div>

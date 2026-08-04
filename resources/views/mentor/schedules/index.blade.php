@@ -31,7 +31,15 @@
         </div>
         <div class="md:col-span-2">
             <label class="mb-1.5 block text-sm font-medium">Link meeting</label>
-            <input type="url" name="meeting_url" class="input-field" placeholder="https://zoom.us/...">
+            <input type="url" name="meeting_url" class="input-field" placeholder="https://meet.google.com/...">
+        </div>
+        <div class="md:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium">Link materi</label>
+            <input type="url" name="materials_url" class="input-field" placeholder="https://drive.google.com/...">
+        </div>
+        <div class="md:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium">Arahan / catatan</label>
+            <textarea name="materials_note" rows="2" class="input-field" placeholder="Arahan singkat untuk peserta"></textarea>
         </div>
         <div class="md:col-span-2">
             <label class="mb-1.5 block text-sm font-medium">Deskripsi</label>
@@ -56,6 +64,12 @@
                         <p class="mt-1 text-xs text-ink-soft">{{ $schedule->starts_at->translatedFormat('d M Y, H:i') }} · {{ $schedule->status }}</p>
                         @if ($schedule->meeting_url)
                             <a href="{{ $schedule->meeting_url }}" target="_blank" class="mt-1 inline-block text-xs text-brand-deeper hover:underline">Meeting link</a>
+                        @endif
+                        @if ($schedule->materials_url)
+                            <a href="{{ $schedule->materials_url }}" target="_blank" class="mt-1 inline-block text-xs text-brand-deeper hover:underline">Materi</a>
+                        @endif
+                        @if ($schedule->materials_note)
+                            <p class="mt-1 text-xs text-ink-soft">{{ $schedule->materials_note }}</p>
                         @endif
                         @if ($schedule->recording_url)
                             <a href="{{ $schedule->recording_url }}" target="_blank" class="mt-1 inline-block text-xs text-brand-deeper hover:underline">Recording</a>

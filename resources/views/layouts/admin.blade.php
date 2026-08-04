@@ -18,8 +18,12 @@
             <a href="{{ route('admin.dashboard') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/10' : '' }}">Dashboard</a>
             <a href="{{ route('admin.users.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/10' : '' }}">Users</a>
             <a href="{{ route('admin.programs.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') ? 'bg-white/10' : '' }}">Programs</a>
+            <a href="{{ route('admin.applications.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.applications.*') ? 'bg-white/10' : '' }}">Seleksi Magang</a>
+            <a href="{{ route('admin.grades.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.grades.*') ? 'bg-white/10' : '' }}">Nilai Magang</a>
+            <a href="{{ route('admin.schedules.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.schedules.*') ? 'bg-white/10' : '' }}">Sesi Magang</a>
+            <a href="{{ route('admin.chat.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.chat.*') ? 'bg-white/10' : '' }}">Chat Magang</a>
             <a href="{{ route('admin.payments.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payments.*') ? 'bg-white/10' : '' }}">Payments</a>
-            <a href="{{ route('admin.content.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.content.*') ? 'bg-white/10' : '' }}">Content</a>
+            <a href="{{ route('admin.content.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.content.*') ? 'bg-white/10' : '' }}">Berita & Content</a>
             <form method="POST" action="{{ route('logout') }}" class="mt-2">
                 @csrf
                 <button class="w-full rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/10" type="submit">Logout</button>

@@ -6,8 +6,18 @@
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-3xl px-4 py-10">
         <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
-        <h1 class="section-title">Logbook magang</h1>
-        <p class="mt-2 text-sm text-ink-soft">Catat aktivitas harian setelah kamu diterima di program magang.</p>
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="section-title">Logbook magang</h1>
+                <p class="mt-2 text-sm text-ink-soft">Catat aktivitas harian setelah kamu diterima di program magang.</p>
+            </div>
+            @if ($logbooks->isNotEmpty())
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('logbook.export.pdf') }}" class="btn-secondary inline-flex text-sm">Export PDF</a>
+                    <a href="{{ route('logbook.export.excel') }}" class="btn-primary inline-flex text-sm">Export Excel</a>
+                </div>
+            @endif
+        </div>
     </div>
 </section>
 

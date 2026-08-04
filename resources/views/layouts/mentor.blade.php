@@ -14,7 +14,7 @@
         $initials = collect(explode(' ', $mentor->name))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('');
     @endphp
 
-    <aside class="panel-sidebar panel-sidebar-mentor relative overflow-x-hidden bg-gradient-to-b from-[#0B1F2A] via-[#0A3A4A] to-[#065A7A] text-white">
+    <aside class="panel-sidebar panel-sidebar-mentor overflow-x-hidden bg-gradient-to-b from-[#0B1F2A] via-[#0A3A4A] to-[#065A7A] text-white">
         <div class="pointer-events-none absolute -right-16 top-24 h-48 w-48 rounded-full bg-brand/20 blur-3xl"></div>
         <div class="border-b border-white/10 px-6 py-6">
             <div class="flex items-center gap-3">
@@ -27,7 +27,6 @@
                 $links = [
                     ['route' => 'mentor.dashboard', 'label' => 'Dashboard', 'match' => 'mentor.dashboard'],
                     ['route' => 'mentor.programs.index', 'label' => 'Program Saya', 'match' => 'mentor.programs.*'],
-                    ['route' => 'mentor.applications.index', 'label' => 'Seleksi Magang', 'match' => 'mentor.applications.*'],
                     ['route' => 'mentor.submissions', 'label' => 'Review Tugas', 'match' => 'mentor.submissions*'],
                     ['route' => 'mentor.schedules.index', 'label' => 'Jadwal Mentoring', 'match' => 'mentor.schedules.*'],
                     ['route' => 'mentor.chat.index', 'label' => 'Chat Siswa', 'match' => 'mentor.chat.*'],

@@ -57,6 +57,22 @@
                                     @if ($enrollment->certificate)
                                         <a href="{{ route('learn.certificate', $enrollment->program) }}" target="_blank" class="btn-secondary">Cetak sertifikat</a>
                                     @endif
+                                    @if ($enrollment->program->type === 'internship' && $enrollment->hasGrade())
+                                        <a href="{{ route('internships.grade', $enrollment->program) }}" target="_blank" class="btn-secondary">Lihat & cetak nilai</a>
+                                    @endif
+                                    @if ($enrollment->isCompleted() && ! $enrollment->student_feedback_at)
+                                        <a href="{{ route('learn.show', $enrollment->program) }}#rating" class="btn-secondary">⭐ Rate mentor</a>
+                                    @endif
+                                    @if ($enrollment->mentor_rating)
+                                        <span class="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-surface px-3 py-2 text-xs font-semibold text-ink">
+                                            Dari mentor: <x-star-display :value="$enrollment->mentor_rating" size="sm" :show-number="false" />
+                                        </span>
+                                    @endif
+                                    @if ($enrollment->hasGrade())
+                                        <span class="inline-flex items-center rounded-xl border border-brand/20 bg-brand-mist px-3 py-2 text-xs font-semibold text-ink">
+                                            Nilai: {{ $enrollment->final_score }} · {{ $enrollment->grade_predicate }}
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
@@ -73,9 +89,14 @@
                         <p class="font-medium text-ink">{{ $schedule->title }}</p>
                         <p class="text-xs text-ink-soft">{{ $schedule->program->title }}</p>
                         <p class="mt-1 text-sm text-brand-deeper">{{ $schedule->starts_at->translatedFormat('d M Y, H:i') }}</p>
-                        @if ($schedule->meeting_url)
-                            <a href="{{ $schedule->meeting_url }}" target="_blank" class="mt-2 inline-block text-xs font-semibold text-brand-deeper hover:underline">Join meeting →</a>
-                        @endif
+                        <div class="mt-2 flex flex-wrap gap-3">
+                            @if ($schedule->meeting_url)
+                                <a href="{{ $schedule->meeting_url }}" target="_blank" class="text-xs font-semibold text-brand-deeper hover:underline">Join Meet →</a>
+                            @endif
+                            @if ($schedule->materials_url)
+                                <a href="{{ $schedule->materials_url }}" target="_blank" class="text-xs font-semibold text-brand-mid hover:underline">Materi →</a>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <p class="mt-3 text-sm text-ink-soft">Tidak ada jadwal mendatang.</p>

@@ -33,7 +33,7 @@ class HomeController extends Controller
         $partners = Partner::latest()->take(8)->get();
         $banners = Banner::where('is_active', true)->latest()->take(3)->get();
         $faqs = Faq::where('is_published', true)->orderBy('sort_order')->take(6)->get();
-        $articles = Article::where('is_published', true)->latest()->take(3)->get();
+        $articles = Article::where('is_published', true)->latest('published_at')->latest('id')->take(3)->get();
 
         return view('home', compact('featured', 'programs', 'categories', 'partners', 'banners', 'faqs', 'articles'));
     }

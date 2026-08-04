@@ -21,7 +21,8 @@ class NewsController extends Controller
                         ->orWhere('body', 'ilike', "%{$q}%");
                 });
             })
-            ->latest()
+            ->latest('published_at')
+            ->latest('id')
             ->paginate(9)
             ->withQueryString();
 

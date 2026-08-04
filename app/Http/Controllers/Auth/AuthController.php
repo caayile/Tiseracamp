@@ -34,8 +34,13 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        // Terima juga "siswa@tigaserangkai" → siswa@tigaserangkai.test
+        if (preg_match('/^[^@\s]+@tigaserangkai$/i', $credentials['email'])) {
+            $credentials['email'] .= '.test';
+        }
+
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['email' => 'Email atau password salah.'])->onlyInput('email');
+            return back()->withErrors(['email' => 'Email atau password salah. Coba siswa@tigaserangkai.test / password'])->onlyInput('email');
         }
 
         $request->session()->regenerate();
@@ -53,7 +58,8 @@ class AuthController extends Controller
             return redirect()->route('verify.show');
         }
 
-        return redirect()->intended(route($user->dashboardRoute()));
+        // Selalu ke dashboard sesuai role (hindari intended yang salah role)
+        return redirect()->route($user->dashboardRoute());
     }
 
     public function showRegister(): View

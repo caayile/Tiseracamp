@@ -9,7 +9,8 @@ class ClassSchedule extends Model
 {
     protected $fillable = [
         'program_id', 'batch_id', 'mentor_id', 'title', 'description',
-        'starts_at', 'ends_at', 'meeting_url', 'recording_url', 'status',
+        'starts_at', 'ends_at', 'meeting_url', 'materials_url', 'materials_note',
+        'recording_url', 'status',
     ];
 
     protected function casts(): array

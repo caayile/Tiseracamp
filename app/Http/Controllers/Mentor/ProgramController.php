@@ -19,6 +19,7 @@ class ProgramController extends Controller
     public function index(): View
     {
         $programs = Program::where('mentor_id', auth()->id())
+            ->where('type', 'bootcamp')
             ->with(['category', 'mentor', 'partner'])
             ->latest()
             ->get();
@@ -78,6 +79,7 @@ class ProgramController extends Controller
     public function curriculum(Program $program): View
     {
         abort_unless($program->mentor_id === auth()->id(), 403);
+        abort_unless($program->type === 'bootcamp', 404);
         $program->load(['modules.lessons.assignment']);
 
         return view('mentor.programs.curriculum', compact('program'));
@@ -196,6 +198,7 @@ class ProgramController extends Controller
     public function students(Program $program): View
     {
         abort_unless($program->mentor_id === auth()->id(), 403);
+        abort_unless($program->type === 'bootcamp', 404);
         $enrollments = Enrollment::with(['user', 'certificate'])
             ->where('program_id', $program->id)
             ->latest()
@@ -208,6 +211,7 @@ class ProgramController extends Controller
     {
         $enrollment->load('program');
         abort_unless($enrollment->program->mentor_id === auth()->id(), 403);
+        abort_unless($enrollment->program->type === 'bootcamp', 404);
         abort_unless($enrollment->isCompleted(), 403, 'Rating hanya untuk siswa yang sudah menyelesaikan semua materi.');
 
         $data = $request->validate([

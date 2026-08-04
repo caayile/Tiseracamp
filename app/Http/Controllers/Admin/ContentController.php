@@ -20,7 +20,10 @@ class ContentController extends Controller
     public function index(): View
     {
         return view('admin.content.index', [
-            'articles' => Article::latest()->take(10)->get(),
+            'articles' => Article::query()->latest('published_at')->latest('id')->take(20)->get(),
+            'editingArticle' => request()->filled('edit')
+                ? Article::find(request('edit'))
+                : null,
             'banners' => Banner::latest()->get(),
             'faqs' => Faq::orderBy('sort_order')->get(),
             'categories' => Category::withCount('programs')->get(),
@@ -33,8 +36,10 @@ class ContentController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'excerpt' => ['nullable', 'string', 'max:500'],
-            'body' => ['nullable', 'string'],
+            'body' => ['required', 'string'],
+            'published_at' => ['required', 'date'],
             'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'is_published' => ['nullable', 'boolean'],
         ]);
 
         $thumbnailPath = null;
@@ -45,13 +50,40 @@ class ContentController extends Controller
         Article::create([
             'title' => $data['title'],
             'excerpt' => $data['excerpt'] ?? null,
-            'body' => $data['body'] ?? null,
+            'body' => $data['body'],
             'thumbnail' => $thumbnailPath,
             'slug' => Str::slug($data['title']).'-'.Str::random(4),
-            'is_published' => true,
+            'is_published' => $request->boolean('is_published'),
+            'published_at' => $data['published_at'],
         ]);
 
-        return back()->with('success', 'Berita dipublikasikan.');
+        return redirect()->route('admin.content.index')->with('success', 'Berita dipublikasikan.');
+    }
+
+    public function updateArticle(Request $request, Article $article): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:200'],
+            'excerpt' => ['nullable', 'string', 'max:500'],
+            'body' => ['required', 'string'],
+            'published_at' => ['required', 'date'],
+            'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'is_published' => ['nullable', 'boolean'],
+        ]);
+
+        if ($request->hasFile('thumbnail')) {
+            $article->thumbnail = $request->file('thumbnail')->store('articles', media_disk());
+        }
+
+        $article->fill([
+            'title' => $data['title'],
+            'excerpt' => $data['excerpt'] ?? null,
+            'body' => $data['body'],
+            'is_published' => $request->boolean('is_published'),
+            'published_at' => $data['published_at'],
+        ])->save();
+
+        return redirect()->route('admin.content.index')->with('success', 'Berita diperbarui.');
     }
 
     public function destroyArticle(Article $article): RedirectResponse

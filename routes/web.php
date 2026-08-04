@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
+use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\ContentController as AdminContentController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\GradeController as AdminGradeController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\ProgramController as AdminProgramController;
+use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
@@ -17,7 +21,6 @@ use App\Http\Controllers\InternshipApplicationController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\Mentor\AnnouncementController as MentorAnnouncementController;
-use App\Http\Controllers\Mentor\ApplicationController as MentorApplicationController;
 use App\Http\Controllers\Mentor\AssignmentController as MentorAssignmentController;
 use App\Http\Controllers\Mentor\ChatController as MentorChatController;
 use App\Http\Controllers\Mentor\DashboardController as MentorDashboardController;
@@ -69,8 +72,11 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/internships/{program}/apply', [InternshipApplicationController::class, 'create'])->name('internships.apply');
     Route::post('/internships/{program}/apply', [InternshipApplicationController::class, 'store'])->name('internships.store');
     Route::get('/internships/{program}/status', [InternshipApplicationController::class, 'status'])->name('internships.status');
+    Route::get('/internships/{program}/nilai', [InternshipApplicationController::class, 'grade'])->name('internships.grade');
 
     Route::post('/logbook', [LogbookController::class, 'store'])->name('logbook.store');
+    Route::get('/logbook/export/pdf', [LogbookController::class, 'exportPdf'])->name('logbook.export.pdf');
+    Route::get('/logbook/export/excel', [LogbookController::class, 'exportExcel'])->name('logbook.export.excel');
     Route::delete('/logbook/{logbook}', [LogbookController::class, 'destroy'])->name('logbook.destroy');
 
     Route::post('/programs/{program}/enroll', [DashboardController::class, 'enroll'])->name('programs.enroll');
@@ -122,8 +128,6 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::post('/schedules', [MentorScheduleController::class, 'store'])->name('schedules.store');
     Route::post('/schedules/{schedule}/recording', [MentorScheduleController::class, 'uploadRecording'])->name('schedules.recording');
     Route::post('/announcements', [MentorAnnouncementController::class, 'store'])->name('announcements.store');
-    Route::get('/applications', [MentorApplicationController::class, 'index'])->name('applications.index');
-    Route::post('/applications/{application}/review', [MentorApplicationController::class, 'review'])->name('applications.review');
     Route::get('/chat', [MentorChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [MentorChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{conversation}', [MentorChatController::class, 'send'])->name('chat.send');
@@ -153,11 +157,28 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::post('/modules/{module}/lessons', [AdminProgramController::class, 'storeLesson'])->name('lessons.store');
     Route::delete('/lessons/{lesson}', [AdminProgramController::class, 'destroyLesson'])->name('lessons.destroy');
 
+    Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
+    Route::post('/applications/{application}/review', [AdminApplicationController::class, 'review'])->name('applications.review');
+
+    Route::get('/grades', [AdminGradeController::class, 'index'])->name('grades.index');
+    Route::put('/grades/{enrollment}', [AdminGradeController::class, 'update'])->name('grades.update');
+    Route::get('/grades/{enrollment}/print', [AdminGradeController::class, 'print'])->name('grades.print');
+
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');
 
+    Route::get('/schedules', [AdminScheduleController::class, 'index'])->name('schedules.index');
+    Route::post('/schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');
+    Route::put('/schedules/{schedule}', [AdminScheduleController::class, 'update'])->name('schedules.update');
+    Route::delete('/schedules/{schedule}', [AdminScheduleController::class, 'destroy'])->name('schedules.destroy');
+
+    Route::get('/chat', [AdminChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/{conversation}', [AdminChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/{conversation}', [AdminChatController::class, 'send'])->name('chat.send');
+
     Route::get('/content', [AdminContentController::class, 'index'])->name('content.index');
     Route::post('/content/articles', [AdminContentController::class, 'storeArticle'])->name('content.articles');
+    Route::put('/content/articles/{article}', [AdminContentController::class, 'updateArticle'])->name('content.articles.update');
     Route::delete('/content/articles/{article}', [AdminContentController::class, 'destroyArticle'])->name('content.articles.destroy');
     Route::post('/content/banners', [AdminContentController::class, 'storeBanner'])->name('content.banners');
     Route::post('/content/faqs', [AdminContentController::class, 'storeFaq'])->name('content.faqs');

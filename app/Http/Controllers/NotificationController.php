@@ -19,6 +19,7 @@ class NotificationController extends Controller
     {
         abort_unless($notification->user_id === auth()->id(), 403);
         $notification->update(['read_at' => now()]);
+        \Illuminate\Support\Facades\Cache::forget('notif-bell-'.auth()->id());
 
         return $notification->link ? redirect($notification->link) : back();
     }
