@@ -5,7 +5,6 @@
 <button
     type="button"
     data-theme-toggle
-    onclick="window.__tsToggleTheme && window.__tsToggleTheme(event)"
     class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink/12 bg-panel text-ink shadow-sm transition hover:border-brand/50 hover:bg-brand-mist {{ $class }}"
     aria-label="Ganti tema gelap/terang"
     title="Dark / Light mode"

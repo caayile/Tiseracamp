@@ -24,31 +24,41 @@
 
     window.__tsSetTheme = applyTheme;
 
-    /**
-     * Toggle tema. Re-apply beberapa kali agar handler lama di app.js
-     * (kalau masih ter-cache) tidak sempat “membalik” hasil klik.
-     */
     window.__tsToggleTheme = (event) => {
         if (event) {
             event.preventDefault();
             event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === 'function') {
+                event.stopImmediatePropagation();
+            }
         }
 
         const now = Date.now();
-        if (window.__tsThemeLastToggle && now - window.__tsThemeLastToggle < 300) {
+        if (window.__tsThemeLastToggle && now - window.__tsThemeLastToggle < 400) {
             return;
         }
         window.__tsThemeLastToggle = now;
 
-        const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-        applyTheme(next);
+        const locked = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        applyTheme(locked);
 
-        // Kunci hasil toggle dari listener/script lama
-        requestAnimationFrame(() => applyTheme(next));
-        setTimeout(() => applyTheme(next), 0);
-        setTimeout(() => applyTheme(next), 40);
-        setTimeout(() => applyTheme(next), 120);
+        // Kunci hasil jika masih ada listener lama di app.js yang ikut toggle
+        const lock = () => applyTheme(locked);
+        requestAnimationFrame(lock);
+        setTimeout(lock, 0);
+        setTimeout(lock, 50);
+        setTimeout(lock, 150);
     };
+
+    // Satu handler capture untuk semua tombol [data-theme-toggle]
+    if (!window.__tsThemeClickBound) {
+        window.__tsThemeClickBound = true;
+        document.addEventListener('click', (event) => {
+            const btn = event.target.closest('[data-theme-toggle]');
+            if (!btn) return;
+            window.__tsToggleTheme(event);
+        }, true);
+    }
 
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
