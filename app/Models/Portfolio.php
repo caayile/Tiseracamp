@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Portfolio extends Model
 {
-    protected $fillable = ['user_id', 'title', 'description', 'project_url', 'image_url'];
+    protected $fillable = ['user_id', 'title', 'description', 'project_url', 'image_url', 'portfolio_file_url'];
 
     public function user(): BelongsTo
     {

@@ -34,6 +34,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const careerToggles = document.querySelectorAll('[data-career-toggle]');
+
+    if (careerToggles.length) {
+        careerToggles.forEach((toggle) => {
+            const target = toggle.getAttribute('data-career-toggle');
+            const menu = document.querySelector(`[data-career-menu="${target}"]`);
+            if (!menu) return;
+
+            toggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const open = menu.classList.toggle('hidden') === false;
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        });
+
+        document.addEventListener('click', (event) => {
+            careerToggles.forEach((toggle) => {
+                const target = toggle.getAttribute('data-career-toggle');
+                const menu = document.querySelector(`[data-career-menu="${target}"]`);
+                if (!menu) return;
+
+                if (!menu.contains(event.target) && !toggle.contains(event.target)) {
+                    if (!menu.classList.contains('hidden')) {
+                        menu.classList.add('hidden');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        });
+    }
+
     const customSelects = [];
     let openSelect = null;
 

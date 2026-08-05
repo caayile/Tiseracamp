@@ -8,12 +8,16 @@
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Karier</p>
         <h1 class="section-title mt-2">Portofolio & <span class="gradient-text">siap kerja</span></h1>
         <p class="mt-2 max-w-xl text-ink-soft">Kumpulkan sertifikat, pencapaian, dan portofolio project kamu.</p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a href="{{ route('career.gallery') }}" class="btn-primary">Galeri Portofolio</a>
+            <a href="{{ route('career.jobs') }}" class="btn-secondary">Lowongan Kerja</a>
+        </div>
     </div>
 </section>
 
 <section class="mx-auto max-w-6xl px-4 py-10">
     <div class="grid gap-6 lg:grid-cols-2">
-        <div class="card-soft p-6">
+        <div class="card-soft p-6" id="certificates">
             <h2 class="font-display text-lg font-semibold">Sertifikat</h2>
             @forelse ($certificates as $certificate)
                 <div class="mt-4 rounded-xl border border-brand/15 bg-brand-mist/40 p-4">
@@ -42,13 +46,15 @@
             @endforelse
         </div>
 
-        <div class="card-soft p-6 lg:col-span-2">
+        <div class="card-soft p-6 lg:col-span-2" id="portfolio-upload">
             <h2 class="font-display text-lg font-semibold">Portofolio project</h2>
 
-            <form method="POST" action="{{ route('career.portfolio.store') }}" class="mt-4 grid gap-3 md:grid-cols-2">
+            <form method="POST" action="{{ route('career.portfolio.store') }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-2">
                 @csrf
                 <input type="text" name="title" class="input-field" placeholder="Judul project" required>
                 <input type="url" name="project_url" class="input-field" placeholder="Link project (opsional)">
+                <input type="file" name="portfolio_file" accept="application/pdf" class="input-field md:col-span-2" />
+                <p class="md:col-span-2 text-sm text-ink-soft">Upload file PDF untuk portofolio atau gunakan link di atas.</p>
                 <textarea name="description" rows="2" class="input-field md:col-span-2" placeholder="Deskripsi singkat"></textarea>
                 <button class="btn-primary md:col-span-2 md:w-fit" type="submit">Tambah portofolio</button>
             </form>

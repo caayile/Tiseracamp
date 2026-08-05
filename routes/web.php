@@ -106,6 +106,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/testimonials/{enrollment}', [TestimonialController::class, 'store'])->name('testimonials.store');
 
     Route::get('/career', [CareerController::class, 'index'])->name('career.index');
+    Route::get('/career/portfolios', [CareerController::class, 'gallery'])->name('career.gallery');
+    Route::get('/career/jobs', [CareerController::class, 'jobs'])->name('career.jobs');
     Route::post('/career/portfolio', [CareerController::class, 'storePortfolio'])->name('career.portfolio.store');
     Route::delete('/career/portfolio/{portfolio}', [CareerController::class, 'destroyPortfolio'])->name('career.portfolio.destroy');
 
