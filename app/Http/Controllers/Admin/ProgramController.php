@@ -18,15 +18,29 @@ class ProgramController extends Controller
 {
     public function index(): View
     {
-        $programs = Program::with(['partner', 'mentor', 'category', 'batches'])->latest()->paginate(10);
+        $type = request()->string('type')->toString();
 
-        return view('admin.programs.index', compact('programs'));
+        $query = Program::with(['partner', 'mentor', 'category', 'batches'])->latest();
+        if (in_array($type, ['internship', 'bootcamp'], true)) {
+            $query->where('type', $type);
+        }
+
+        $programs = $query->paginate(10)->withQueryString();
+
+        return view('admin.programs.index', compact('programs', 'type'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
+        $type = $request->input('type');
+        $type = in_array($type, ['internship', 'bootcamp'], true) ? $type : 'internship';
+
         return view('admin.programs.form', [
-            'program' => new Program(['type' => 'internship', 'level' => 'Beginner', 'price' => 0]),
+            'program' => new Program([
+                'type' => $type,
+                'level' => $type === 'internship' ? 'Beginner' : 'Intermediate',
+                'price' => 0,
+            ]),
             'partners' => Partner::orderBy('name')->get(),
             'mentors' => User::where('role', 'mentor')->orderBy('name')->get(),
             'categories' => Category::orderBy('name')->get(),
@@ -35,17 +49,27 @@ class ProgramController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $type = $request->input('type');
+        $type = in_array($type, ['internship', 'bootcamp'], true) ? $type : 'internship';
+        $price = $type === 'internship' ? 0 : (int) $request->input('price', 0);
+
         $request->merge([
-            'type' => 'internship',
-            'level' => 'Beginner',
-            'price' => 0,
+            'type' => $type,
+            'level' => $type === 'internship' ? 'Beginner' : 'Intermediate',
+            'price' => $price,
             'is_featured' => false,
         ]);
 
         $data = $this->validated($request);
-        $data['type'] = 'internship';
-        $data['level'] = 'Beginner';
-        $data['price'] = 0;
+        $data['type'] = $type;
+        $data['level'] = $type === 'internship' ? 'Beginner' : 'Intermediate';
+        $data['price'] = $price;
+        if (filled($request->input('partner_name'))) {
+            $partner = Partner::firstOrCreate(['name' => trim($request->input('partner_name'))]);
+            $data['partner_id'] = $partner->id;
+        } else {
+            $data['partner_id'] = null;
+        }
         $data['slug'] = Str::slug($data['title']).'-'.Str::random(4);
         $data['benefits'] = $this->parseBenefits($request->input('benefits_text'));
         $data['qualifications'] = $this->parseBenefits($request->input('qualifications_text'));
@@ -58,14 +82,15 @@ class ProgramController extends Controller
         $data['is_featured'] = false;
         $data['approval_status'] = 'approved';
         $data['mentor_id'] = null;
-        $data['category_id'] = null;
-        $data['partner_id'] = null;
-        $data['excerpt'] = null;
         $data = $this->normalizeInternshipFields($data);
 
         Program::create($data);
 
-        return redirect()->route('admin.programs.index')->with('success', 'Lowongan magang berhasil dibuat. Atur publikasi lewat tombol Publikasi.');
+        $message = $type === 'internship'
+            ? 'Lowongan magang berhasil dibuat. Atur publikasi lewat tombol Publikasi.'
+            : 'Lowongan kerja berhasil dibuat. Atur publikasi lewat tombol Publikasi.';
+
+        return redirect()->route('admin.programs.index')->with('success', $message);
     }
 
     public function edit(Program $program): View
@@ -93,6 +118,12 @@ class ProgramController extends Controller
 
         $data = $this->validated($request);
         $data['type'] = $program->type;
+        if (filled($request->input('partner_name'))) {
+            $partner = Partner::firstOrCreate(['name' => trim($request->input('partner_name'))]);
+            $data['partner_id'] = $partner->id;
+        } else {
+            $data['partner_id'] = null;
+        }
 
         if ($program->type === 'internship') {
             // Hanya update detail lowongan; publikasi di halaman terpisah
@@ -285,6 +316,10 @@ class ProgramController extends Controller
 
     private function validated(Request $request): array
     {
+        $durationRules = $request->input('type') === 'internship'
+            ? ['required', 'integer', 'min:1']
+            : ['nullable', 'integer', 'min:0'];
+
         return $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'type' => ['required', 'in:bootcamp,internship'],
@@ -294,7 +329,7 @@ class ProgramController extends Controller
             'division' => ['nullable', 'string', 'max:120'],
             'location' => ['nullable', 'string', 'max:255'],
             'deadline' => ['nullable', 'date'],
-            'duration_months' => ['required', 'integer', 'min:1'],
+            'duration_months' => $durationRules,
             'price' => ['required', 'integer', 'min:0'],
             'excerpt' => ['nullable', 'string', 'max:300'],
             'description' => ['nullable', 'string'],

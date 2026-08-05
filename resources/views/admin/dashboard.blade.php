@@ -17,6 +17,8 @@
 
 <div class="mb-6 flex flex-wrap gap-2">
     <a href="{{ route('admin.programs.index') }}" class="btn-secondary text-sm">Lowongan Magang</a>
+    <a href="{{ route('admin.programs.create', ['type' => 'internship']) }}" class="btn-primary text-sm">Tambah Lowongan Magang</a>
+    <a href="{{ route('admin.programs.create', ['type' => 'bootcamp']) }}" class="btn-secondary text-sm">Tambah Lowongan Kerja</a>
     <a href="{{ route('admin.applications.index') }}" class="btn-secondary text-sm">Seleksi Magang</a>
     <a href="{{ route('admin.grades.index') }}" class="btn-secondary text-sm">Nilai Magang</a>
     <a href="{{ route('admin.schedules.index') }}" class="btn-secondary text-sm">Sesi Magang</a>

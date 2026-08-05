@@ -4,9 +4,14 @@
 @section('heading', 'Kelola Program')
 
 @section('content')
+@php $viewType = $type ?? request('type') ?? 'internship'; @endphp
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <p class="text-sm text-ink-soft">Approve bootcamp dari mentor, atau tambah lowongan magang.</p>
-    <a href="{{ route('admin.programs.create') }}" class="btn-primary">Tambah lowongan magang</a>
+    <p class="text-sm text-ink-soft">{{ $viewType === 'bootcamp' ? 'Kelola lowongan kerja (bootcamp) yang diinput admin atau diajukan mentor.' : 'Approve bootcamp dari mentor, atau tambah lowongan magang.' }}</p>
+    @if ($viewType === 'bootcamp')
+        <a href="{{ route('admin.programs.create', ['type' => 'bootcamp']) }}" class="btn-primary">Tambah Lowongan Kerja</a>
+    @else
+        <a href="{{ route('admin.programs.create', ['type' => 'internship']) }}" class="btn-primary">Tambah Lowongan Magang</a>
+    @endif
 </div>
 
 <div class="card-soft overflow-x-auto">

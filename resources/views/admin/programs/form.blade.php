@@ -1,11 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', $program->exists ? 'Edit Program' : 'Tambah Lowongan Magang')
-@section('heading', $program->exists ? ($program->type === 'internship' ? 'Edit Lowongan Magang' : 'Edit Bootcamp') : 'Tambah Lowongan Magang')
+@section('title', $program->exists ? 'Edit Program' : ($program->type === 'bootcamp' ? 'Tambah Lowongan Kerja' : 'Tambah Lowongan Magang'))
+@section('heading', $program->exists ? ($program->type === 'internship' ? 'Edit Lowongan Magang' : 'Edit Bootcamp') : ($program->type === 'bootcamp' ? 'Tambah Lowongan Kerja' : 'Tambah Lowongan Magang'))
 
 @section('content')
 @php
     $isBootcampEdit = $program->exists && $program->type === 'bootcamp';
+    $isBootcampCreate = ! $program->exists && $program->type === 'bootcamp';
     $qualificationsText = old('qualifications_text', collect($program->qualifications ?? [])->implode("\n"));
 @endphp
 
@@ -65,13 +66,9 @@
                 </div>
             </div>
             <div>
-                <label class="mb-1.5 block text-sm font-medium">Partner</label>
-                <select name="partner_id" class="input-field">
-                    <option value="">— Tidak ada —</option>
-                    @foreach ($partners as $partner)
-                        <option value="{{ $partner->id }}" @selected(old('partner_id', $program->partner_id) == $partner->id)>{{ $partner->name }}</option>
-                    @endforeach
-                </select>
+                <label class="mb-1.5 block text-sm font-medium">Partner / Perusahaan</label>
+                <input type="text" name="partner_name" value="{{ old('partner_name', $program->partner?->name) }}" class="input-field" placeholder="Ketik nama perusahaan" />
+                <p class="mt-1 text-xs text-ink-soft">Ketik nama perusahaan tanpa memilih daftar.</p>
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Ringkasan</label>
@@ -99,6 +96,89 @@
 
         <div class="flex gap-3">
             <button class="btn-primary" type="submit">Simpan</button>
+            <a href="{{ route('admin.programs.index') }}" class="btn-secondary">Batal</a>
+        </div>
+    </form>
+@elseif ($isBootcampCreate)
+    {{-- Buat lowongan kerja --}}
+    <form method="POST"
+          action="{{ route('admin.programs.store') }}"
+          class="mx-auto max-w-4xl space-y-6">
+        @csrf
+        <input type="hidden" name="type" value="bootcamp">
+        <input type="hidden" name="level" value="Intermediate">
+
+        <div class="rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
+            Tambah lowongan kerja untuk katalog bootcamp / pekerjaan yang ditawarkan oleh admin.
+        </div>
+
+        <section class="card-soft space-y-5 p-6">
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-dark">Detail lowongan kerja</p>
+                <h2 class="mt-1 font-display text-lg font-semibold text-ink">Informasi yang dilihat pelamar</h2>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Judul lowongan <span class="text-red-500">*</span></label>
+                <input type="text" name="title" value="{{ old('title', $program->title) }}" class="input-field" placeholder="Contoh: Frontend Developer" required>
+                @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+
+            <input type="hidden" name="duration_months" value="0">
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Harga / Gaji (Rp)</label>
+                    <input type="number" name="price" value="{{ old('price', $program->price ?? 0) }}" class="input-field" min="0">
+                </div>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Kategori</label>
+                    <select name="category_id" class="input-field">
+                        <option value="">— Pilih kategori —</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected(old('category_id', $program->category_id) == $category->id)>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Partner / Perusahaan</label>
+                    <input type="text" name="partner_name" value="{{ old('partner_name', $program->partner?->name) }}" class="input-field" placeholder="Ketik nama perusahaan" />
+                    <p class="mt-1 text-xs text-ink-soft">Ketik nama perusahaan tanpa memilih daftar.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Lokasi</label>
+                <input type="text" name="location" value="{{ old('location', $program->location) }}" class="input-field" placeholder="Contoh: Surakarta / Remote">
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Ringkasan</label>
+                <textarea name="excerpt" rows="2" class="input-field">{{ old('excerpt', $program->excerpt) }}</textarea>
+            </div>
+        </section>
+
+        <section class="card-soft space-y-5 p-6">
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-dark">Halaman detail</p>
+                <h2 class="mt-1 font-display text-lg font-semibold text-ink">Konten pada halaman detail lowongan</h2>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Deskripsi</label>
+                <textarea name="description" rows="5" class="input-field" placeholder="Jelaskan tugas dan persyaratan pekerjaan...">{{ old('description', $program->description) }}</textarea>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Benefits / Keuntungan</label>
+                <textarea name="benefits_text" rows="4" class="input-field" placeholder="Pengalaman kerja tim, sertifikat, fleksibilitas...">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
+            </div>
+        </section>
+
+        <div class="flex gap-3">
+            <button class="btn-primary" type="submit">Simpan lowongan kerja</button>
             <a href="{{ route('admin.programs.index') }}" class="btn-secondary">Batal</a>
         </div>
     </form>
