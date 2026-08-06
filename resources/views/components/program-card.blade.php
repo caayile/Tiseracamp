@@ -8,21 +8,31 @@
     $link = $href ?? route('programs.show', $program->slug);
     $ctaText = $cta ?? 'Daftar sekarang & dapatkan diskon khusus';
     $isInternship = $program->type === 'internship';
+    $isJob = $program->type === 'job';
     $qualifications = $program->qualifications ?? [];
-    if ($isInternship && empty($qualifications)) {
+    if (($isInternship || $isJob) && empty($qualifications)) {
         $qualifications = array_slice($program->benefits ?? [], 0, 4);
     }
 @endphp
 
-@if ($isInternship)
+@if ($isInternship || $isJob)
     @php
-        $metaItems = [
-            ['label' => 'Divisi', 'value' => $program->division, 'icon' => 'briefcase'],
-            ['label' => 'Lokasi', 'value' => $program->location, 'icon' => 'pin'],
-            ['label' => 'Deadline', 'value' => $program->deadline?->translatedFormat('d F Y'), 'icon' => 'calendar'],
-            ['label' => 'Durasi', 'value' => $program->formattedDuration(), 'icon' => 'clock'],
-        ];
-        $isOpen = $program->isInternshipOpen();
+        $metaItems = $isJob
+            ? [
+                ['label' => 'Perusahaan', 'value' => $program->partner?->name, 'icon' => 'briefcase'],
+                ['label' => 'Lokasi', 'value' => $program->location, 'icon' => 'pin'],
+                ['label' => 'Deadline', 'value' => $program->deadline?->translatedFormat('d F Y'), 'icon' => 'calendar'],
+                ['label' => 'Gaji', 'value' => $program->formattedSalary(), 'icon' => 'clock'],
+            ]
+            : [
+                ['label' => 'Divisi', 'value' => $program->division, 'icon' => 'briefcase'],
+                ['label' => 'Lokasi', 'value' => $program->location, 'icon' => 'pin'],
+                ['label' => 'Deadline', 'value' => $program->deadline?->translatedFormat('d F Y'), 'icon' => 'calendar'],
+                ['label' => 'Durasi', 'value' => $program->formattedDuration(), 'icon' => 'clock'],
+            ];
+        $isOpen = $isJob ? $program->isJobOpen() : $program->isInternshipOpen();
+        $statusLabel = $isJob ? $program->jobStatusLabel() : $program->internshipStatusLabel();
+        $badgeLabel = $isJob ? 'Lowongan Kerja' : 'Lowongan Magang';
     @endphp
     <article class="group flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-brand/15 bg-panel shadow-[0_16px_40px_-28px_rgba(6,90,122,0.55)] transition duration-300 hover:-translate-y-1 hover:border-brand/35 hover:shadow-[0_22px_48px_-22px_rgba(39,204,245,0.45)]">
         <div class="h-1.5 bg-gradient-to-r from-brand-mid via-brand to-brand-light"></div>
@@ -30,27 +40,31 @@
         <div class="flex flex-1 flex-col p-5 sm:p-6">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-dark">Lowongan Magang</p>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-dark">{{ $badgeLabel }}</p>
                     <a href="{{ $link }}" class="mt-1 block font-display text-lg font-bold leading-snug text-brand-deeper transition group-hover:text-brand-mid sm:text-xl">
                         {{ $program->title }}
                     </a>
                 </div>
                 <span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 {{ $isOpen ? 'bg-emerald-100 text-emerald-800 ring-emerald-200' : 'bg-red-100 text-red-800 ring-red-200' }}">
-                    {{ $program->internshipStatusLabel() }}
+                    {{ $statusLabel }}
                 </span>
             </div>
 
-            <div class="mt-4 space-y-2">
-                <div class="inline-flex items-center gap-2 rounded-full bg-brand-mist px-3 py-1.5 text-xs font-semibold text-brand-mid">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14z"/></svg>
-                    Jenjang {{ $program->education_level ?: 'dibuka' }}
+            @if ($isInternship)
+                <div class="mt-4 space-y-2">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-brand-mist px-3 py-1.5 text-xs font-semibold text-brand-mid">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14z"/></svg>
+                        Jenjang {{ $program->education_level ?: 'dibuka' }}
+                    </div>
+                    @if ($program->majors)
+                        <p class="rounded-xl border border-brand/10 bg-surface/80 px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
+                            <span class="font-semibold text-brand-mid">Prodi:</span> {{ $program->majors }}
+                        </p>
+                    @endif
                 </div>
-                @if ($program->majors)
-                    <p class="rounded-xl border border-brand/10 bg-surface/80 px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
-                        <span class="font-semibold text-brand-mid">Prodi:</span> {{ $program->majors }}
-                    </p>
-                @endif
-            </div>
+            @elseif ($program->excerpt)
+                <p class="mt-4 line-clamp-2 text-sm text-ink-soft">{{ $program->excerpt }}</p>
+            @endif
 
             <ul class="mt-5 space-y-2.5">
                 @foreach ($metaItems as $item)

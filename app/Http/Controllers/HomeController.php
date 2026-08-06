@@ -45,6 +45,15 @@ class HomeController extends Controller
             ->take(18)
             ->get();
 
-        return view('home', compact('featured', 'programs', 'categories', 'partners', 'banners', 'faqs', 'articles', 'testimonials'));
+        return view('home', compact(
+            'featured',
+            'programs',
+            'categories',
+            'partners',
+            'banners',
+            'faqs',
+            'articles',
+            'testimonials'
+        ));
     }
 }

@@ -11,7 +11,7 @@
         <p class="mt-2 text-ink-soft">Pantau progress bootcamp & magang kamu di satu tempat.</p>
 
         <div class="mt-6 flex flex-wrap gap-2">
-            <a href="{{ route('career.index') }}" class="btn-secondary">Karier</a>
+            <a href="{{ route('career.gallery') }}" class="btn-secondary">Karier</a>
             <a href="{{ route('chat.index') }}" class="btn-secondary">Chat</a>
             <a href="{{ route('schedules.index') }}" class="btn-secondary">Jadwal</a>
             <a href="{{ route('payments.index') }}" class="btn-secondary">Pembayaran</a>

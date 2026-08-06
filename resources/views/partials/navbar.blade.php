@@ -1,6 +1,7 @@
 @php
     $type = request('type');
     $isHome = request()->routeIs('home');
+    $isCvReview = request()->routeIs('cv-review.*');
     $isMagang = (request()->routeIs('programs.index') && $type === 'internship')
         || request()->routeIs('internships.*');
     $isPrograms = request()->routeIs('programs.*') && ! $isMagang;
@@ -25,40 +26,26 @@
 
         <nav class="hidden items-center gap-1 md:flex">
             <a href="{{ route('home') }}" class="{{ $isHome ? $navActive : $navClass }}">Beranda</a>
+            <a href="{{ route('cv-review.index') }}" class="{{ $isCvReview ? $navActive : $navClass }}">Review CV AI</a>
             <a href="{{ route('programs.index') }}" class="{{ $isPrograms ? $navActive : $navClass }}">Bootcamp & Program</a>
             <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="{{ $isMagang ? $navActive : $navClass }}">Magang</a>
             <a href="{{ route('news.index') }}" class="{{ $isNews ? $navActive : $navClass }}">Berita</a>
             @auth
                 @if (auth()->user()->isStudent())
-                    <div class="relative">
-                        <button type="button" class="{{ $isCareer ? $navActive : $navClass }} inline-flex items-center gap-2" aria-haspopup="menu" aria-controls="career-menu-desktop" aria-expanded="false" data-career-toggle="desktop">
+                    <div class="group relative">
+                        <a href="{{ route('career.gallery') }}" class="{{ $isCareer ? $navActive : $navClass }} inline-flex items-center gap-2" aria-haspopup="menu" aria-controls="career-menu-desktop" data-career-toggle="desktop">
                             Karier
-                            <svg class="h-4 w-4 text-ink-soft transition duration-200" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <svg class="h-4 w-4 text-ink-soft transition duration-200 group-hover:rotate-180 group-focus-within:rotate-180" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                 <path d="M6 8l4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                        </button>
+                        </a>
 
-                        <div id="career-menu-desktop" class="absolute left-0 top-full z-50 mt-2 hidden w-72 overflow-hidden rounded-3xl border border-ink/10 bg-panel p-3 shadow-[0_24px_70px_-32px_rgba(11,31,42,0.35)] transition duration-200" data-career-menu="desktop">
-                            <a href="{{ route('career.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-ink transition hover:bg-brand-mist">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-mist text-brand-dark">👤</span>
-                                <span>
-                                    <span class="block font-semibold">Karier Saya</span>
-                                    <span class="text-xs text-ink-soft">Cetak sertifikat dan unggah portofolio</span>
-                                </span>
+                        <div id="career-menu-desktop" class="invisible absolute left-0 top-full z-50 mt-2 w-56 origin-top scale-95 overflow-hidden rounded-2xl border border-ink/10 bg-panel p-2 opacity-0 shadow-[0_24px_70px_-32px_rgba(11,31,42,0.35)] transition duration-200 group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100" data-career-menu="desktop">
+                            <a href="{{ route('career.gallery') }}" class="block rounded-xl px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-brand-mist">
+                                Galeri Portofolio
                             </a>
-                            <a href="{{ route('career.gallery') }}" class="mt-1 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-ink transition hover:bg-brand-mist">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-mist text-brand-dark">📁</span>
-                                <span>
-                                    <span class="block font-semibold">Galeri Portofolio</span>
-                                    <span class="text-xs text-ink-soft">Lihat karya peserta dan alumni</span>
-                                </span>
-                            </a>
-                            <a href="{{ route('career.jobs') }}" class="mt-1 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-ink transition hover:bg-brand-mist">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-mist text-brand-dark">💼</span>
-                                <span>
-                                    <span class="block font-semibold">Lowongan Kerja</span>
-                                    <span class="text-xs text-ink-soft">Cari posisi yang cocok dan apply</span>
-                                </span>
+                            <a href="{{ route('career.jobs') }}" class="mt-0.5 block rounded-xl px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-brand-mist">
+                                Lowongan Kerja
                             </a>
                         </div>
                     </div>
@@ -98,6 +85,7 @@
     <div class="hidden border-t border-ink/8 bg-panel px-4 py-4 md:hidden" data-nav-panel>
         <div class="mx-auto flex max-w-6xl flex-col gap-2">
             <a href="{{ route('home') }}" class="{{ ($isHome ? $navActive : $navClass).' justify-start' }}">Beranda</a>
+            <a href="{{ route('cv-review.index') }}" class="{{ ($isCvReview ? $navActive : $navClass).' justify-start' }}">Review CV AI</a>
             <a href="{{ route('programs.index') }}" class="{{ ($isPrograms ? $navActive : $navClass).' justify-start' }}">Bootcamp & Program</a>
             <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="{{ ($isMagang ? $navActive : $navClass).' justify-start' }}">Magang</a>
             <a href="{{ route('news.index') }}" class="{{ ($isNews ? $navActive : $navClass).' justify-start' }}">Berita</a>
@@ -111,9 +99,8 @@
                             </svg>
                         </button>
                         <div id="career-menu-mobile" class="mt-2 hidden flex-col gap-1 rounded-2xl border border-ink/10 bg-panel p-2" data-career-menu="mobile">
-                            <a href="{{ route('career.index') }}" class="inline-flex w-full items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Karier Saya</a>
-                            <a href="{{ route('career.gallery') }}" class="inline-flex w-full items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Galeri Portofolio</a>
-                            <a href="{{ route('career.jobs') }}" class="inline-flex w-full items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Lowongan Kerja</a>
+                            <a href="{{ route('career.gallery') }}" class="inline-flex w-full items-center rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Galeri Portofolio</a>
+                            <a href="{{ route('career.jobs') }}" class="inline-flex w-full items-center rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Lowongan Kerja</a>
                         </div>
                     </div>
                 @endif

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ApplicationController as AdminApplicationControll
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
 use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\ContentController as AdminContentController;
+use App\Http\Controllers\Admin\CvSubscriptionController as AdminCvSubscriptionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GradeController as AdminGradeController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\CvReviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\HomeController;
@@ -97,6 +99,24 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/payments/checkout/{program}', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('/payments/{payment}/invoice', [PaymentController::class, 'invoice'])->name('payments.invoice');
 
+    Route::get('/cv-review/plans', [CvReviewController::class, 'plans'])->name('cv-review.plans');
+    Route::get('/cv-review/checkout/{plan}', [CvReviewController::class, 'checkout'])->name('cv-review.checkout');
+    Route::post('/cv-review/checkout/{plan}', [CvReviewController::class, 'purchase'])->name('cv-review.purchase');
+    Route::get('/cv-review', [CvReviewController::class, 'index'])->name('cv-review.index');
+    Route::post('/cv-review', [CvReviewController::class, 'store'])
+        ->middleware('throttle:8,1')
+        ->name('cv-review.store');
+    Route::get('/cv-review/{cvReview}', [CvReviewController::class, 'show'])->name('cv-review.show');
+    Route::post('/cv-review/{cvReview}/cover-letter', [CvReviewController::class, 'generateCoverLetter'])
+        ->middleware('throttle:6,1')
+        ->name('cv-review.cover-letter');
+    Route::post('/cv-review/{cvReview}/interview', [CvReviewController::class, 'generateInterview'])
+        ->middleware('throttle:6,1')
+        ->name('cv-review.interview');
+    Route::post('/cv-review/{cvReview}/interview/answer', [CvReviewController::class, 'submitInterviewAnswer'])
+        ->middleware('throttle:12,1')
+        ->name('cv-review.interview.answer');
+
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{conversation}', [ChatController::class, 'send'])->name('chat.send');
@@ -176,6 +196,9 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
 
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');
+
+    Route::get('/cv-subscriptions', [AdminCvSubscriptionController::class, 'index'])->name('cv-subscriptions.index');
+    Route::post('/cv-subscriptions/{subscription}/verify', [AdminCvSubscriptionController::class, 'verify'])->name('cv-subscriptions.verify');
 
     Route::get('/schedules', [AdminScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');

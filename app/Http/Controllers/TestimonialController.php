@@ -10,13 +10,23 @@ use Illuminate\View\View;
 
 class TestimonialController extends Controller
 {
-    public function create(Enrollment $enrollment): View
+    public function create(Enrollment $enrollment): View|RedirectResponse
     {
         abort_unless($enrollment->user_id === auth()->id(), 403);
-        abort_unless($enrollment->isCompleted(), 403, 'Testimoni hanya tersedia setelah magang/bootcamp selesai.');
-        abort_unless(! $enrollment->testimonial, 403, 'Kamu sudah mengirim testimoni untuk program ini.');
 
-        $enrollment->load('program');
+        if (! $enrollment->isCompleted()) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'Testimoni hanya tersedia setelah magang/bootcamp selesai.');
+        }
+
+        $enrollment->load(['program', 'testimonial']);
+
+        if ($enrollment->testimonial) {
+            return redirect()
+                ->to(route('home').'#testimoni')
+                ->with('success', 'Testimoni untuk program ini sudah terkirim dan tampil di beranda.');
+        }
 
         return view('testimonials.create', compact('enrollment'));
     }
@@ -24,8 +34,18 @@ class TestimonialController extends Controller
     public function store(Request $request, Enrollment $enrollment): RedirectResponse
     {
         abort_unless($enrollment->user_id === auth()->id(), 403);
-        abort_unless($enrollment->isCompleted(), 403, 'Testimoni hanya tersedia setelah magang/bootcamp selesai.');
-        abort_if($enrollment->testimonial()->exists(), 422, 'Testimoni sudah ada.');
+
+        if (! $enrollment->isCompleted()) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'Testimoni hanya tersedia setelah magang/bootcamp selesai.');
+        }
+
+        if ($enrollment->testimonial()->exists()) {
+            return redirect()
+                ->to(route('home').'#testimoni')
+                ->with('success', 'Testimoni untuk program ini sudah terkirim dan tampil di beranda.');
+        }
 
         $data = $request->validate([
             'body' => ['required', 'string', 'min:30', 'max:600'],
@@ -44,7 +64,7 @@ class TestimonialController extends Controller
         ]);
 
         return redirect()
-            ->route('dashboard')
+            ->to(route('home').'#testimoni')
             ->with('success', 'Terima kasih! Testimoni magang/bootcamp-mu sudah tampil di beranda.');
     }
 }

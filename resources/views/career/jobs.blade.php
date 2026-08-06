@@ -7,8 +7,8 @@
     <div class="mx-auto max-w-6xl px-4 py-14">
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Karier</p>
         <h1 class="section-title mt-2">Lowongan Kerja</h1>
-        <p class="mt-2 max-w-2xl text-ink-soft">Temukan lowongan karier dan magang yang sesuai skill kamu, lalu langsung apply.</p>
-        <p class="mt-3 max-w-2xl text-sm text-ink-soft/80">Semua lowongan ini diinput dan diperbarui secara manual oleh tim admin.</p>
+        <p class="mt-2 max-w-2xl text-ink-soft">Temukan lowongan kerja yang sesuai skill kamu.</p>
+        <p class="mt-3 max-w-2xl text-sm text-ink-soft/80">Lowongan diinput admin lewat panel <strong class="text-ink">Lowongan Kerja</strong>. Untuk magang, lihat menu Magang.</p>
     </div>
 </section>
 

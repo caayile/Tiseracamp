@@ -36,16 +36,21 @@ class SyncMitraPartners extends Command
             ],
             [
                 'name' => 'Tiga Serangkai University',
-                'logo' => 'logosmitra/logo-tsu.png',
+                'logo' => 'logosmitra/logo-tsuniv.jpg',
                 'website' => 'http://www.tsu.ac.id/',
             ],
         ];
 
-        // Rename lama jika masih "Tiga Serangkai"
+        // Rename / update logo path lama TSU
         Partner::query()
-            ->where('logo', 'logosmitra/logo-tsu.png')
+            ->whereIn('logo', ['logosmitra/logo-tsu.png', 'logosmitra/logo-tsuniv.jpg'])
             ->orWhere('name', 'Tiga Serangkai')
-            ->update(['name' => 'Tiga Serangkai University']);
+            ->orWhere('name', 'Tiga Serangkai University')
+            ->update([
+                'name' => 'Tiga Serangkai University',
+                'logo' => 'logosmitra/logo-tsuniv.jpg',
+                'website' => 'http://www.tsu.ac.id/',
+            ]);
 
         foreach ($mitra as $item) {
             $publicPath = public_path($item['logo']);

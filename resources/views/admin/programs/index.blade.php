@@ -4,11 +4,20 @@
 @section('heading', 'Kelola Program')
 
 @section('content')
-@php $viewType = $type ?? request('type') ?? 'internship'; @endphp
+@php
+    $viewType = $type ?: 'internship';
+    $headingCopy = match ($viewType) {
+        'job' => 'Kelola lowongan kerja yang tampil di Karier → Lowongan Kerja.',
+        'bootcamp' => 'Kelola bootcamp dari mentor atau yang dibuat admin.',
+        default => 'Kelola lowongan magang. Tampil di menu Magang.',
+    };
+@endphp
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-    <p class="text-sm text-ink-soft">{{ $viewType === 'bootcamp' ? 'Kelola lowongan kerja (bootcamp) yang diinput admin atau diajukan mentor.' : 'Approve bootcamp dari mentor, atau tambah lowongan magang.' }}</p>
-    @if ($viewType === 'bootcamp')
-        <a href="{{ route('admin.programs.create', ['type' => 'bootcamp']) }}" class="btn-primary">Tambah Lowongan Kerja</a>
+    <p class="text-sm text-ink-soft">{{ $headingCopy }}</p>
+    @if ($viewType === 'job')
+        <a href="{{ route('admin.programs.create', ['type' => 'job']) }}" class="btn-primary">Tambah Lowongan Kerja</a>
+    @elseif ($viewType === 'bootcamp')
+        <a href="{{ route('admin.programs.create', ['type' => 'bootcamp']) }}" class="btn-primary">Tambah Bootcamp</a>
     @else
         <a href="{{ route('admin.programs.create', ['type' => 'internship']) }}" class="btn-primary">Tambah Lowongan Magang</a>
     @endif
@@ -27,12 +36,12 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($programs as $program)
+            @forelse ($programs as $program)
                 <tr class="border-t border-brand/10">
                     <td class="px-5 py-3 font-medium">{{ $program->title }}</td>
                     <td class="px-5 py-3">{{ $program->typeLabel() }}</td>
                     <td class="px-5 py-3">
-                        @if ($program->type === 'internship')
+                        @if (in_array($program->type, ['internship', 'job'], true))
                             <form method="POST" action="{{ route('admin.programs.toggle-open', $program) }}" class="inline-flex items-center gap-3">
                                 @csrf
                                 <button type="submit"
@@ -74,10 +83,16 @@
                         </div>
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="6" class="px-5 py-8 text-center text-ink-soft">Belum ada data.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 </div>
 
-<div class="mt-6">{{ $programs->links() }}</div>
+<div class="mt-6 flex justify-center">
+    {{ $programs->links() }}
+</div>
 @endsection

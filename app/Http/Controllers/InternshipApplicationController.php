@@ -37,10 +37,16 @@ class InternshipApplicationController extends Controller
             return redirect()->route('internships.status', $program);
         }
 
+        $user = auth()->user();
+        $savedCv = $user->portfolios()->where('type', 'cv')->latest()->first();
+        $savedPortfolio = $user->portfolios()->where('type', 'portfolio')->latest()->first();
+
         return view('internships.apply', [
             'program' => $program,
-            'user' => auth()->user(),
+            'user' => $user,
             'application' => $application,
+            'savedCv' => $savedCv,
+            'savedPortfolio' => $savedPortfolio,
         ]);
     }
 
@@ -66,6 +72,12 @@ class InternshipApplicationController extends Controller
                 ->with('success', 'Pendaftaran sudah terkirim.');
         }
 
+        $user = $request->user();
+        $savedCv = $user->portfolios()->where('type', 'cv')->latest()->first();
+        $savedPortfolio = $user->portfolios()->where('type', 'portfolio')->latest()->first();
+        $useSavedCv = $request->boolean('use_saved_cv') && $savedCv?->portfolio_file_url;
+        $useSavedPortfolio = $request->boolean('use_saved_portfolio') && ($savedPortfolio?->portfolio_file_url || $savedPortfolio?->project_url);
+
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:30'],
@@ -75,7 +87,14 @@ class InternshipApplicationController extends Controller
             'education_level' => ['required', 'in:D3,D4,S1'],
             'portfolio_url' => ['nullable', 'url', 'max:255'],
             'portfolio_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
-            'cv' => [$existing?->cv_path ? 'nullable' : 'required', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+            'use_saved_cv' => ['nullable', 'boolean'],
+            'use_saved_portfolio' => ['nullable', 'boolean'],
+            'cv' => [
+                ($existing?->cv_path || $useSavedCv) ? 'nullable' : 'required',
+                'file',
+                'mimes:pdf,doc,docx',
+                'max:5120',
+            ],
             'transcript' => [$existing?->transcript_path ? 'nullable' : 'required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'cover_letter' => [$existing?->cover_letter_path ? 'nullable' : 'required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'],
         ]);
@@ -83,6 +102,8 @@ class InternshipApplicationController extends Controller
         $cvPath = $existing?->cv_path;
         if ($request->hasFile('cv')) {
             $cvPath = $request->file('cv')->store('internship-docs/cv', media_disk());
+        } elseif ($useSavedCv) {
+            $cvPath = $savedCv->portfolio_file_url;
         }
 
         $transcriptPath = $existing?->transcript_path;
@@ -96,8 +117,16 @@ class InternshipApplicationController extends Controller
         }
 
         $portfolioPath = $existing?->portfolio_path;
+        $portfolioUrl = $data['portfolio_url'] ?? null;
         if ($request->hasFile('portfolio_file')) {
             $portfolioPath = $request->file('portfolio_file')->store('internship-docs/portfolios', media_disk());
+        } elseif ($useSavedPortfolio) {
+            if ($savedPortfolio->portfolio_file_url) {
+                $portfolioPath = $savedPortfolio->portfolio_file_url;
+            }
+            if (! $portfolioUrl && $savedPortfolio->project_url) {
+                $portfolioUrl = $savedPortfolio->project_url;
+            }
         }
 
         $application = InternshipApplication::updateOrCreate(
@@ -111,7 +140,7 @@ class InternshipApplicationController extends Controller
                 'education_level' => $data['education_level'],
                 'motivation' => '',
                 'experience' => null,
-                'portfolio_url' => $data['portfolio_url'] ?? null,
+                'portfolio_url' => $portfolioUrl,
                 'portfolio_path' => $portfolioPath,
                 'cv_path' => $cvPath,
                 'transcript_path' => $transcriptPath,
@@ -124,7 +153,6 @@ class InternshipApplicationController extends Controller
             ]
         );
 
-        $user = $request->user();
         $user->forceFill([
             'phone' => $data['phone'],
             'university' => $data['university'],

@@ -367,15 +367,4 @@
     </div>
 </section>
 @endif
-
-<section class="mx-auto max-w-6xl px-4 pb-20">
-    <div class="reveal overflow-hidden rounded-3xl border border-brand/30 bg-gradient-to-r from-brand-mist via-white to-brand-light/35 p-8 text-ink shadow-sm md:p-12">
-        <h2 class="font-display text-3xl font-semibold md:text-4xl">Siap mulai perjalanan kariermu?</h2>
-        <p class="mt-3 max-w-xl text-ink-soft">Daftar gratis, pilih bootcamp atau magang, dan mulai belajar hari ini.</p>
-        <div class="mt-6 flex flex-wrap gap-3">
-            <a href="{{ route('register') }}" class="btn-primary">Buat akun</a>
-            <a href="{{ route('programs.index') }}" class="btn-secondary">Lihat katalog</a>
-        </div>
-    </div>
-</section>
 @endsection

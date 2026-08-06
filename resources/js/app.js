@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!menu) return;
 
             toggle.addEventListener('click', (event) => {
+                // Desktop pakai hover + link langsung; JS hanya untuk menu mobile.
+                if (target !== 'mobile') {
+                    return;
+                }
+
+                event.preventDefault();
                 event.stopPropagation();
                 const open = menu.classList.toggle('hidden') === false;
                 toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -52,14 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('click', (event) => {
             careerToggles.forEach((toggle) => {
                 const target = toggle.getAttribute('data-career-toggle');
+                if (target !== 'mobile') return;
+
                 const menu = document.querySelector(`[data-career-menu="${target}"]`);
                 if (!menu) return;
 
-                if (!menu.contains(event.target) && !toggle.contains(event.target)) {
-                    if (!menu.classList.contains('hidden')) {
-                        menu.classList.add('hidden');
-                        toggle.setAttribute('aria-expanded', 'false');
-                    }
+                if (!menu.contains(event.target) && !toggle.contains(event.target) && !menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    toggle.setAttribute('aria-expanded', 'false');
                 }
             });
         });

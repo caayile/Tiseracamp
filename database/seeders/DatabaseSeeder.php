@@ -78,7 +78,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Universitas Muhammadiyah Surakarta', 'logo' => 'logosmitra/logo-ums.png', 'website' => 'https://ums.ac.id'],
             ['name' => 'UIN Raden Mas Said Surakarta', 'logo' => 'logosmitra/logo-uin.png', 'website' => 'https://uinsaid.ac.id'],
             ['name' => 'Universitas Duta Bangsa Surakarta', 'logo' => 'logosmitra/logo-udb.jpg', 'website' => 'https://udb.ac.id'],
-            ['name' => 'Tiga Serangkai University', 'logo' => 'logosmitra/logo-tsu.png', 'website' => 'http://www.tsu.ac.id/'],
+            ['name' => 'Tiga Serangkai University', 'logo' => 'logosmitra/logo-tsuniv.jpg', 'website' => 'http://www.tsu.ac.id/'],
         ])->map(fn ($p) => Partner::create($p));
 
         $catalog = [

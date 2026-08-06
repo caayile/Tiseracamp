@@ -51,14 +51,64 @@
             </div>
         </div>
 
+        @php
+            $hasSavedCv = filled($savedCv?->portfolio_file_url);
+            $hasSavedPortfolio = filled($savedPortfolio?->portfolio_file_url) || filled($savedPortfolio?->project_url);
+            $useSavedCvDefault = old('use_saved_cv', $hasSavedCv && ! $application?->cv_path);
+            $useSavedPortfolioDefault = old('use_saved_portfolio', $hasSavedPortfolio && ! $application?->portfolio_path && ! $application?->portfolio_url);
+            $prefillPortfolioUrl = old('portfolio_url', $application->portfolio_url ?? ($hasSavedPortfolio ? ($savedPortfolio->project_url ?? '') : ''));
+            $cvUploadOptional = $application?->cv_path || $useSavedCvDefault;
+        @endphp
+
+        @if ($hasSavedCv || $hasSavedPortfolio)
+            <div class="rounded-xl border border-brand/20 bg-brand-mist/40 p-4">
+                <p class="text-sm font-semibold text-ink">Dari galeri karier</p>
+                <p class="mt-1 text-xs text-ink-soft">Dokumen yang sudah diunggah di Galeri Portofolio bisa dipakai langsung. Cek dulu, lalu kirim.</p>
+                <div class="mt-3 space-y-3">
+                    @if ($hasSavedCv)
+                        <label class="flex items-start gap-3 rounded-lg border border-brand/15 bg-panel px-3 py-2.5 text-sm">
+                            <input type="checkbox" name="use_saved_cv" value="1" class="mt-0.5" @checked($useSavedCvDefault) data-toggle-cv>
+                            <span>
+                                <span class="font-medium text-ink">Gunakan CV tersimpan</span>
+                                <span class="mt-0.5 block text-xs text-ink-soft">{{ $savedCv->title }}
+                                    · <a href="{{ media_url($savedCv->portfolio_file_url) }}" target="_blank" class="text-brand-dark underline">Lihat</a>
+                                </span>
+                            </span>
+                        </label>
+                    @endif
+                    @if ($hasSavedPortfolio)
+                        <label class="flex items-start gap-3 rounded-lg border border-brand/15 bg-panel px-3 py-2.5 text-sm">
+                            <input type="checkbox" name="use_saved_portfolio" value="1" class="mt-0.5" @checked($useSavedPortfolioDefault)>
+                            <span>
+                                <span class="font-medium text-ink">Gunakan portofolio tersimpan</span>
+                                <span class="mt-0.5 block text-xs text-ink-soft">{{ $savedPortfolio->title }}
+                                    @if ($savedPortfolio->project_url)
+                                        · <a href="{{ $savedPortfolio->project_url }}" target="_blank" class="text-brand-dark underline">Link</a>
+                                    @endif
+                                    @if ($savedPortfolio->portfolio_file_url)
+                                        · <a href="{{ media_url($savedPortfolio->portfolio_file_url) }}" target="_blank" class="text-brand-dark underline">PDF</a>
+                                    @endif
+                                </span>
+                            </span>
+                        </label>
+                    @endif
+                </div>
+                @if (! $hasSavedCv)
+                    <p class="mt-3 text-xs text-ink-soft">Belum punya CV di galeri? <a href="{{ route('career.gallery') }}#portfolio-upload" class="font-medium text-brand-dark underline">Unggah dulu</a>.</p>
+                @endif
+            </div>
+        @endif
+
         <div class="border-t border-brand/10 pt-5">
             <p class="mb-4 text-sm font-semibold text-ink">Berkas persyaratan</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium">CV (PDF/DOC) *</label>
-                    <input type="file" name="cv" accept=".pdf,.doc,.docx" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold" @required(! ($application?->cv_path))>
+                    <label class="mb-1.5 block text-sm font-medium">CV (PDF/DOC) @unless ($cvUploadOptional)<span class="text-red-600">*</span>@endunless</label>
+                    <input type="file" name="cv" accept=".pdf,.doc,.docx" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold" id="cv-upload" @required(! $cvUploadOptional)>
                     @if ($application?->cv_path)
-                        <p class="mt-1 text-xs text-ink-soft">Sudah ada CV tersimpan. Upload ulang untuk mengganti.</p>
+                        <p class="mt-1 text-xs text-ink-soft">Sudah ada CV di pendaftaran ini. Upload ulang untuk mengganti.</p>
+                    @elseif ($hasSavedCv)
+                        <p class="mt-1 text-xs text-ink-soft">Centang CV tersimpan di atas, atau upload file baru di sini.</p>
                     @endif
                     @error('cv') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -80,7 +130,7 @@
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium">Link portfolio <span class="font-normal text-ink-soft">(opsional)</span></label>
-                    <input type="url" name="portfolio_url" value="{{ old('portfolio_url', $application->portfolio_url ?? '') }}" class="input-field" placeholder="https://...">
+                    <input type="url" name="portfolio_url" value="{{ $prefillPortfolioUrl }}" class="input-field" placeholder="https://...">
                     @error('portfolio_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
@@ -88,6 +138,8 @@
                     <input type="file" name="portfolio_file" accept=".pdf" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
                     @if ($application?->portfolio_path)
                         <p class="mt-1 text-xs text-ink-soft">Sudah ada portfolio PDF tersimpan. Upload ulang untuk mengganti.</p>
+                    @elseif ($hasSavedPortfolio && $savedPortfolio?->portfolio_file_url)
+                        <p class="mt-1 text-xs text-ink-soft">Centang portofolio tersimpan di atas, atau upload file baru.</p>
                     @endif
                     @error('portfolio_file') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -96,5 +148,18 @@
 
         <button type="submit" class="btn-primary w-full">Kirim pendaftaran</button>
     </form>
+
+    @if ($hasSavedCv)
+    <script>
+    (() => {
+        const toggle = document.querySelector('[data-toggle-cv]');
+        const upload = document.getElementById('cv-upload');
+        if (!toggle || !upload) return;
+        const sync = () => { upload.required = !toggle.checked; };
+        toggle.addEventListener('change', sync);
+        sync();
+    })();
+    </script>
+    @endif
 </section>
 @endsection

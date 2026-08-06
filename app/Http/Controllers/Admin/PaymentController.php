@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\AppNotification;
+use App\Models\CvSubscription;
 use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,8 +16,11 @@ class PaymentController extends Controller
     public function index(): View
     {
         $payments = Payment::with(['user', 'program', 'enrollment'])->latest()->paginate(20);
+        $cvSubscriptions = CvSubscription::with('user')
+            ->latest()
+            ->paginate(20, ['*'], 'cv_page');
 
-        return view('admin.payments.index', compact('payments'));
+        return view('admin.payments.index', compact('payments', 'cvSubscriptions'));
     }
 
     public function verify(Request $request, Payment $payment): RedirectResponse

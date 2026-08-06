@@ -97,7 +97,16 @@ class Program extends Model
 
     public function typeLabel(): string
     {
-        return $this->type === 'internship' ? 'Magang' : 'Bootcamp';
+        return match ($this->type) {
+            'internship' => 'Magang',
+            'job' => 'Lowongan Kerja',
+            default => 'Bootcamp',
+        };
+    }
+
+    public function isJob(): bool
+    {
+        return $this->type === 'job';
     }
 
     public function isFree(): bool
@@ -107,7 +116,18 @@ class Program extends Model
 
     public function formattedDuration(): string
     {
+        if ((int) $this->duration_months <= 0) {
+            return '—';
+        }
+
         return $this->duration_months.' bulan';
+    }
+
+    public function formattedSalary(): string
+    {
+        return $this->price === 0
+            ? 'Gaji dirundingkan'
+            : 'Rp '.number_format($this->price, 0, ',', '.');
     }
 
     public function isInternshipOpen(): bool
@@ -116,6 +136,20 @@ class Program extends Model
             return false;
         }
 
+        return $this->isListingOpen();
+    }
+
+    public function isJobOpen(): bool
+    {
+        if ($this->type !== 'job') {
+            return false;
+        }
+
+        return $this->isListingOpen();
+    }
+
+    public function isListingOpen(): bool
+    {
         if (! $this->is_open) {
             return false;
         }
@@ -134,5 +168,10 @@ class Program extends Model
     public function internshipStatusLabel(): string
     {
         return $this->isInternshipOpen() ? 'Terbuka' : 'Tertutup';
+    }
+
+    public function jobStatusLabel(): string
+    {
+        return $this->isJobOpen() ? 'Terbuka' : 'Tertutup';
     }
 }

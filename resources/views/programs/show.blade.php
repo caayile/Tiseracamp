@@ -200,6 +200,88 @@
             });
         })();
     </script>
+@elseif ($program->type === 'job')
+    @php
+        $isOpen = $program->isJobOpen();
+        $benefits = $program->benefits ?? [];
+        $qualifications = $program->qualifications ?? [];
+    @endphp
+
+    <section class="bg-surface pb-16 pt-6">
+        <div class="mx-auto max-w-3xl px-4">
+            <x-back-nav :fallback="route('career.jobs')" class="mb-6" />
+
+            <article class="rounded-3xl border border-ink/8 bg-panel p-6 shadow-[0_16px_40px_-28px_rgba(11,31,42,0.3)] sm:p-8">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-dark">Lowongan Kerja</p>
+                        <h1 class="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">{{ $program->title }}</h1>
+                        @if ($program->partner)
+                            <p class="mt-2 text-sm font-semibold text-brand-mid">{{ $program->partner->name }}</p>
+                        @endif
+                    </div>
+                    <span class="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide {{ $isOpen ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200' : 'bg-red-100 text-red-800 ring-1 ring-red-200' }}">
+                        {{ $program->jobStatusLabel() }}
+                    </span>
+                </div>
+
+                @if ($program->excerpt)
+                    <p class="mt-4 text-sm leading-relaxed text-ink-soft">{{ $program->excerpt }}</p>
+                @endif
+
+                <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+                    @foreach ([
+                        ['label' => 'Lokasi', 'value' => $program->location],
+                        ['label' => 'Gaji', 'value' => $program->formattedSalary()],
+                        ['label' => 'Deadline', 'value' => $program->deadline?->translatedFormat('d F Y')],
+                        ['label' => 'Kategori', 'value' => $program->category?->name],
+                    ] as $row)
+                        <li class="rounded-xl border border-brand/10 bg-brand-mist/40 px-4 py-3">
+                            <span class="block text-[10px] font-bold uppercase tracking-wide text-ink-soft/70">{{ $row['label'] }}</span>
+                            <span class="mt-0.5 block text-sm font-semibold text-ink">{{ $row['value'] ?: '—' }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div class="mt-8">
+                    <h2 class="font-display text-lg font-semibold text-ink">Deskripsi</h2>
+                    <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{{ $program->description ?: 'Deskripsi belum diisi.' }}</p>
+                </div>
+
+                @if ($qualifications)
+                    <div class="mt-8">
+                        <h2 class="font-display text-lg font-semibold text-ink">Kualifikasi</h2>
+                        <ul class="mt-3 space-y-2">
+                            @foreach ($qualifications as $item)
+                                <li class="flex items-start gap-2.5 text-sm text-ink-soft">
+                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+                                    <span>{{ $item }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if ($benefits)
+                    <div class="mt-8">
+                        <h2 class="font-display text-lg font-semibold text-ink">Benefit</h2>
+                        <ul class="mt-3 space-y-2">
+                            @foreach ($benefits as $item)
+                                <li class="flex items-start gap-2.5 text-sm text-ink-soft">
+                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-brand-mid" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+                                    <span>{{ $item }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <div class="mt-8 rounded-xl border border-brand/15 bg-brand-mist/30 px-4 py-3 text-sm text-ink-soft">
+                    Tertarik? Hubungi admin / perusahaan mitra untuk proses lamaran lebih lanjut.
+                </div>
+            </article>
+        </div>
+    </section>
 @else
     @php
         $mentor = $program->mentor;

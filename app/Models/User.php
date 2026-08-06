@@ -73,6 +73,25 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class);
     }
 
+    public function cvSubscriptions(): HasMany
+    {
+        return $this->hasMany(CvSubscription::class);
+    }
+
+    public function activeCvSubscription(): ?CvSubscription
+    {
+        return $this->cvSubscriptions()
+            ->active()
+            ->latest('paid_at')
+            ->get()
+            ->first(fn (CvSubscription $subscription) => $subscription->isUsable());
+    }
+
+    public function hasActiveCvSubscription(): bool
+    {
+        return $this->activeCvSubscription() !== null;
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

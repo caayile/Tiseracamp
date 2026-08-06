@@ -29,7 +29,7 @@
                 <a href="{{ route('news.index') }}" class="transition hover:text-brand">Berita</a>
                 @auth
                     @if (auth()->user()->isStudent())
-                        <a href="{{ route('career.index') }}" class="transition hover:text-brand">Karier</a>
+                        <a href="{{ route('career.gallery') }}" class="transition hover:text-brand">Karier</a>
                     @endif
                 @endauth
             </nav>

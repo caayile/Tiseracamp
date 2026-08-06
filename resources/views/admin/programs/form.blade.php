@@ -1,17 +1,21 @@
 @extends('layouts.admin')
 
-@section('title', $program->exists ? 'Edit Program' : ($program->type === 'bootcamp' ? 'Tambah Lowongan Kerja' : 'Tambah Lowongan Magang'))
-@section('heading', $program->exists ? ($program->type === 'internship' ? 'Edit Lowongan Magang' : 'Edit Bootcamp') : ($program->type === 'bootcamp' ? 'Tambah Lowongan Kerja' : 'Tambah Lowongan Magang'))
+@section('title', $program->exists
+    ? 'Edit Program'
+    : ($program->type === 'job' ? 'Tambah Lowongan Kerja' : ($program->type === 'bootcamp' ? 'Tambah Bootcamp' : 'Tambah Lowongan Magang')))
+@section('heading', $program->exists
+    ? ($program->type === 'internship' ? 'Edit Lowongan Magang' : ($program->type === 'job' ? 'Edit Lowongan Kerja' : 'Edit Bootcamp'))
+    : ($program->type === 'job' ? 'Tambah Lowongan Kerja' : ($program->type === 'bootcamp' ? 'Tambah Bootcamp' : 'Tambah Lowongan Magang')))
 
 @section('content')
 @php
     $isBootcampEdit = $program->exists && $program->type === 'bootcamp';
+    $isJobForm = $program->type === 'job';
     $isBootcampCreate = ! $program->exists && $program->type === 'bootcamp';
     $qualificationsText = old('qualifications_text', collect($program->qualifications ?? [])->implode("\n"));
 @endphp
 
 @if ($isBootcampEdit)
-    {{-- Edit bootcamp dari mentor: admin kelola/approve, bukan buat baru --}}
     <form method="POST" action="{{ route('admin.programs.update', $program) }}" class="mx-auto max-w-3xl space-y-6">
         @csrf
         @method('PUT')
@@ -68,7 +72,6 @@
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Partner / Perusahaan</label>
                 <input type="text" name="partner_name" value="{{ old('partner_name', $program->partner?->name) }}" class="input-field" placeholder="Ketik nama perusahaan" />
-                <p class="mt-1 text-xs text-ink-soft">Ketik nama perusahaan tanpa memilih daftar.</p>
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Ringkasan</label>
@@ -96,20 +99,23 @@
 
         <div class="flex gap-3">
             <button class="btn-primary" type="submit">Simpan</button>
-            <a href="{{ route('admin.programs.index') }}" class="btn-secondary">Batal</a>
+            <a href="{{ route('admin.programs.index', ['type' => 'bootcamp']) }}" class="btn-secondary">Batal</a>
         </div>
     </form>
-@elseif ($isBootcampCreate)
-    {{-- Buat lowongan kerja --}}
+@elseif ($isJobForm)
     <form method="POST"
-          action="{{ route('admin.programs.store') }}"
+          action="{{ $program->exists ? route('admin.programs.update', $program) : route('admin.programs.store') }}"
           class="mx-auto max-w-4xl space-y-6">
         @csrf
-        <input type="hidden" name="type" value="bootcamp">
+        @if ($program->exists)
+            @method('PUT')
+        @endif
+        <input type="hidden" name="type" value="job">
         <input type="hidden" name="level" value="Intermediate">
+        <input type="hidden" name="duration_months" value="0">
 
         <div class="rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
-            Tambah lowongan kerja untuk katalog bootcamp / pekerjaan yang ditawarkan oleh admin.
+            Lowongan ini akan tampil di <strong class="text-ink">Karier → Lowongan Kerja</strong> setelah disimpan.
         </div>
 
         <section class="card-soft space-y-5 p-6">
@@ -124,11 +130,15 @@
                 @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
 
-            <input type="hidden" name="duration_months" value="0">
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="mb-1.5 block text-sm font-semibold text-ink">Harga / Gaji (Rp)</label>
-                    <input type="number" name="price" value="{{ old('price', $program->price ?? 0) }}" class="input-field" min="0">
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Gaji (Rp)</label>
+                    <input type="number" name="price" value="{{ old('price', $program->price ?? 0) }}" class="input-field" min="0" placeholder="0 = dirundingkan">
+                    <p class="mt-1 text-xs text-ink-soft">Isi 0 jika gaji dirundingkan.</p>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Deadline lamaran</label>
+                    <input type="date" name="deadline" value="{{ old('deadline', optional($program->deadline)->format('Y-m-d')) }}" class="input-field">
                 </div>
             </div>
 
@@ -145,7 +155,6 @@
                 <div>
                     <label class="mb-1.5 block text-sm font-semibold text-ink">Partner / Perusahaan</label>
                     <input type="text" name="partner_name" value="{{ old('partner_name', $program->partner?->name) }}" class="input-field" placeholder="Ketik nama perusahaan" />
-                    <p class="mt-1 text-xs text-ink-soft">Ketik nama perusahaan tanpa memilih daftar.</p>
                 </div>
             </div>
 
@@ -157,6 +166,11 @@
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Ringkasan</label>
                 <textarea name="excerpt" rows="2" class="input-field">{{ old('excerpt', $program->excerpt) }}</textarea>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Kualifikasi</label>
+                <textarea name="qualifications_text" rows="4" class="input-field" placeholder="Satu baris = satu poin">{{ $qualificationsText }}</textarea>
             </div>
         </section>
 
@@ -173,17 +187,81 @@
 
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Benefits / Keuntungan</label>
-                <textarea name="benefits_text" rows="4" class="input-field" placeholder="Pengalaman kerja tim, sertifikat, fleksibilitas...">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
+                <textarea name="benefits_text" rows="4" class="input-field" placeholder="BPJS, remote, mentoring...">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
             </div>
         </section>
 
         <div class="flex gap-3">
-            <button class="btn-primary" type="submit">Simpan lowongan kerja</button>
-            <a href="{{ route('admin.programs.index') }}" class="btn-secondary">Batal</a>
+            <button class="btn-primary" type="submit">{{ $program->exists ? 'Simpan perubahan' : 'Simpan lowongan kerja' }}</button>
+            <a href="{{ route('admin.programs.index', ['type' => 'job']) }}" class="btn-secondary">Batal</a>
+        </div>
+    </form>
+@elseif ($isBootcampCreate)
+    <form method="POST" action="{{ route('admin.programs.store') }}" class="mx-auto max-w-4xl space-y-6">
+        @csrf
+        <input type="hidden" name="type" value="bootcamp">
+        <input type="hidden" name="level" value="Intermediate">
+
+        <div class="rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
+            Tambah bootcamp ke katalog. Kurikulum bisa diatur setelah program dibuat.
+        </div>
+
+        <section class="card-soft space-y-5 p-6">
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Judul bootcamp <span class="text-red-500">*</span></label>
+                <input type="text" name="title" value="{{ old('title', $program->title) }}" class="input-field" required>
+                @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Durasi (bulan)</label>
+                    <input type="number" name="duration_months" value="{{ old('duration_months', 3) }}" class="input-field" min="1" required>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Harga (Rp)</label>
+                    <input type="number" name="price" value="{{ old('price', $program->price ?? 0) }}" class="input-field" min="0" required>
+                </div>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Kategori</label>
+                    <select name="category_id" class="input-field">
+                        <option value="">— Pilih kategori —</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected(old('category_id', $program->category_id) == $category->id)>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Partner / Perusahaan</label>
+                    <input type="text" name="partner_name" value="{{ old('partner_name', $program->partner?->name) }}" class="input-field" placeholder="Ketik nama perusahaan" />
+                </div>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Ringkasan</label>
+                <textarea name="excerpt" rows="2" class="input-field">{{ old('excerpt', $program->excerpt) }}</textarea>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Deskripsi</label>
+                <textarea name="description" rows="5" class="input-field">{{ old('description', $program->description) }}</textarea>
+            </div>
+
+            <div>
+                <label class="mb-1.5 block text-sm font-semibold text-ink">Benefits</label>
+                <textarea name="benefits_text" rows="4" class="input-field">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
+            </div>
+        </section>
+
+        <div class="flex gap-3">
+            <button class="btn-primary" type="submit">Simpan bootcamp</button>
+            <a href="{{ route('admin.programs.index', ['type' => 'bootcamp']) }}" class="btn-secondary">Batal</a>
         </div>
     </form>
 @else
-    {{-- Buat / edit lowongan magang --}}
     <form method="POST"
           action="{{ $program->exists ? route('admin.programs.update', $program) : route('admin.programs.store') }}"
           class="mx-auto max-w-4xl space-y-6">
@@ -196,7 +274,7 @@
         <input type="hidden" name="price" value="0">
 
         <div class="rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
-            Admin hanya menambah <strong class="text-ink">lowongan magang</strong>. Bootcamp dibuat mentor, lalu di-approve di daftar program.
+            Lowongan magang tampil di katalog <strong class="text-ink">Magang</strong> di navbar.
         </div>
 
         <section class="card-soft space-y-5 p-6">
@@ -208,7 +286,6 @@
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Role lowongan <span class="text-red-500">*</span></label>
                 <input type="text" name="title" value="{{ old('title', $program->title) }}" class="input-field" placeholder="Contoh: E-Book Development" required>
-                <p class="mt-1 text-xs text-ink-soft">Nama posisi yang dilihat pelamar.</p>
                 @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
 
@@ -231,7 +308,6 @@
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Prodi</label>
                 <textarea name="majors" rows="2" class="input-field" placeholder="Contoh: Sastra Indonesia, Ilmu Komunikasi, Manajemen...">{{ old('majors', $program->majors) }}</textarea>
-                <p class="mt-1 text-xs text-ink-soft">Bisa lebih dari satu, pisahkan dengan koma.</p>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
@@ -261,8 +337,7 @@
                     </div>
                 </div>
                 <textarea name="qualifications_text" rows="6" class="input-field font-medium leading-relaxed"
-                          placeholder="Mahasiswa aktif S1 Sastra Indonesia semester 4 (Minimal)
-Memahami kaidah Bahasa Indonesia yang baik dan benar sesuai PUEBI">{{ $qualificationsText }}</textarea>
+                          placeholder="Mahasiswa aktif S1&#10;Memahami kaidah Bahasa Indonesia">{{ $qualificationsText }}</textarea>
             </div>
         </section>
 
@@ -270,39 +345,31 @@ Memahami kaidah Bahasa Indonesia yang baik dan benar sesuai PUEBI">{{ $qualifica
             <div>
                 <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-dark">Halaman detail</p>
                 <h2 class="mt-1 font-display text-lg font-semibold text-ink">Konten untuk Lihat Detail</h2>
-                <p class="mt-1 text-sm text-ink-soft">Tampil di halaman detail saat peserta klik Lihat Detail.</p>
             </div>
 
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Deskripsi pekerjaan</label>
-                <textarea name="description" rows="5" class="input-field"
-                          placeholder="Jelaskan tugas dan ruang lingkup pekerjaan selama magang...">{{ old('description', $program->description) }}</textarea>
+                <textarea name="description" rows="5" class="input-field">{{ old('description', $program->description) }}</textarea>
             </div>
 
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Persyaratan dokumen</label>
-                <textarea name="required_documents_text" rows="3" class="input-field"
-                          placeholder="CV&#10;Surat Pengantar Magang dari Kampus">{{ old('required_documents_text', collect($program->required_documents ?? [])->implode("\n")) }}</textarea>
-                <p class="mt-1 text-xs text-ink-soft">Satu baris = satu dokumen.</p>
+                <textarea name="required_documents_text" rows="3" class="input-field">{{ old('required_documents_text', collect($program->required_documents ?? [])->implode("\n")) }}</textarea>
             </div>
 
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Skill yang diutamakan</label>
-                <textarea name="preferred_skills_text" rows="3" class="input-field"
-                          placeholder="Proofreading&#10;MS Word / Google Docs&#10;Canva / InDesign">{{ old('preferred_skills_text', collect($program->preferred_skills ?? [])->implode("\n")) }}</textarea>
-                <p class="mt-1 text-xs text-ink-soft">Satu baris = satu skill (tampil sebagai tag).</p>
+                <textarea name="preferred_skills_text" rows="3" class="input-field">{{ old('preferred_skills_text', collect($program->preferred_skills ?? [])->implode("\n")) }}</textarea>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label class="mb-1.5 block text-sm font-semibold text-ink">Benefit selama magang</label>
-                    <textarea name="benefits_text" rows="5" class="input-field"
-                              placeholder="Sertifikat magang&#10;Mentoring rutin&#10;Pengalaman project nyata">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
+                    <textarea name="benefits_text" rows="5" class="input-field">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-semibold text-ink">Tanggung jawab</label>
-                    <textarea name="responsibilities_text" rows="5" class="input-field"
-                              placeholder="Menyunting naskah&#10;Menyiapkan metadata e-book&#10;Kolaborasi dengan tim editorial">{{ old('responsibilities_text', collect($program->responsibilities ?? [])->implode("\n")) }}</textarea>
+                    <textarea name="responsibilities_text" rows="5" class="input-field">{{ old('responsibilities_text', collect($program->responsibilities ?? [])->implode("\n")) }}</textarea>
                 </div>
             </div>
         </section>
@@ -312,7 +379,7 @@ Memahami kaidah Bahasa Indonesia yang baik dan benar sesuai PUEBI">{{ $qualifica
             @if ($program->exists)
                 <a href="{{ route('admin.programs.publikasi', $program) }}" class="btn-secondary">Atur publikasi</a>
             @endif
-            <a href="{{ route('admin.programs.index') }}" class="btn-secondary">Batal</a>
+            <a href="{{ route('admin.programs.index', ['type' => 'internship']) }}" class="btn-secondary">Batal</a>
         </div>
     </form>
 @endif

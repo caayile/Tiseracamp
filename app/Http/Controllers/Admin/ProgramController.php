@@ -21,7 +21,7 @@ class ProgramController extends Controller
         $type = request()->string('type')->toString();
 
         $query = Program::with(['partner', 'mentor', 'category', 'batches'])->latest();
-        if (in_array($type, ['internship', 'bootcamp'], true)) {
+        if (in_array($type, ['internship', 'bootcamp', 'job'], true)) {
             $query->where('type', $type);
         }
 
@@ -33,7 +33,7 @@ class ProgramController extends Controller
     public function create(Request $request): View
     {
         $type = $request->input('type');
-        $type = in_array($type, ['internship', 'bootcamp'], true) ? $type : 'internship';
+        $type = in_array($type, ['internship', 'bootcamp', 'job'], true) ? $type : 'internship';
 
         return view('admin.programs.form', [
             'program' => new Program([
@@ -50,7 +50,7 @@ class ProgramController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $type = $request->input('type');
-        $type = in_array($type, ['internship', 'bootcamp'], true) ? $type : 'internship';
+        $type = in_array($type, ['internship', 'bootcamp', 'job'], true) ? $type : 'internship';
         $price = $type === 'internship' ? 0 : (int) $request->input('price', 0);
 
         $request->merge([
@@ -82,15 +82,25 @@ class ProgramController extends Controller
         $data['is_featured'] = false;
         $data['approval_status'] = 'approved';
         $data['mentor_id'] = null;
+        if ($type === 'job') {
+            $data['duration_months'] = (int) ($data['duration_months'] ?? 0);
+            $data['location'] = $request->input('location');
+        }
         $data = $this->normalizeInternshipFields($data);
 
         Program::create($data);
 
-        $message = $type === 'internship'
-            ? 'Lowongan magang berhasil dibuat. Atur publikasi lewat tombol Publikasi.'
-            : 'Lowongan kerja berhasil dibuat. Atur publikasi lewat tombol Publikasi.';
+        $message = match ($type) {
+            'internship' => 'Lowongan magang berhasil dibuat. Atur publikasi lewat tombol Publikasi.',
+            'job' => 'Lowongan kerja berhasil dibuat dan tampil di Karier → Lowongan Kerja.',
+            default => 'Bootcamp berhasil dibuat. Atur publikasi lewat tombol Publikasi.',
+        };
 
-        return redirect()->route('admin.programs.index')->with('success', $message);
+        $redirectType = in_array($type, ['internship', 'bootcamp', 'job'], true) ? $type : null;
+
+        return redirect()
+            ->route('admin.programs.index', array_filter(['type' => $redirectType]))
+            ->with('success', $message);
     }
 
     public function edit(Program $program): View
@@ -113,6 +123,12 @@ class ProgramController extends Controller
             $request->merge([
                 'level' => 'Beginner',
                 'price' => 0,
+            ]);
+        }
+
+        if ($program->type === 'job') {
+            $request->merge([
+                'level' => 'Intermediate',
             ]);
         }
 
@@ -145,7 +161,26 @@ class ProgramController extends Controller
                 'level' => 'Beginner',
             ]);
 
-            return redirect()->route('admin.programs.index')->with('success', 'Detail lowongan magang diperbarui.');
+            return redirect()->route('admin.programs.index', ['type' => 'internship'])->with('success', 'Detail lowongan magang diperbarui.');
+        }
+
+        if ($program->type === 'job') {
+            $program->update([
+                'title' => $data['title'],
+                'location' => $data['location'] ?? null,
+                'deadline' => $data['deadline'] ?? null,
+                'duration_months' => (int) ($data['duration_months'] ?? 0),
+                'price' => (int) ($data['price'] ?? 0),
+                'excerpt' => $data['excerpt'] ?? null,
+                'description' => $data['description'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'partner_id' => $data['partner_id'] ?? null,
+                'benefits' => $this->parseBenefits($request->input('benefits_text')),
+                'qualifications' => $this->parseBenefits($request->input('qualifications_text')),
+                'level' => 'Intermediate',
+            ]);
+
+            return redirect()->route('admin.programs.index', ['type' => 'job'])->with('success', 'Detail lowongan kerja diperbarui.');
         }
 
         $data['benefits'] = $this->parseBenefits($request->input('benefits_text'));
@@ -156,7 +191,7 @@ class ProgramController extends Controller
 
         $program->update($data);
 
-        return redirect()->route('admin.programs.index')->with('success', 'Program diperbarui.');
+        return redirect()->route('admin.programs.index', ['type' => 'bootcamp'])->with('success', 'Program diperbarui.');
     }
 
     public function publikasi(Program $program): View
@@ -215,13 +250,14 @@ class ProgramController extends Controller
 
     public function toggleOpen(Program $program): RedirectResponse
     {
-        abort_unless($program->type === 'internship', 404);
+        abort_unless(in_array($program->type, ['internship', 'job'], true), 404);
 
         $program->update(['is_open' => ! $program->is_open]);
 
         $label = $program->is_open ? 'dibuka' : 'ditutup';
+        $kind = $program->type === 'job' ? 'kerja' : 'magang';
 
-        return back()->with('success', "Lowongan magang berhasil {$label}.");
+        return back()->with('success', "Lowongan {$kind} berhasil {$label}.");
     }
 
     public function curriculum(Program $program): View
@@ -322,7 +358,7 @@ class ProgramController extends Controller
 
         return $request->validate([
             'title' => ['required', 'string', 'max:160'],
-            'type' => ['required', 'in:bootcamp,internship'],
+            'type' => ['required', 'in:bootcamp,internship,job'],
             'level' => ['required', 'string', 'max:40'],
             'education_level' => ['nullable', 'string', 'max:40'],
             'majors' => ['nullable', 'string', 'max:1000'],
@@ -342,7 +378,22 @@ class ProgramController extends Controller
 
     private function normalizeInternshipFields(array $data): array
     {
-        if (($data['type'] ?? null) !== 'internship') {
+        $type = $data['type'] ?? null;
+
+        if ($type === 'job') {
+            $data['education_level'] = null;
+            $data['majors'] = null;
+            $data['division'] = null;
+            $data['required_documents'] = $data['required_documents'] ?? [];
+            $data['preferred_skills'] = $data['preferred_skills'] ?? [];
+            $data['responsibilities'] = $data['responsibilities'] ?? [];
+            $data['qualifications'] = $data['qualifications'] ?? [];
+            $data['duration_months'] = (int) ($data['duration_months'] ?? 0);
+
+            return $data;
+        }
+
+        if ($type !== 'internship') {
             $data['education_level'] = null;
             $data['majors'] = null;
             $data['division'] = null;

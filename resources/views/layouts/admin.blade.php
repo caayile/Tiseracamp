@@ -17,13 +17,15 @@
         <nav class="flex flex-col gap-1 p-3">
             <a href="{{ route('admin.dashboard') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/10' : '' }}">Dashboard</a>
             <a href="{{ route('admin.users.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/10' : '' }}">Users</a>
-            <a href="{{ route('admin.programs.index', ['type' => 'internship']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && (request('type') === 'internship' || ! request()->has('type')) ? 'bg-white/10' : '' }}">Lowongan Magang</a>
-            <a href="{{ route('admin.programs.index', ['type' => 'bootcamp']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type') === 'bootcamp' ? 'bg-white/10' : '' }}">Lowongan Kerja</a>
+            <a href="{{ route('admin.programs.index', ['type' => 'internship']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type', 'internship') === 'internship' && ! in_array(request('type'), ['job', 'bootcamp'], true) ? 'bg-white/10' : '' }}">Lowongan Magang</a>
+            <a href="{{ route('admin.programs.index', ['type' => 'job']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type') === 'job' ? 'bg-white/10' : '' }}">Lowongan Kerja</a>
+            <a href="{{ route('admin.programs.index', ['type' => 'bootcamp']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type') === 'bootcamp' ? 'bg-white/10' : '' }}">Bootcamp</a>
             <a href="{{ route('admin.applications.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.applications.*') ? 'bg-white/10' : '' }}">Seleksi Magang</a>
             <a href="{{ route('admin.grades.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.grades.*') ? 'bg-white/10' : '' }}">Nilai Magang</a>
             <a href="{{ route('admin.schedules.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.schedules.*') ? 'bg-white/10' : '' }}">Sesi Magang</a>
             <a href="{{ route('admin.chat.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.chat.*') ? 'bg-white/10' : '' }}">Chat Magang</a>
-            <a href="{{ route('admin.payments.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payments.*') ? 'bg-white/10' : '' }}">Payments</a>
+            <a href="{{ route('admin.payments.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payments.*') ? 'bg-white/10' : '' }}">Pembayaran</a>
+            <a href="{{ route('admin.cv-subscriptions.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.cv-subscriptions.*') ? 'bg-white/10' : '' }}">Paket CV AI</a>
             <a href="{{ route('admin.content.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.content.*') ? 'bg-white/10' : '' }}">Berita & Content</a>
             <form method="POST" action="{{ route('logout') }}" class="mt-2">
                 @csrf

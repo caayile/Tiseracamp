@@ -20,6 +20,14 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mx-auto max-w-6xl px-4 pt-4">
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
+
     <main>
         @yield('content')
     </main>
