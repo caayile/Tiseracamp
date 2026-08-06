@@ -106,6 +106,31 @@ class ContentController extends Controller
         return back()->with('success', 'Banner ditambahkan.');
     }
 
+    public function updateBanner(Request $request, Banner $banner): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string'],
+            'subtitle' => ['nullable', 'string'],
+            'cta_text' => ['nullable', 'string'],
+            'cta_link' => ['nullable', 'string'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $banner->update([
+            ...$data,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        return back()->with('success', 'Banner diperbarui.');
+    }
+
+    public function destroyBanner(Banner $banner): RedirectResponse
+    {
+        $banner->delete();
+
+        return back()->with('success', 'Banner dihapus.');
+    }
+
     public function storeFaq(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -117,12 +142,58 @@ class ContentController extends Controller
         return back()->with('success', 'FAQ ditambahkan.');
     }
 
+    public function updateFaq(Request $request, Faq $faq): RedirectResponse
+    {
+        $data = $request->validate([
+            'question' => ['required', 'string'],
+            'answer' => ['required', 'string'],
+            'is_published' => ['nullable', 'boolean'],
+        ]);
+
+        $faq->update([
+            'question' => $data['question'],
+            'answer' => $data['answer'],
+            'is_published' => $request->boolean('is_published'),
+        ]);
+
+        return back()->with('success', 'FAQ diperbarui.');
+    }
+
+    public function destroyFaq(Faq $faq): RedirectResponse
+    {
+        $faq->delete();
+
+        return back()->with('success', 'FAQ dihapus.');
+    }
+
     public function storeCategory(Request $request): RedirectResponse
     {
         $data = $request->validate(['name' => ['required', 'string', 'max:80']]);
         Category::create(['name' => $data['name'], 'slug' => Str::slug($data['name'])]);
 
         return back()->with('success', 'Kategori ditambahkan.');
+    }
+
+    public function updateCategory(Request $request, Category $category): RedirectResponse
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:80']]);
+        $category->update([
+            'name' => $data['name'],
+            'slug' => Str::slug($data['name']),
+        ]);
+
+        return back()->with('success', 'Kategori diperbarui.');
+    }
+
+    public function destroyCategory(Category $category): RedirectResponse
+    {
+        if ($category->programs()->exists()) {
+            return back()->with('error', 'Kategori masih dipakai program. Pindahkan dulu.');
+        }
+
+        $category->delete();
+
+        return back()->with('success', 'Kategori dihapus.');
     }
 
     public function broadcast(Request $request): RedirectResponse

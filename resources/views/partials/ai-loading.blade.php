@@ -2,7 +2,7 @@
 <div data-ai-loading hidden class="fixed inset-0 z-[200] flex items-center justify-center bg-brand-navy/45 px-4 backdrop-blur-[2px]" role="status" aria-live="polite" aria-busy="true">
     <div class="w-full max-w-sm rounded-2xl border border-brand/20 bg-panel p-6 shadow-xl shadow-brand/20">
         <div class="flex justify-center">
-            <span data-ai-loading-pill class="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-ink shadow-[0_8px_24px_rgba(39,204,245,0.45)]">
+            <span data-ai-loading-pill class="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-navy shadow-[0_8px_24px_rgba(39,204,245,0.45)]">
                 <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
                     <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>

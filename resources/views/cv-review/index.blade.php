@@ -15,6 +15,9 @@
 <section class="bg-surface py-8 sm:py-10">
     <div class="mx-auto max-w-6xl px-4">
         <div class="mb-6">
+            <a href="{{ route('cv-review.plans') }}" class="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-mid transition hover:text-brand-deeper">
+                ← Kembali ke pilihan paket
+            </a>
             <p class="font-display text-sm font-bold uppercase tracking-[0.28em] text-brand-dark">Karier tools</p>
             <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-ink">Review CV AI</h1>
             <p class="mt-2 max-w-2xl text-sm text-ink-soft">Isi form target karier dulu, unggah CV, lalu AI kasih skor per bagian + analisa kecocokan.</p>
@@ -26,7 +29,7 @@
                 <nav class="mt-3 space-y-1">
                     @foreach ($journey as $step => $label)
                         <div class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm {{ $step === 1 ? 'bg-brand-mist font-semibold text-brand-mid' : 'text-ink-soft' }}">
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ $step === 1 ? 'bg-brand text-ink' : 'bg-ink/10' }}">
+                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ $step === 1 ? 'bg-brand text-brand-navy' : 'bg-ink/10' }}">
                                 <span class="text-[10px] font-bold">{{ $step }}</span>
                             </span>
                             <span>{{ $step }}. {{ $label }}</span>
@@ -40,10 +43,15 @@
                 <p class="mt-1 text-sm text-ink-soft">Tuliskan data di bawah, lalu unggah CV untuk mulai analisis.</p>
 
                 @if ($subscription)
-                    <div class="mt-4 rounded-xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
-                        Paket aktif: <strong class="text-ink">{{ $subscription->plan_name }}</strong>
-                        · Sisa review:
-                        <strong class="text-ink">{{ $subscription->remainingReviews() === null ? 'Tanpa batas' : $subscription->remainingReviews().'x' }}</strong>
+                    <div class="mt-4 flex flex-col gap-3 rounded-xl border border-brand/20 bg-brand-mist/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-sm text-ink-soft">
+                            Paket aktif: <strong class="text-ink">{{ $subscription->plan_name }}</strong>
+                            · Sisa review:
+                            <strong class="text-ink">{{ $subscription->remainingReviews() === null ? 'Tanpa batas' : $subscription->remainingReviews().'x' }}</strong>
+                        </p>
+                        <a href="{{ route('cv-review.plans') }}" class="btn-secondary inline-flex shrink-0 items-center justify-center gap-1.5 text-xs sm:text-sm">
+                            ← Kembali ke pilihan paket
+                        </a>
                     </div>
                 @endif
 

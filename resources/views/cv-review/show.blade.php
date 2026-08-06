@@ -48,7 +48,7 @@
                         @endphp
                         <a href="{{ $href }}"
                            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition {{ $isActive ? 'bg-brand-mist font-semibold text-brand-mid' : 'text-ink-soft hover:bg-brand-mist/50 hover:text-ink' }}">
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ $isActive || $isDone ? 'bg-brand text-ink' : 'bg-ink/10 text-ink-soft' }}">
+                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ $isActive || $isDone ? 'bg-brand text-brand-navy' : 'bg-ink/10 text-ink-soft' }}">
                                 @if ($isDone && ! $isActive)
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                 @elseif ($isActive)
@@ -243,7 +243,7 @@
                             <div class="mt-5 flex flex-wrap gap-2">
                                 @foreach (['karir' => 'Karir', 'skill' => 'Analisa Skill', 'pengalaman' => 'Analisa Pengalaman'] as $tabKey => $tabLabel)
                                     <a href="{{ route('cv-review.show', ['cvReview' => $review, 'step' => 2, 'tab' => $tabKey]) }}"
-                                       class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $careerTab === $tabKey ? 'bg-brand text-ink' : 'border border-brand/30 text-brand-mid hover:bg-brand-mist' }}">
+                                       class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $careerTab === $tabKey ? 'bg-brand text-brand-navy' : 'border border-brand/30 text-brand-mid hover:bg-brand-mist' }}">
                                         {{ $tabLabel }}
                                     </a>
                                 @endforeach
@@ -339,6 +339,36 @@
                                         @endforeach
                                     </ul>
                                 @endif
+                            </article>
+                        @endif
+
+                        @if (! empty($jobBoards))
+                            <article class="rounded-2xl border border-ink/10 bg-panel p-5 sm:p-7">
+                                <p class="text-xs font-bold uppercase tracking-[0.16em] text-brand-mid">Rekomendasi lowongan</p>
+                                <h3 class="mt-1 font-display text-lg font-bold text-ink">Cari lowongan yang cocok</h3>
+                                <p class="mt-1 text-sm text-ink-soft">
+                                    Berdasarkan posisi yang disarankan AI. Klik untuk membuka pencarian di LinkedIn, Glints, atau Jobstreet.
+                                </p>
+
+                                <div class="mt-5 space-y-4">
+                                    @foreach ($jobBoards as $item)
+                                        <div class="rounded-xl border border-brand/15 bg-brand-mist/40 p-4">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Posisi</p>
+                                            <p class="mt-1 font-display text-base font-bold text-ink">{{ $item['role'] }}</p>
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @foreach ($item['boards'] as $board)
+                                                    <a href="{{ $board['url'] }}"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"
+                                                       class="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ $board['color'] }}">
+                                                        {{ $board['label'] }}
+                                                        <span aria-hidden="true">↗</span>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </article>
                         @endif
 

@@ -276,8 +276,22 @@
                     </div>
                 @endif
 
-                <div class="mt-8 rounded-xl border border-brand/15 bg-brand-mist/30 px-4 py-3 text-sm text-ink-soft">
-                    Tertarik? Hubungi admin / perusahaan mitra untuk proses lamaran lebih lanjut.
+                <div class="mt-8 flex flex-wrap gap-3">
+                    @auth
+                        @if ($isOpen)
+                            <a href="{{ route('jobs.apply', $program) }}" class="btn-primary">Lamar sekarang</a>
+                        @else
+                            <button type="button" class="btn-secondary cursor-not-allowed opacity-60" disabled>Lowongan ditutup</button>
+                        @endif
+                        @php
+                            $myJobApp = \App\Models\JobApplication::where('user_id', auth()->id())->where('program_id', $program->id)->first();
+                        @endphp
+                        @if ($myJobApp)
+                            <a href="{{ route('jobs.status', $program) }}" class="btn-secondary">Lihat status lamaran</a>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}" class="btn-primary">Masuk untuk melamar</a>
+                    @endauth
                 </div>
             </article>
         </div>

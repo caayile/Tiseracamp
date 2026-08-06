@@ -18,6 +18,44 @@
         background-color: #0a1520 !important;
         color: #e8f4f8 !important;
     }
+    html.dark .btn-primary,
+    html.dark [data-ai-loading-pill] {
+        color: #0b1f2a !important;
+    }
+    html.dark .bg-emerald-50,
+    html.dark .bg-emerald-100 {
+        background-color: rgba(16, 185, 129, 0.18) !important;
+        color: #6ee7b7 !important;
+    }
+    html.dark .text-emerald-900,
+    html.dark .text-emerald-800 {
+        color: #6ee7b7 !important;
+    }
+    html.dark .bg-amber-50,
+    html.dark .bg-amber-100 {
+        background-color: rgba(245, 158, 11, 0.18) !important;
+        color: #fcd34d !important;
+    }
+    html.dark .text-amber-900,
+    html.dark .text-amber-800 {
+        color: #fcd34d !important;
+    }
+    /* Dropdown notifikasi: tinggi terkunci ~3:4 */
+    [data-notif-panel] {
+        width: min(17.5rem, calc(100vw - 1.5rem)) !important;
+        height: 23.5rem !important;
+        max-height: min(23.5rem, 65vh) !important;
+        overflow: hidden !important;
+    }
+    [data-notif-panel]:not(.hidden) {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    [data-notif-panel] [data-notif-list] {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+    }
     /* Ikon: dikontrol JS, fallback CSS jika class dark ada */
     html:not(.dark) [data-theme-icon="sun"] { display: none !important; }
     html:not(.dark) [data-theme-icon="moon"] { display: block !important; }

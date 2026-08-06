@@ -88,6 +88,42 @@
     </div>
 </section>
 
+@if ($banners->isNotEmpty())
+<section class="mx-auto max-w-6xl px-4 pb-4 pt-2">
+    <div class="grid gap-4 @if($banners->count() >= 3) md:grid-cols-3 @elseif($banners->count() === 2) md:grid-cols-2 @endif">
+        @foreach ($banners as $banner)
+            <div class="reveal overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-br from-brand-mist via-panel to-brand-light/30 p-6 shadow-sm sm:p-7">
+                <p class="text-xs font-bold uppercase tracking-[0.16em] text-brand-mid">Promo</p>
+                <h2 class="mt-2 font-display text-xl font-bold text-ink sm:text-2xl">{{ $banner->title }}</h2>
+                @if ($banner->subtitle)
+                    <p class="mt-2 text-sm leading-relaxed text-ink-soft">{{ $banner->subtitle }}</p>
+                @endif
+                @if ($banner->cta_text && $banner->cta_link)
+                    <a href="{{ $banner->cta_link }}" class="btn-primary mt-5 inline-flex">{{ $banner->cta_text }}</a>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</section>
+@endif
+
+@if ($categories->isNotEmpty())
+<section class="mx-auto max-w-6xl px-4 py-8">
+    <div class="reveal mb-4">
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Kategori</p>
+        <h2 class="section-title mt-2">Jelajahi sesuai minat</h2>
+    </div>
+    <div class="reveal flex flex-wrap gap-2">
+        @foreach ($categories as $category)
+            <a href="{{ route('programs.index', ['category' => $category->slug]) }}"
+               class="rounded-full border border-ink/10 bg-panel px-4 py-2 text-sm font-semibold text-ink transition hover:border-brand/40 hover:bg-brand-mist">
+                {{ $category->name }}
+            </a>
+        @endforeach
+    </div>
+</section>
+@endif
+
 <section class="mx-auto max-w-6xl px-4 py-16">
     <div class="reveal mb-8 flex items-end justify-between gap-4">
         <div>
@@ -285,54 +321,69 @@
                 Pengalaman Magang & Bootcamp
             </h2>
             <p class="mx-auto mt-3 max-w-2xl font-sans text-sm leading-relaxed text-ink-soft sm:text-[15px] sm:leading-7">
-                Dengarkan pengalaman nyata peserta setelah menyelesaikan magang atau bootcamp di Tiga Serangkai.
+                Atas: testimoni peserta. Bawah: portofolio singkat karya mereka.
             </p>
-            @if (($testimonials ?? collect())->isNotEmpty())
-                <p class="mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/80 px-3.5 py-1.5 font-display text-xs font-semibold text-brand-mid shadow-sm">
-                    <span class="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
-                    {{ $testimonials->count() }} cerita peserta
-                </p>
-            @endif
         </div>
     </div>
 
-    @if (($testimonials ?? collect())->isEmpty())
+    @php
+        $testimonials = $testimonials ?? collect();
+        $portfolios = $portfolios ?? collect();
+        $useTestimonialMarquee = $testimonials->count() >= 2;
+        $usePortfolioMarquee = $portfolios->count() >= 2;
+    @endphp
+
+    {{-- Baris atas: testimoni bergerak ke kiri --}}
+    @if ($testimonials->isEmpty())
         <div class="relative mx-auto max-w-xl px-4">
-            <div class="reveal rounded-2xl border border-dashed border-brand/30 bg-white/70 px-6 py-10 text-center">
-                <p class="font-display text-lg font-semibold text-ink">Belum ada testimoni</p>
-                <p class="mt-2 text-sm text-ink-soft">Setelah menyelesaikan magang atau bootcamp, peserta bisa membagikan ceritanya di sini.</p>
+            <div class="reveal rounded-2xl border border-dashed border-brand/30 bg-white/70 px-6 py-8 text-center">
+                <p class="font-display text-base font-semibold text-ink">Belum ada testimoni</p>
+                <p class="mt-1 text-sm text-ink-soft">Cerita peserta akan tampil di sini setelah program selesai.</p>
+            </div>
+        </div>
+    @elseif ($useTestimonialMarquee)
+        <div class="reveal relative" data-testimonial-marquee aria-label="Testimoni peserta">
+            <p class="mb-3 px-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-brand-mid sm:px-0">Testimoni</p>
+            <div class="testimonials-marquee overflow-hidden">
+                <div class="testimonials-marquee__track testimonials-marquee__track--left flex w-max gap-4 py-1 pl-4 sm:gap-5 sm:pl-5">
+                    @foreach ([1, 2] as $copy)
+                        @foreach ($testimonials as $testimonial)
+                            <div @if ($copy === 2) aria-hidden="true" @endif>
+                                @include('partials.testimonial-card', ['testimonial' => $testimonial, 'compact' => true])
+                            </div>
+                        @endforeach
+                    @endforeach
+                </div>
             </div>
         </div>
     @else
-        @php
-            $rowA = $testimonials->values()->filter(fn ($_, $i) => $i % 2 === 0)->values();
-            $rowB = $testimonials->values()->filter(fn ($_, $i) => $i % 2 === 1)->values();
-            if ($rowB->isEmpty()) {
-                $rowB = $rowA->reverse()->values();
-            }
-            $useMarquee = $testimonials->count() >= 3;
-        @endphp
-
-        @if ($useMarquee)
-            <div class="reveal relative space-y-5" data-testimonial-marquee aria-label="Testimoni peserta">
-                <div class="testimonials-marquee overflow-hidden">
-                    <div class="testimonials-marquee__track testimonials-marquee__track--left flex w-max gap-4 py-1 pl-4 sm:gap-5 sm:pl-5">
-                        @foreach ([1, 2] as $copy)
-                            @foreach ($rowA as $testimonial)
-                                <div @if ($copy === 2) aria-hidden="true" @endif>
-                                    @include('partials.testimonial-card', ['testimonial' => $testimonial, 'compact' => true])
-                                </div>
-                            @endforeach
-                        @endforeach
-                    </div>
+        <div class="relative mx-auto grid max-w-6xl gap-5 px-4 sm:grid-cols-2">
+            @foreach ($testimonials as $testimonial)
+                <div class="reveal">
+                    @include('partials.testimonial-card', ['testimonial' => $testimonial])
                 </div>
+            @endforeach
+        </div>
+    @endif
 
+    {{-- Baris bawah: portofolio bergerak ke kanan --}}
+    <div class="relative mt-8 md:mt-10">
+        @if ($portfolios->isEmpty())
+            <div class="relative mx-auto max-w-xl px-4">
+                <div class="reveal rounded-2xl border border-dashed border-brand/30 bg-white/70 px-6 py-8 text-center">
+                    <p class="font-display text-base font-semibold text-ink">Belum ada portofolio</p>
+                    <p class="mt-1 text-sm text-ink-soft">Portofolio peserta magang & bootcamp akan tampil di sini.</p>
+                </div>
+            </div>
+        @elseif ($usePortfolioMarquee)
+            <div class="reveal relative" data-testimonial-marquee aria-label="Portofolio peserta">
+                <p class="mb-3 px-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-brand-mid sm:px-0">Portofolio peserta</p>
                 <div class="testimonials-marquee overflow-hidden">
                     <div class="testimonials-marquee__track testimonials-marquee__track--right flex w-max gap-4 py-1 pl-4 sm:gap-5 sm:pl-5">
                         @foreach ([1, 2] as $copy)
-                            @foreach ($rowB as $testimonial)
+                            @foreach ($portfolios as $portfolio)
                                 <div @if ($copy === 2) aria-hidden="true" @endif>
-                                    @include('partials.testimonial-card', ['testimonial' => $testimonial, 'compact' => true])
+                                    @include('partials.portfolio-card', ['portfolio' => $portfolio, 'compact' => true])
                                 </div>
                             @endforeach
                         @endforeach
@@ -341,14 +392,14 @@
             </div>
         @else
             <div class="relative mx-auto grid max-w-6xl gap-5 px-4 sm:grid-cols-2 lg:grid-cols-3">
-                @foreach ($testimonials as $testimonial)
+                @foreach ($portfolios as $portfolio)
                     <div class="reveal">
-                        @include('partials.testimonial-card', ['testimonial' => $testimonial])
+                        @include('partials.portfolio-card', ['portfolio' => $portfolio, 'compact' => false])
                     </div>
                 @endforeach
             </div>
         @endif
-    @endif
+    </div>
 </section>
 
 @if (($faqs ?? collect())->isNotEmpty())

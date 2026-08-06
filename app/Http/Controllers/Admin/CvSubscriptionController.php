@@ -27,6 +27,12 @@ class CvSubscriptionController extends Controller
         ]);
 
         if ($data['status'] === 'active') {
+            CvSubscription::query()
+                ->where('user_id', $subscription->user_id)
+                ->where('id', '!=', $subscription->id)
+                ->where('status', 'active')
+                ->update(['status' => 'expired']);
+
             $subscription->activate();
             $subscription->update(['admin_note' => $data['admin_note'] ?? $subscription->admin_note]);
 

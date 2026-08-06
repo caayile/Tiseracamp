@@ -32,15 +32,18 @@ class CvReviewController extends Controller
         $planConfig = config('cv_plans.'.$plan);
         abort_unless(is_array($planConfig), 404);
 
-        if (auth()->user()->hasActiveCvSubscription()) {
+        $subscription = auth()->user()->activeCvSubscription();
+        if ($subscription && $subscription->plan_code === $plan) {
             return redirect()
-                ->route('cv-review.index')
-                ->with('success', 'Kamu sudah punya paket aktif. Langsung mulai review CV.');
+                ->route('cv-review.plans')
+                ->with('success', 'Paket '.$subscription->plan_name.' sudah aktif. Sisa coba masih bisa dipakai.');
         }
 
         return view('cv-review.checkout', [
             'plan' => $planConfig,
             'planCode' => $plan,
+            'isUpgrade' => (bool) $subscription,
+            'currentPlan' => $subscription,
         ]);
     }
 
@@ -49,8 +52,18 @@ class CvReviewController extends Controller
         $planConfig = config('cv_plans.'.$plan);
         abort_unless(is_array($planConfig), 404);
 
-        if (auth()->user()->hasActiveCvSubscription()) {
-            return redirect()->route('cv-review.index');
+        $subscription = auth()->user()->activeCvSubscription();
+        if ($subscription && $subscription->plan_code === $plan) {
+            return redirect()->route('cv-review.plans');
+        }
+
+        $pending = auth()->user()->cvSubscriptions()
+            ->where('status', 'waiting_verification')
+            ->exists();
+        if ($pending) {
+            return redirect()
+                ->route('cv-review.plans')
+                ->with('error', 'Masih ada pembayaran menunggu verifikasi. Tunggu admin dulu.');
         }
 
         $request->validate([
@@ -61,7 +74,7 @@ class CvReviewController extends Controller
 
         $path = $request->file('proof')->store('cv-subscriptions', media_disk());
 
-        $subscription = CvSubscription::create([
+        $newSubscription = CvSubscription::create([
             'user_id' => auth()->id(),
             'plan_code' => $planConfig['code'],
             'plan_name' => $planConfig['name'],
@@ -71,19 +84,20 @@ class CvReviewController extends Controller
             'invoice_code' => 'CV-'.strtoupper(Str::random(8)),
             'proof_path' => $path,
             'status' => 'waiting_verification',
+            'admin_note' => $subscription ? 'Upgrade dari '.$subscription->plan_name : null,
         ]);
 
         AppNotification::create([
             'user_id' => auth()->id(),
-            'title' => 'Pembayaran paket CV dikirim',
-            'body' => 'Menunggu verifikasi admin untuk invoice '.$subscription->invoice_code,
+            'title' => $subscription ? 'Upgrade paket CV dikirim' : 'Pembayaran paket CV dikirim',
+            'body' => 'Menunggu verifikasi admin untuk invoice '.$newSubscription->invoice_code,
             'type' => 'payment',
             'link' => route('cv-review.plans'),
         ]);
 
         return redirect()
             ->route('cv-review.plans')
-            ->with('success', 'Bukti pembayaran diunggah. Setelah admin verifikasi, kamu bisa mulai Review CV AI.');
+            ->with('success', 'Bukti pembayaran diunggah. Setelah admin verifikasi, paket baru aktif.');
     }
 
     public function index(CvReviewService $service): View|RedirectResponse
@@ -204,17 +218,26 @@ class CvReviewController extends Controller
             $interview['current_index'] = max(0, min($qIndex, $max));
         }
 
+        $career = $result['career'] ?? [];
+        $jobBoards = cv_job_board_recommendations([
+            'target_position' => $cvReview->target_position,
+            'suggested_role' => $career['suggested_role'] ?? null,
+            'location' => $cvReview->location,
+            'alternatives' => $career['alternatives'] ?? [],
+        ]);
+
         return view('cv-review.show', [
             'review' => $cvReview,
             'result' => $result,
             'points' => $points,
             'activePointId' => $activePointId,
             'journeyStep' => $journeyStep,
-            'career' => $result['career'] ?? [],
+            'career' => $career,
             'careerTab' => $careerTab,
             'coverLetter' => $cvReview->cover_letter,
             'interview' => $interview,
             'cvReviewReady' => app(CvReviewService::class)->isConfigured(),
+            'jobBoards' => $jobBoards,
         ]);
     }
 

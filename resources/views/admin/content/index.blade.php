@@ -124,13 +124,38 @@
             <input type="text" name="title" class="input-field" placeholder="Judul banner" required>
             <input type="text" name="subtitle" class="input-field" placeholder="Subjudul">
             <input type="text" name="cta_text" class="input-field" placeholder="Teks CTA">
-            <input type="text" name="cta_link" class="input-field" placeholder="Link CTA">
+            <input type="text" name="cta_link" class="input-field" placeholder="Link CTA (/programs, https://...)">
             <button class="btn-primary" type="submit">Tambah banner</button>
         </form>
-        <ul class="mt-4 space-y-2">
-            @foreach ($banners as $banner)
-                <li class="rounded-lg bg-brand-mist/50 px-3 py-2 text-sm">{{ $banner->title }}</li>
-            @endforeach
+        <ul class="mt-4 space-y-3">
+            @forelse ($banners as $banner)
+                <li class="rounded-lg border border-brand/10 bg-brand-mist/40 p-3 text-sm">
+                    <form method="POST" action="{{ route('admin.content.banners.update', $banner) }}" class="space-y-2">
+                        @csrf
+                        @method('PUT')
+                        <input type="text" name="title" value="{{ $banner->title }}" class="input-field py-1 text-xs" required>
+                        <input type="text" name="subtitle" value="{{ $banner->subtitle }}" class="input-field py-1 text-xs" placeholder="Subjudul">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" name="cta_text" value="{{ $banner->cta_text }}" class="input-field py-1 text-xs" placeholder="CTA">
+                            <input type="text" name="cta_link" value="{{ $banner->cta_link }}" class="input-field py-1 text-xs" placeholder="Link">
+                        </div>
+                        <label class="flex items-center gap-2 text-xs">
+                            <input type="checkbox" name="is_active" value="1" @checked($banner->is_active) class="rounded border-slate-300 text-brand focus:ring-brand">
+                            Aktif di beranda
+                        </label>
+                        <div class="flex gap-2">
+                            <button class="btn-primary text-xs" type="submit">Simpan</button>
+                            <button form="banner-del-{{ $banner->id }}" class="btn-ghost text-xs text-red-600" type="submit" onclick="return confirm('Hapus banner?')">Hapus</button>
+                        </div>
+                    </form>
+                    <form id="banner-del-{{ $banner->id }}" method="POST" action="{{ route('admin.content.banners.destroy', $banner) }}" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                </li>
+            @empty
+                <li class="text-sm text-ink-soft">Belum ada banner.</li>
+            @endforelse
         </ul>
     </div>
 
@@ -143,13 +168,31 @@
             <textarea name="answer" rows="2" class="input-field" placeholder="Jawaban" required></textarea>
             <button class="btn-primary" type="submit">Tambah FAQ</button>
         </form>
-        <ul class="mt-4 space-y-2">
-            @foreach ($faqs as $faq)
-                <li class="rounded-lg bg-brand-mist/50 px-3 py-2 text-sm">
-                    <p class="font-medium">{{ $faq->question }}</p>
-                    <p class="text-xs text-ink-soft">{{ \Illuminate\Support\Str::limit($faq->answer, 80) }}</p>
+        <ul class="mt-4 space-y-3">
+            @forelse ($faqs as $faq)
+                <li class="rounded-lg border border-brand/10 bg-brand-mist/40 p-3 text-sm">
+                    <form method="POST" action="{{ route('admin.content.faqs.update', $faq) }}" class="space-y-2">
+                        @csrf
+                        @method('PUT')
+                        <input type="text" name="question" value="{{ $faq->question }}" class="input-field py-1 text-xs" required>
+                        <textarea name="answer" rows="2" class="input-field py-1 text-xs" required>{{ $faq->answer }}</textarea>
+                        <label class="flex items-center gap-2 text-xs">
+                            <input type="checkbox" name="is_published" value="1" @checked($faq->is_published) class="rounded border-slate-300 text-brand focus:ring-brand">
+                            Tampil di beranda
+                        </label>
+                        <div class="flex gap-2">
+                            <button class="btn-primary text-xs" type="submit">Simpan</button>
+                            <button form="faq-del-{{ $faq->id }}" class="btn-ghost text-xs text-red-600" type="submit" onclick="return confirm('Hapus FAQ?')">Hapus</button>
+                        </div>
+                    </form>
+                    <form id="faq-del-{{ $faq->id }}" method="POST" action="{{ route('admin.content.faqs.destroy', $faq) }}" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
                 </li>
-            @endforeach
+            @empty
+                <li class="text-sm text-ink-soft">Belum ada FAQ.</li>
+            @endforelse
         </ul>
     </div>
 
@@ -162,12 +205,24 @@
             <button class="btn-primary shrink-0" type="submit">Tambah</button>
         </form>
         <ul class="mt-4 space-y-2">
-            @foreach ($categories as $category)
-                <li class="flex justify-between rounded-lg bg-brand-mist/50 px-3 py-2 text-sm">
-                    <span>{{ $category->name }}</span>
-                    <span class="text-xs text-ink-soft">{{ $category->programs_count }} program</span>
+            @forelse ($categories as $category)
+                <li class="rounded-lg border border-brand/10 bg-brand-mist/40 p-3 text-sm">
+                    <form method="POST" action="{{ route('admin.content.categories.update', $category) }}" class="flex flex-wrap items-center gap-2">
+                        @csrf
+                        @method('PUT')
+                        <input type="text" name="name" value="{{ $category->name }}" class="input-field py-1 text-xs flex-1" required>
+                        <span class="text-xs text-ink-soft">{{ $category->programs_count }} program</span>
+                        <button class="btn-primary text-xs" type="submit">Simpan</button>
+                        <button form="cat-del-{{ $category->id }}" class="btn-ghost text-xs text-red-600" type="submit" onclick="return confirm('Hapus kategori?')">Hapus</button>
+                    </form>
+                    <form id="cat-del-{{ $category->id }}" method="POST" action="{{ route('admin.content.categories.destroy', $category) }}" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
                 </li>
-            @endforeach
+            @empty
+                <li class="text-sm text-ink-soft">Belum ada kategori.</li>
+            @endforelse
         </ul>
     </div>
 

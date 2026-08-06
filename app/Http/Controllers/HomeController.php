@@ -7,6 +7,7 @@ use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Faq;
 use App\Models\Partner;
+use App\Models\Portfolio;
 use App\Models\Program;
 use App\Models\Testimonial;
 use Illuminate\View\View;
@@ -45,6 +46,23 @@ class HomeController extends Controller
             ->take(18)
             ->get();
 
+        $portfolios = Portfolio::query()
+            ->with(['user:id,name,university,avatar'])
+            ->where('type', 'portfolio')
+            ->whereHas('user.enrollments.program', fn ($q) => $q->whereIn('type', ['internship', 'bootcamp']))
+            ->latest()
+            ->take(18)
+            ->get();
+
+        if ($portfolios->isEmpty()) {
+            $portfolios = Portfolio::query()
+                ->with(['user:id,name,university,avatar'])
+                ->where('type', 'portfolio')
+                ->latest()
+                ->take(18)
+                ->get();
+        }
+
         return view('home', compact(
             'featured',
             'programs',
@@ -53,7 +71,8 @@ class HomeController extends Controller
             'banners',
             'faqs',
             'articles',
-            'testimonials'
+            'testimonials',
+            'portfolios'
         ));
     }
 }

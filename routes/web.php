@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\JobApplicationController as AdminJobApplicationController;
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
 use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\ContentController as AdminContentController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InternshipApplicationController;
+use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\Mentor\AnnouncementController as MentorAnnouncementController;
@@ -29,6 +31,7 @@ use App\Http\Controllers\Mentor\DashboardController as MentorDashboardController
 use App\Http\Controllers\Mentor\ProgramController as MentorProgramController;
 use App\Http\Controllers\Mentor\ScheduleController as MentorScheduleController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
@@ -41,6 +44,8 @@ Route::get('/berita', [NewsController::class, 'index'])->name('news.index');
 Route::get('/berita/{slug}', [NewsController::class, 'show'])->name('news.show');
 Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
 Route::get('/programs/{slug}', [ProgramController::class, 'show'])->name('programs.show');
+Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('pages.terms');
+Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('pages.privacy');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -131,13 +136,19 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/career/portfolio', [CareerController::class, 'storePortfolio'])->name('career.portfolio.store');
     Route::delete('/career/portfolio/{portfolio}', [CareerController::class, 'destroyPortfolio'])->name('career.portfolio.destroy');
 
+    Route::get('/jobs/{program}/apply', [JobApplicationController::class, 'create'])->name('jobs.apply');
+    Route::post('/jobs/{program}/apply', [JobApplicationController::class, 'store'])->name('jobs.store');
+    Route::get('/jobs/{program}/status', [JobApplicationController::class, 'status'])->name('jobs.status');
+
     Route::post('/programs/{program}/discussions', [DiscussionController::class, 'store'])->name('discussions.store');
     Route::get('/discussions/{discussion}', [DiscussionController::class, 'show'])->name('discussions.show');
     Route::post('/discussions/{discussion}/reply', [DiscussionController::class, 'reply'])->name('discussions.reply');
 
     Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 });
 
 Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.')->group(function () {
@@ -190,6 +201,9 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::post('/applications/{application}/review', [AdminApplicationController::class, 'review'])->name('applications.review');
 
+    Route::get('/job-applications', [AdminJobApplicationController::class, 'index'])->name('job-applications.index');
+    Route::post('/job-applications/{application}/review', [AdminJobApplicationController::class, 'review'])->name('job-applications.review');
+
     Route::get('/grades', [AdminGradeController::class, 'index'])->name('grades.index');
     Route::put('/grades/{enrollment}', [AdminGradeController::class, 'update'])->name('grades.update');
     Route::get('/grades/{enrollment}/print', [AdminGradeController::class, 'print'])->name('grades.print');
@@ -214,7 +228,13 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::put('/content/articles/{article}', [AdminContentController::class, 'updateArticle'])->name('content.articles.update');
     Route::delete('/content/articles/{article}', [AdminContentController::class, 'destroyArticle'])->name('content.articles.destroy');
     Route::post('/content/banners', [AdminContentController::class, 'storeBanner'])->name('content.banners');
+    Route::put('/content/banners/{banner}', [AdminContentController::class, 'updateBanner'])->name('content.banners.update');
+    Route::delete('/content/banners/{banner}', [AdminContentController::class, 'destroyBanner'])->name('content.banners.destroy');
     Route::post('/content/faqs', [AdminContentController::class, 'storeFaq'])->name('content.faqs');
+    Route::put('/content/faqs/{faq}', [AdminContentController::class, 'updateFaq'])->name('content.faqs.update');
+    Route::delete('/content/faqs/{faq}', [AdminContentController::class, 'destroyFaq'])->name('content.faqs.destroy');
     Route::post('/content/categories', [AdminContentController::class, 'storeCategory'])->name('content.categories');
+    Route::put('/content/categories/{category}', [AdminContentController::class, 'updateCategory'])->name('content.categories.update');
+    Route::delete('/content/categories/{category}', [AdminContentController::class, 'destroyCategory'])->name('content.categories.destroy');
     Route::post('/content/broadcast', [AdminContentController::class, 'broadcast'])->name('content.broadcast');
 });

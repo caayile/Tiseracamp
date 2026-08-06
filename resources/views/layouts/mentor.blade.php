@@ -65,10 +65,12 @@
                         <span class="hidden sm:inline">Tambah Bootcamp</span>
                     </a>
 
-                    <div class="relative" data-profile-menu>
+                    <div class="relative z-50" data-profile-menu>
                         <button type="button" data-profile-toggle
                                 class="flex items-center gap-3 rounded-2xl border border-[#0B1F2A]/10 bg-white py-1.5 pl-1.5 pr-3 shadow-sm transition hover:border-[#27CCF5]/50 hover:shadow-md"
-                                aria-expanded="false">
+                                aria-expanded="false"
+                                aria-haspopup="menu"
+                                aria-label="Menu profil">
                             @if ($mentor->avatar)
                                 <img src="{{ media_url($mentor->avatar) }}" alt="{{ $mentor->name }}" class="h-11 w-11 rounded-xl object-cover ring-2 ring-[#27CCF5]/40">
                             @else
@@ -80,36 +82,36 @@
                                 <span class="block text-sm font-semibold leading-tight text-[#0B1F2A]">{{ $mentor->name }}</span>
                                 <span class="block text-[11px] text-[#0B9BC4]">Mentor · {{ number_format($mentor->rating, 1) }}★</span>
                             </span>
-                            <svg class="hidden h-4 w-4 text-slate-400 sm:block" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+                            <svg class="hidden h-4 w-4 text-slate-400 sm:block" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
                         </button>
 
-                        <div class="absolute right-0 mt-2 hidden w-72 overflow-hidden rounded-2xl border border-brand/15 bg-white shadow-xl" data-profile-panel>
-                            <div class="bg-gradient-to-br from-brand/20 via-white to-brand-mist p-5">
+                        <div class="absolute right-0 z-50 mt-2 hidden w-72 overflow-hidden rounded-2xl border border-brand/15 bg-panel shadow-xl" data-profile-panel role="menu">
+                            <div class="bg-gradient-to-br from-brand/20 via-panel to-brand-mist p-5">
                                 <div class="flex items-center gap-3">
                                     @if ($mentor->avatar)
                                         <img src="{{ media_url($mentor->avatar) }}" alt="" class="h-14 w-14 rounded-xl object-cover">
                                     @else
                                         <span class="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-deeper font-display text-lg font-bold text-white">{{ strtoupper($initials) }}</span>
                                     @endif
-                                    <div>
-                                        <p class="text-base font-semibold text-ink">{{ $mentor->name }}</p>
-                                        <p class="text-sm text-ink-soft">{{ $mentor->email }}</p>
+                                    <div class="min-w-0">
+                                        <p class="truncate text-base font-semibold text-ink">{{ $mentor->name }}</p>
+                                        <p class="truncate text-sm text-ink-soft">{{ $mentor->email }}</p>
                                     </div>
                                 </div>
                                 @if ($mentor->expertise)
                                     <div class="mt-3 flex flex-wrap gap-1">
                                         @foreach (array_slice($mentor->expertise ?? [], 0, 4) as $skill)
-                                            <span class="rounded-lg bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-deeper">{{ $skill }}</span>
+                                            <span class="rounded-lg bg-panel/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-deeper">{{ $skill }}</span>
                                         @endforeach
                                     </div>
                                 @endif
                             </div>
                             <div class="p-2">
-                                <a href="{{ route('profile.edit') }}" class="block rounded-xl px-3 py-2 text-sm hover:bg-brand/10">Kelola profil mentor</a>
-                                <a href="{{ route('mentor.programs.index') }}" class="block rounded-xl px-3 py-2 text-sm hover:bg-brand/10">Program saya</a>
-                                <form method="POST" action="{{ route('logout') }}">
+                                <a href="{{ route('profile.edit') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10" role="menuitem">Edit profil</a>
+                                <a href="{{ route('mentor.programs.index') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10" role="menuitem">Program saya</a>
+                                <form method="POST" action="{{ route('logout') }}" class="border-t border-ink/8 mt-1 pt-1">
                                     @csrf
-                                    <button class="w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50" type="submit">Keluar</button>
+                                    <button class="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50" type="submit" role="menuitem">Keluar</button>
                                 </form>
                             </div>
                         </div>
@@ -136,20 +138,5 @@
             @yield('content')
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const root = document.querySelector('[data-profile-menu]');
-            if (!root) return;
-            const toggle = root.querySelector('[data-profile-toggle]');
-            const panel = root.querySelector('[data-profile-panel]');
-            toggle?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                panel.classList.toggle('hidden');
-                toggle.setAttribute('aria-expanded', panel.classList.contains('hidden') ? 'false' : 'true');
-            });
-            document.addEventListener('click', () => panel?.classList.add('hidden'));
-        });
-    </script>
 </body>
 </html>

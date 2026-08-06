@@ -84,7 +84,7 @@
 
     <label class="flex items-start gap-2.5 text-sm text-ink-soft">
         <input type="checkbox" name="terms" value="1" class="mt-0.5 rounded border-slate-300 text-brand focus:ring-brand" required>
-        <span>Saya menyetujui <a href="#" class="font-semibold text-brand">Syarat & Ketentuan</a> serta <a href="#" class="font-semibold text-brand">Kebijakan Privasi</a>.</span>
+        <span>Saya menyetujui <a href="{{ route('pages.terms') }}" target="_blank" class="font-semibold text-brand">Syarat & Ketentuan</a> serta <a href="{{ route('pages.privacy') }}" target="_blank" class="font-semibold text-brand">Kebijakan Privasi</a>.</span>
     </label>
 
     <button type="submit" class="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark">

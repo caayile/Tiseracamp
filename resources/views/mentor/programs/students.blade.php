@@ -10,6 +10,18 @@
 
 @php $ratingLabels = \App\Models\Enrollment::mentorRatingLabels(); @endphp
 
+<div class="mb-6 card-soft p-5">
+    <h2 class="font-display text-lg font-semibold text-ink">Kirim pengumuman ke siswa</h2>
+    <p class="mt-1 text-sm text-ink-soft">Pesan masuk ke notifikasi semua siswa yang terdaftar di program ini.</p>
+    <form method="POST" action="{{ route('mentor.announcements.store') }}" class="mt-4 space-y-3">
+        @csrf
+        <input type="hidden" name="program_id" value="{{ $program->id }}">
+        <input type="text" name="title" class="input-field" placeholder="Judul pengumuman" required maxlength="160">
+        <textarea name="body" rows="3" class="input-field" placeholder="Isi pengumuman..." required></textarea>
+        <button type="submit" class="btn-primary">Kirim pengumuman</button>
+    </form>
+</div>
+
 <div class="mb-4 rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
     Setelah siswa menyelesaikan 100% course, beri <strong class="text-ink">rating bintang 1–5</strong> secara manual.
     Siswa juga bisa memberi bintang untukmu dari halaman belajar mereka.

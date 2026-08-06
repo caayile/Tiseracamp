@@ -105,7 +105,7 @@
 
 @layer components {
     .btn-primary {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-brand-navy
             shadow-[0_10px_28px_-12px_rgba(39,204,245,0.75)] transition duration-300
             hover:-translate-y-0.5 hover:bg-brand-light
             focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2;
@@ -486,6 +486,72 @@ html.dark .border-gray-200 {
     border-color: color-mix(in srgb, var(--color-ink) 12%, transparent) !important;
 }
 
+/* Tombol/badge cyan: tetap pakai teks gelap agar terbaca di mode gelap */
+html.dark .btn-primary,
+html.dark .bg-brand.text-ink,
+html.dark .bg-brand .text-ink,
+html.dark [data-ai-loading-pill] {
+    color: #0b1f2a !important;
+}
+
+/* Alert / skor Review CV AI */
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-50\/70,
+html.dark .bg-emerald-100 {
+    background-color: color-mix(in srgb, #10b981 22%, var(--color-panel)) !important;
+    border-color: color-mix(in srgb, #34d399 35%, transparent) !important;
+}
+
+html.dark .text-emerald-900,
+html.dark .text-emerald-800,
+html.dark .text-emerald-700 {
+    color: #6ee7b7 !important;
+}
+
+html.dark .border-emerald-100,
+html.dark .border-emerald-200 {
+    border-color: color-mix(in srgb, #34d399 40%, transparent) !important;
+}
+
+html.dark .ring-emerald-200 {
+    --tw-ring-color: color-mix(in srgb, #34d399 45%, transparent) !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/70,
+html.dark .bg-amber-100 {
+    background-color: color-mix(in srgb, #f59e0b 20%, var(--color-panel)) !important;
+    border-color: color-mix(in srgb, #fbbf24 35%, transparent) !important;
+}
+
+html.dark .text-amber-900,
+html.dark .text-amber-800,
+html.dark .text-amber-700 {
+    color: #fcd34d !important;
+}
+
+html.dark .border-amber-100,
+html.dark .border-amber-200 {
+    border-color: color-mix(in srgb, #fbbf24 40%, transparent) !important;
+}
+
+html.dark .ring-amber-200 {
+    --tw-ring-color: color-mix(in srgb, #fbbf24 45%, transparent) !important;
+}
+
+html.dark .bg-rose-100 {
+    background-color: color-mix(in srgb, #f43f5e 22%, var(--color-panel)) !important;
+}
+
+html.dark .text-rose-800,
+html.dark .text-rose-700 {
+    color: #fda4af !important;
+}
+
+html.dark .ring-rose-200 {
+    --tw-ring-color: color-mix(in srgb, #fb7185 45%, transparent) !important;
+}
+
 html.dark footer,
 html.dark .bg-ink {
     background-color: #0b1f2a !important;
@@ -497,4 +563,25 @@ html.dark .auth-card {
     border-color: color-mix(in srgb, white 22%, transparent);
     -webkit-backdrop-filter: blur(28px) saturate(1.2);
     backdrop-filter: blur(28px) saturate(1.2);
+}
+
+/* Dropdown lonceng: ukuran tetap, tidak memanjang */
+[data-notif-panel] {
+    width: min(17.5rem, calc(100vw - 1.5rem)) !important;
+    height: 23.5rem !important; /* ~3:4 dari lebar 17.5rem */
+    max-height: min(23.5rem, 65vh) !important;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+[data-notif-panel]:not(.hidden) {
+    display: flex !important;
+}
+
+[data-notif-panel] [data-notif-list] {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }

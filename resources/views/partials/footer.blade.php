@@ -27,6 +27,8 @@
                 <a href="{{ route('programs.index') }}" class="transition hover:text-brand">Bootcamp & Program</a>
                 <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="transition hover:text-brand">Magang</a>
                 <a href="{{ route('news.index') }}" class="transition hover:text-brand">Berita</a>
+                <a href="{{ route('pages.terms') }}" class="transition hover:text-brand">Syarat & Ketentuan</a>
+                <a href="{{ route('pages.privacy') }}" class="transition hover:text-brand">Kebijakan Privasi</a>
                 @auth
                     @if (auth()->user()->isStudent())
                         <a href="{{ route('career.gallery') }}" class="transition hover:text-brand">Karier</a>

@@ -54,3 +54,72 @@ if (! function_exists('youtube_embed_url')) {
         return $url;
     }
 }
+
+if (! function_exists('cv_job_board_recommendations')) {
+    /**
+     * Build LinkedIn / Glints / Jobstreet search links for CV review roles.
+     *
+     * @param  array{target_position?:?string,suggested_role?:?string,location?:?string,alternatives?:array<int,string>}  $context
+     * @return array<int, array{role:string,boards:array<int, array{name:string,label:string,url:string,color:string}>}>
+     */
+    function cv_job_board_recommendations(array $context): array
+    {
+        $primary = trim((string) ($context['suggested_role'] ?? ''))
+            ?: trim((string) ($context['target_position'] ?? ''));
+
+        $roles = [];
+        if ($primary !== '') {
+            $roles[] = $primary;
+        }
+
+        foreach ($context['alternatives'] ?? [] as $alt) {
+            $alt = trim((string) $alt);
+            if ($alt !== '' && ! in_array($alt, $roles, true)) {
+                $roles[] = $alt;
+            }
+            if (count($roles) >= 3) {
+                break;
+            }
+        }
+
+        if ($roles === []) {
+            return [];
+        }
+
+        $location = trim((string) ($context['location'] ?? '')) ?: 'Indonesia';
+
+        $boardsFor = function (string $role) use ($location): array {
+            $q = rawurlencode($role);
+            $loc = rawurlencode($location);
+            $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $role) ?? '', '-'));
+
+            return [
+                [
+                    'name' => 'linkedin',
+                    'label' => 'LinkedIn',
+                    'url' => "https://www.linkedin.com/jobs/search/?keywords={$q}&location={$loc}",
+                    'color' => 'bg-[#0A66C2] text-white hover:bg-[#004182]',
+                ],
+                [
+                    'name' => 'glints',
+                    'label' => 'Glints',
+                    'url' => "https://glints.com/id/opportunities/jobs/explore?keyword={$q}&country=ID",
+                    'color' => 'bg-[#0F1B2A] text-white hover:bg-[#1a2d45]',
+                ],
+                [
+                    'name' => 'jobstreet',
+                    'label' => 'Jobstreet',
+                    'url' => $slug !== ''
+                        ? "https://id.jobstreet.com/{$slug}-jobs"
+                        : "https://id.jobstreet.com/jobs?keywords={$q}",
+                    'color' => 'bg-[#0D74CE] text-white hover:bg-[#0a5ca3]',
+                ],
+            ];
+        };
+
+        return array_map(fn (string $role) => [
+            'role' => $role,
+            'boards' => $boardsFor($role),
+        ], $roles);
+    }
+}

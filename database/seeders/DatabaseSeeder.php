@@ -2,11 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Achievement;
 use App\Models\Assignment;
 use App\Models\Banner;
 use App\Models\Batch;
-use App\Models\CareerResource;
 use App\Models\Category;
 use App\Models\ClassSchedule;
 use App\Models\Faq;
@@ -239,11 +237,6 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        Achievement::create(['name' => 'First Step', 'icon' => '🚀', 'description' => 'Menyelesaikan materi pertama']);
-        Achievement::create(['name' => 'Consistent Learner', 'icon' => '🔥', 'description' => 'Aktif belajar 7 hari']);
-        CareerResource::create(['title' => 'Template CV ATS-Friendly', 'type' => 'cv', 'content' => 'Gunakan struktur ringkas: ringkasan, skill, pengalaman, project.']);
-        CareerResource::create(['title' => 'Persiapan Interview Technical', 'type' => 'interview', 'content' => 'Latihan STAR method + penjelasan project portfolio.']);
-        CareerResource::create(['title' => 'Info Magang Partner', 'type' => 'job', 'content' => 'Cek lowongan magang dari partner Tiga Serangkai setiap bulan.']);
         Banner::create([
             'title' => 'Batch baru Tiga Serangkai dibuka',
             'subtitle' => 'Bootcamp & magang online dengan mentoring industri',

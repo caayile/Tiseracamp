@@ -9,9 +9,19 @@
     <div class="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         <x-back-nav :fallback="route('cv-review.plans')" />
         <div class="mt-4">
-            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Checkout paket</p>
-            <h1 class="mt-2 font-display text-3xl font-bold text-ink">Aktifkan Review CV AI</h1>
-            <p class="mt-2 max-w-xl text-sm text-ink-soft">Transfer sesuai nominal, upload bukti, lalu tunggu verifikasi admin.</p>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">
+                {{ ($isUpgrade ?? false) ? 'Upgrade paket' : 'Checkout paket' }}
+            </p>
+            <h1 class="mt-2 font-display text-3xl font-bold text-ink">
+                {{ ($isUpgrade ?? false) ? 'Upgrade Review CV AI' : 'Aktifkan Review CV AI' }}
+            </h1>
+            <p class="mt-2 max-w-xl text-sm text-ink-soft">
+                @if ($isUpgrade ?? false)
+                    Kamu masih punya paket {{ $currentPlan->plan_name ?? '' }} aktif. Setelah admin verifikasi upgrade, paket baru yang dipakai.
+                @else
+                    Transfer sesuai nominal, upload bukti, lalu tunggu verifikasi admin.
+                @endif
+            </p>
         </div>
 
         <div class="mt-8 grid gap-3 sm:grid-cols-3">
@@ -21,7 +31,7 @@
                 ['3', 'Verifikasi admin', 'todo'],
             ] as [$num, $label, $state])
                 <div class="flex items-center gap-3 rounded-2xl border px-4 py-3 {{ $state === 'active' ? 'border-brand/40 bg-brand-mist' : 'border-brand/15 bg-white' }}">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold {{ $state === 'active' ? 'bg-brand text-ink' : ($state === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-surface text-ink-soft') }}">{{ $num }}</span>
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold {{ $state === 'active' ? 'bg-brand text-brand-navy' : ($state === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-surface text-ink-soft') }}">{{ $num }}</span>
                     <span class="text-sm font-semibold {{ $state === 'todo' ? 'text-ink-soft' : 'text-ink' }}">{{ $label }}</span>
                 </div>
             @endforeach
