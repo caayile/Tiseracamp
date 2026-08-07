@@ -57,6 +57,8 @@ class ContentController extends Controller
             'published_at' => $data['published_at'],
         ]);
 
+        forget_home_cache();
+
         return redirect()->route('admin.content.index')->with('success', 'Berita dipublikasikan.');
     }
 
@@ -83,12 +85,16 @@ class ContentController extends Controller
             'published_at' => $data['published_at'],
         ])->save();
 
+        forget_home_cache();
+
         return redirect()->route('admin.content.index')->with('success', 'Berita diperbarui.');
     }
 
     public function destroyArticle(Article $article): RedirectResponse
     {
         $article->delete();
+
+        forget_home_cache();
 
         return back()->with('success', 'Berita dihapus.');
     }
@@ -102,6 +108,8 @@ class ContentController extends Controller
             'cta_link' => ['nullable', 'string'],
         ]);
         Banner::create([...$data, 'is_active' => true]);
+
+        forget_home_cache();
 
         return back()->with('success', 'Banner ditambahkan.');
     }
@@ -121,12 +129,16 @@ class ContentController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
+        forget_home_cache();
+
         return back()->with('success', 'Banner diperbarui.');
     }
 
     public function destroyBanner(Banner $banner): RedirectResponse
     {
         $banner->delete();
+
+        forget_home_cache();
 
         return back()->with('success', 'Banner dihapus.');
     }
@@ -138,6 +150,8 @@ class ContentController extends Controller
             'answer' => ['required', 'string'],
         ]);
         Faq::create([...$data, 'sort_order' => Faq::count() + 1, 'is_published' => true]);
+
+        forget_home_cache();
 
         return back()->with('success', 'FAQ ditambahkan.');
     }
@@ -156,12 +170,16 @@ class ContentController extends Controller
             'is_published' => $request->boolean('is_published'),
         ]);
 
+        forget_home_cache();
+
         return back()->with('success', 'FAQ diperbarui.');
     }
 
     public function destroyFaq(Faq $faq): RedirectResponse
     {
         $faq->delete();
+
+        forget_home_cache();
 
         return back()->with('success', 'FAQ dihapus.');
     }
@@ -170,6 +188,8 @@ class ContentController extends Controller
     {
         $data = $request->validate(['name' => ['required', 'string', 'max:80']]);
         Category::create(['name' => $data['name'], 'slug' => Str::slug($data['name'])]);
+
+        forget_home_cache();
 
         return back()->with('success', 'Kategori ditambahkan.');
     }
@@ -182,6 +202,8 @@ class ContentController extends Controller
             'slug' => Str::slug($data['name']),
         ]);
 
+        forget_home_cache();
+
         return back()->with('success', 'Kategori diperbarui.');
     }
 
@@ -192,6 +214,8 @@ class ContentController extends Controller
         }
 
         $category->delete();
+
+        forget_home_cache();
 
         return back()->with('success', 'Kategori dihapus.');
     }

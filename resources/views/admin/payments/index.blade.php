@@ -5,6 +5,17 @@
 
 @section('content')
 <div class="mb-8">
+    @php $bank = payment_account(); @endphp
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand-mist/40 px-4 py-3">
+        <div>
+            <p class="text-sm font-semibold text-ink">Rekening tujuan transfer</p>
+            <p class="text-xs text-ink-soft">
+                {{ $bank['bank_name'] }} · {{ $bank['account_number'] }} · a.n. {{ $bank['account_holder'] }}
+            </p>
+        </div>
+        <a href="{{ route('admin.payment-account.edit') }}" class="btn-secondary text-xs">Ubah rekening</a>
+    </div>
+
     <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
             <h2 class="font-display text-lg font-semibold text-ink">Paket Review CV AI</h2>

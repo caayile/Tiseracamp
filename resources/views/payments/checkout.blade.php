@@ -84,15 +84,16 @@
                 <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#0B9BC4]">Rekening tujuan</p>
                 <h3 class="mt-1 font-display text-lg font-semibold text-[#0B1F2A]">Transfer bank</h3>
 
+                @php $bank = payment_account(); @endphp
                 <div class="mt-5 space-y-3">
                     <div class="rounded-2xl border border-[#27CCF5]/25 bg-gradient-to-br from-[#E8F9FE] to-white p-4">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="text-xs font-semibold uppercase tracking-wide text-[#065A7A]">BCA</p>
-                                <p class="mt-1 font-display text-2xl font-bold tracking-wide text-[#0B1F2A]" data-copy-value="1234567890">1234567890</p>
-                                <p class="mt-1 text-sm text-slate-500">a.n. PT Tiga Serangkai</p>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-[#065A7A]">{{ $bank['bank_name'] }}</p>
+                                <p class="mt-1 font-display text-2xl font-bold tracking-wide text-[#0B1F2A]" data-copy-value="{{ $bank['account_number'] }}">{{ $bank['account_number'] }}</p>
+                                <p class="mt-1 text-sm text-slate-500">a.n. {{ $bank['account_holder'] }}</p>
                             </div>
-                            <button type="button" data-copy="1234567890" class="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-ink transition hover:bg-brand-light">Salin</button>
+                            <button type="button" data-copy="{{ $bank['account_number'] }}" class="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-ink transition hover:bg-brand-light">Salin</button>
                         </div>
                     </div>
 

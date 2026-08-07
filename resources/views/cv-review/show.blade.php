@@ -399,7 +399,7 @@
 
                         @if (! ($cvReviewReady ?? false))
                             <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                                Fitur AI belum dikonfigurasi. Admin perlu set <code class="text-xs">GEMINI_API_KEY</code>.
+                                Fitur AI belum dikonfigurasi. Admin perlu set <code class="text-xs">GEMINI_API_KEY</code> atau <code class="text-xs">GROQ_API_KEY</code>.
                             </div>
                         @else
                             <form method="POST" action="{{ route('cv-review.cover-letter', $review) }}"
@@ -484,7 +484,7 @@
 
                         @if (! ($cvReviewReady ?? false))
                             <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                                Fitur AI belum dikonfigurasi. Admin perlu set <code class="text-xs">GEMINI_API_KEY</code>.
+                                Fitur AI belum dikonfigurasi. Admin perlu set <code class="text-xs">GEMINI_API_KEY</code> atau <code class="text-xs">GROQ_API_KEY</code>.
                             </div>
                         @elseif (empty($questions))
                             <form method="POST" action="{{ route('cv-review.interview', $review) }}" class="mt-6"

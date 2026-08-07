@@ -43,9 +43,12 @@ class ProgramController extends Controller
     public function show(string $slug): View
     {
         $program = Program::published()
-            ->with(['partner', 'mentor', 'modules.lessons', 'category'])
+            ->with(['partner', 'mentor', 'category'])
             ->where('slug', $slug)
             ->firstOrFail();
+
+        // Dipakai navbar untuk highlight Magang vs Bootcamp tanpa query ekstra.
+        view()->share('navProgramType', $program->type);
 
         $enrolled = false;
         $application = null;

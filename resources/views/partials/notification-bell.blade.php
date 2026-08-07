@@ -1,33 +1,6 @@
 @auth
 @php
-    $cacheKey = 'notif-bell-'.auth()->id();
-    $bellPayload = \Illuminate\Support\Facades\Cache::get($cacheKey);
-
-    if (! is_array($bellPayload) || ! isset($bellPayload['rows'], $bellPayload['unread'])) {
-        $rows = \App\Models\AppNotification::query()
-            ->where('user_id', auth()->id())
-            ->latest()
-            ->limit(4)
-            ->get(['id', 'title', 'body', 'link', 'read_at', 'created_at'])
-            ->map(fn ($n) => [
-                'id' => $n->id,
-                'title' => $n->title,
-                'body' => $n->body,
-                'link' => $n->link,
-                'read_at' => $n->read_at?->toIso8601String(),
-                'created_at' => $n->created_at?->toIso8601String(),
-            ])
-            ->all();
-
-        $unreadTotal = \App\Models\AppNotification::query()
-            ->where('user_id', auth()->id())
-            ->whereNull('read_at')
-            ->count();
-
-        $bellPayload = ['rows' => $rows, 'unread' => $unreadTotal];
-        \Illuminate\Support\Facades\Cache::put($cacheKey, $bellPayload, now()->addSeconds(60));
-    }
-
+    $bellPayload = notification_bell_payload();
     $recentNotifications = collect($bellPayload['rows'])->map(function ($row) {
         return (object) [
             'id' => $row['id'],

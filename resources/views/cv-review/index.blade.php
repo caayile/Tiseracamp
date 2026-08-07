@@ -116,7 +116,7 @@
                 @else
                     <div class="mt-6 rounded-2xl border border-dashed border-brand/25 bg-brand-mist/40 px-5 py-8 text-center">
                         <p class="font-display text-lg font-semibold text-ink">Segera hadir</p>
-                        <p class="mt-2 text-sm text-ink-soft">Set <code class="text-xs">GEMINI_API_KEY</code> di `.env` untuk mengaktifkan.</p>
+                        <p class="mt-2 text-sm text-ink-soft">Set <code class="text-xs">GEMINI_API_KEY</code> atau <code class="text-xs">GROQ_API_KEY</code> di `.env` untuk mengaktifkan.</p>
                     </div>
                 @endif
             </div>

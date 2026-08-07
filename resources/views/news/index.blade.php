@@ -14,7 +14,7 @@
             <label class="sr-only" for="news-search">Cari berita</label>
             <input id="news-search" type="search" name="q" value="{{ $q ?? '' }}"
                    placeholder="Cari berita magang..."
-                   class="w-full rounded-xl border border-ink/10 bg-surface px-5 py-3 text-sm text-ink outline-none placeholder:text-ink-soft/60 focus:border-brand focus:ring-2 focus:ring-brand/20">
+                   class="w-full rounded-xl border border-ink/10 bg-surface px-5 py-3 text-sm text-ink outline-none placeholder:text-ink-soft/60 focus:border-brand focus:ring-0 focus:bg-surface">
         </form>
     </div>
 </section>

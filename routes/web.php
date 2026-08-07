@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ContentController as AdminContentController;
 use App\Http\Controllers\Admin\CvSubscriptionController as AdminCvSubscriptionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GradeController as AdminGradeController;
+use App\Http\Controllers\Admin\PaymentAccountController as AdminPaymentAccountController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\ProgramController as AdminProgramController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
@@ -210,6 +211,8 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
 
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');
+    Route::get('/payment-account', [AdminPaymentAccountController::class, 'edit'])->name('payment-account.edit');
+    Route::put('/payment-account', [AdminPaymentAccountController::class, 'update'])->name('payment-account.update');
 
     Route::get('/cv-subscriptions', [AdminCvSubscriptionController::class, 'index'])->name('cv-subscriptions.index');
     Route::post('/cv-subscriptions/{subscription}/verify', [AdminCvSubscriptionController::class, 'verify'])->name('cv-subscriptions.verify');

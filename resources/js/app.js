@@ -34,6 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Prefetch halaman saat hover navbar → klik terasa lebih cepat
+    const prefetched = new Set();
+    document.querySelectorAll('header a[href]').forEach((anchor) => {
+        const href = anchor.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto:')) return;
+
+        anchor.addEventListener('mouseenter', () => {
+            if (prefetched.has(href)) return;
+            prefetched.add(href);
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = href;
+            document.head.appendChild(link);
+        }, { once: true });
+    });
+
     const careerToggles = document.querySelectorAll('[data-career-toggle]');
 
     if (careerToggles.length) {

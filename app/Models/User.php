@@ -80,11 +80,21 @@ class User extends Authenticatable
 
     public function activeCvSubscription(): ?CvSubscription
     {
-        return $this->cvSubscriptions()
+        static $memo = [];
+        $userId = $this->id;
+        if (array_key_exists($userId, $memo)) {
+            return $memo[$userId];
+        }
+
+        $candidates = $this->cvSubscriptions()
             ->active()
             ->latest('paid_at')
-            ->get()
-            ->first(fn (CvSubscription $subscription) => $subscription->isUsable());
+            ->limit(5)
+            ->get();
+
+        $usable = $candidates->first(fn (CvSubscription $subscription) => $subscription->isUsable());
+
+        return $memo[$userId] = $usable;
     }
 
     public function hasActiveCvSubscription(): bool

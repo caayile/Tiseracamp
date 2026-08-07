@@ -121,7 +121,7 @@ class CvReviewController extends Controller
         }
 
         if (! $service->isConfigured()) {
-            return back()->with('error', 'Fitur Review CV AI belum siap. Admin perlu set GEMINI_API_KEY di .env.');
+            return back()->with('error', 'Fitur Review CV AI belum siap. Admin perlu set GEMINI_API_KEY / GROQ_API_KEY di .env.');
         }
 
         $data = $request->validate([
@@ -246,7 +246,7 @@ class CvReviewController extends Controller
         $this->authorizeReviewOwner($cvReview);
 
         if (! $service->isConfigured()) {
-            return back()->with('error', 'Fitur AI belum siap. Set GEMINI_API_KEY di .env.');
+            return back()->with('error', 'Fitur AI belum siap. Set GEMINI_API_KEY / GROQ_API_KEY di .env.');
         }
 
         $data = $request->validate([
@@ -300,7 +300,7 @@ class CvReviewController extends Controller
         $this->authorizeReviewOwner($cvReview);
 
         if (! $service->isConfigured()) {
-            return back()->with('error', 'Fitur AI belum siap. Set GEMINI_API_KEY di .env.');
+            return back()->with('error', 'Fitur AI belum siap. Set GEMINI_API_KEY / GROQ_API_KEY di .env.');
         }
 
         try {
@@ -353,7 +353,7 @@ class CvReviewController extends Controller
         $this->authorizeReviewOwner($cvReview);
 
         if (! $service->isConfigured()) {
-            return back()->with('error', 'Fitur AI belum siap. Set GEMINI_API_KEY di .env.');
+            return back()->with('error', 'Fitur AI belum siap. Set GEMINI_API_KEY / GROQ_API_KEY di .env.');
         }
 
         $interview = $cvReview->interview;

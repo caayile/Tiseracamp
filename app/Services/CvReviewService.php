@@ -12,7 +12,9 @@ class CvReviewService
 {
     public function isConfigured(): bool
     {
-        return filled(config('services.gemini.key')) || filled(config('services.openai.key'));
+        return filled(config('services.gemini.key'))
+            || filled(config('services.groq.key'))
+            || filled(config('services.openai.key'));
     }
 
     /**
@@ -25,11 +27,29 @@ class CvReviewService
             return $this->reviewWithGemini($file, $context);
         }
 
-        if (filled(config('services.openai.key'))) {
-            return $this->reviewWithOpenAi($file, $context);
+        if (filled(config('services.groq.key'))) {
+            return $this->reviewWithOpenAiCompatible(
+                $file,
+                $context,
+                (string) config('services.groq.key'),
+                (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
+                rtrim((string) config('services.groq.base_url'), '/').'/chat/completions',
+                'groq',
+            );
         }
 
-        throw new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY atau OPENAI_API_KEY di .env.');
+        if (filled(config('services.openai.key'))) {
+            return $this->reviewWithOpenAiCompatible(
+                $file,
+                $context,
+                (string) config('services.openai.key'),
+                (string) config('services.openai.model', 'gpt-4o-mini'),
+                'https://api.openai.com/v1/chat/completions',
+                'openai',
+            );
+        }
+
+        throw new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY, GROQ_API_KEY, atau OPENAI_API_KEY di .env.');
     }
 
     private function reviewWithGemini(UploadedFile $file, array $context = []): array
@@ -108,42 +128,91 @@ class CvReviewService
         throw new RuntimeException('Gagal menghubungi Gemini. Coba lagi nanti.');
     }
 
-    private function reviewWithOpenAi(UploadedFile $file, array $context = []): array
-    {
-        $key = config('services.openai.key');
-        $model = config('services.openai.model', 'gpt-4o-mini');
-
+    private function reviewWithOpenAiCompatible(
+        UploadedFile $file,
+        array $context,
+        string $key,
+        string $model,
+        string $url,
+        string $provider,
+    ): array {
         $textContent = $this->extractPdfTextFallback($file);
+        if ($provider === 'groq') {
+            $textContent = mb_substr($textContent, 0, 8000);
+        }
 
-        $response = Http::timeout(90)
+        $response = Http::timeout(120)
             ->withToken($key)
             ->acceptJson()
-            ->post('https://api.openai.com/v1/chat/completions', [
+            ->post($url, [
                 'model' => $model,
-                'temperature' => 0.3,
+                'temperature' => 0.1,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'Kamu adalah reviewer CV profesional untuk mahasiswa Indonesia. Jawab hanya JSON valid sesuai skema.',
+                        'content' => 'Kamu adalah reviewer CV profesional untuk mahasiswa Indonesia. '
+                            .'Output WAJIB satu objek JSON valid saja. '
+                            .'Jangan ulang teks CV, jangan tulis penjelasan, jangan pakai markdown. '
+                            .'Mulai dengan { dan akhiri dengan }.',
                     ],
                     [
                         'role' => 'user',
-                        'content' => $this->prompt($context)."\n\nIsi CV:\n".$textContent,
+                        'content' => $this->prompt($context)
+                            ."\n\n--- CV TEXT START ---\n".$textContent."\n--- CV TEXT END ---\n\n"
+                            .'Buat review berdasarkan CV di atas. Balas HANYA JSON sesuai skema.',
                     ],
                 ],
             ]);
 
+        $payload = $response->json();
+        $text = (string) data_get($payload, 'choices.0.message.content', '');
+
         if (! $response->successful()) {
-            Log::warning('OpenAI CV review failed', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new RuntimeException('Gagal menghubungi OpenAI. Coba lagi nanti.');
+            $failed = (string) data_get($payload, 'error.failed_generation', '');
+            if ($response->status() === 400 && $failed !== '') {
+                try {
+                    $parsed = $this->parseJsonPayload($failed);
+                    $parsed['provider'] = $provider;
+
+                    return $parsed;
+                } catch (RuntimeException) {
+                    // fall through
+                }
+            }
+
+            Log::warning(strtoupper($provider).' CV review failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            if (in_array($response->status(), [401, 403], true)) {
+                throw new RuntimeException('API key '.strtoupper($provider).' tidak valid.');
+            }
+
+            if ($response->status() === 429) {
+                throw new RuntimeException('Kuota '.strtoupper($provider).' habis / rate limit. Coba lagi nanti.');
+            }
+
+            throw new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
         }
 
-        $text = data_get($response->json(), 'choices.0.message.content', '');
         $parsed = $this->parseJsonPayload($text);
-        $parsed['provider'] = 'openai';
+        $parsed['provider'] = $provider;
 
         return $parsed;
+    }
+
+    private function reviewWithOpenAi(UploadedFile $file, array $context = []): array
+    {
+        return $this->reviewWithOpenAiCompatible(
+            $file,
+            $context,
+            (string) config('services.openai.key'),
+            (string) config('services.openai.model', 'gpt-4o-mini'),
+            'https://api.openai.com/v1/chat/completions',
+            'openai',
+        );
     }
 
     private function extractPdfTextFallback(UploadedFile $file): string
@@ -287,12 +356,7 @@ PROMPT;
 
     private function parseJsonPayload(string $text): array
     {
-        $text = trim($text);
-        if (preg_match('/\{.*\}/s', $text, $m)) {
-            $text = $m[0];
-        }
-
-        $data = json_decode($text, true);
+        $data = $this->extractJsonObject($text);
         if (! is_array($data)) {
             throw new RuntimeException('Respons AI tidak valid. Coba unggah ulang.');
         }
@@ -487,14 +551,33 @@ PROMPT;
             return $data;
         }
 
+        if (filled(config('services.groq.key'))) {
+            $data = $this->openAiCompatibleJson(
+                $prompt,
+                (string) config('services.groq.key'),
+                (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
+                rtrim((string) config('services.groq.base_url'), '/').'/chat/completions',
+                'groq',
+            );
+            $data['_provider'] = 'groq';
+
+            return $data;
+        }
+
         if (filled(config('services.openai.key'))) {
-            $data = $this->openAiJson($prompt);
+            $data = $this->openAiCompatibleJson(
+                $prompt,
+                (string) config('services.openai.key'),
+                (string) config('services.openai.model', 'gpt-4o-mini'),
+                'https://api.openai.com/v1/chat/completions',
+                'openai',
+            );
             $data['_provider'] = 'openai';
 
             return $data;
         }
 
-        throw new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY atau OPENAI_API_KEY di .env.');
+        throw new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY, GROQ_API_KEY, atau OPENAI_API_KEY di .env.');
     }
 
     /**
@@ -570,35 +653,58 @@ PROMPT;
     /**
      * @return array<string, mixed>
      */
-    private function openAiJson(string $prompt): array
+    private function openAiCompatibleJson(string $prompt, string $key, string $model, string $url, string $provider): array
     {
-        $key = config('services.openai.key');
-        $model = config('services.openai.model', 'gpt-4o-mini');
-
-        $response = Http::timeout(90)
+        $response = Http::timeout(120)
             ->withToken($key)
             ->acceptJson()
-            ->post('https://api.openai.com/v1/chat/completions', [
+            ->post($url, [
                 'model' => $model,
-                'temperature' => 0.4,
+                'temperature' => 0.2,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'Kamu adalah coach karier untuk mahasiswa Indonesia. Jawab hanya JSON valid.',
+                        'content' => 'Kamu adalah coach karier untuk mahasiswa Indonesia. '
+                            .'Output WAJIB satu objek JSON valid saja. Jangan tulis teks lain di luar JSON.',
                     ],
-                    ['role' => 'user', 'content' => $prompt],
+                    ['role' => 'user', 'content' => $prompt."\n\nBalas HANYA JSON."],
                 ],
             ]);
 
+        $payload = $response->json();
+
         if (! $response->successful()) {
-            Log::warning('OpenAI career AI failed', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new RuntimeException('Gagal menghubungi OpenAI. Coba lagi nanti.');
+            $failed = (string) data_get($payload, 'error.failed_generation', '');
+            if ($response->status() === 400 && $failed !== '') {
+                try {
+                    return $this->decodeJsonObject($failed);
+                } catch (RuntimeException) {
+                    // fall through
+                }
+            }
+
+            Log::warning(strtoupper($provider).' career AI failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
         }
 
-        $text = data_get($response->json(), 'choices.0.message.content', '');
+        $text = (string) data_get($payload, 'choices.0.message.content', '');
 
         return $this->decodeJsonObject($text);
+    }
+
+    private function openAiJson(string $prompt): array
+    {
+        return $this->openAiCompatibleJson(
+            $prompt,
+            (string) config('services.openai.key'),
+            (string) config('services.openai.model', 'gpt-4o-mini'),
+            'https://api.openai.com/v1/chat/completions',
+            'openai',
+        );
     }
 
     /**
@@ -606,17 +712,94 @@ PROMPT;
      */
     private function decodeJsonObject(string $text): array
     {
-        $text = trim($text);
-        if (preg_match('/\{.*\}/s', $text, $m)) {
-            $text = $m[0];
-        }
-
-        $data = json_decode($text, true);
+        $data = $this->extractJsonObject($text);
         if (! is_array($data)) {
             throw new RuntimeException('Respons AI tidak valid. Coba lagi.');
         }
 
         return $data;
+    }
+
+    /**
+     * Ambil objek JSON dari teks (termasuk kasus Groq failed_generation yang ada teks CV di depan).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function extractJsonObject(string $text): ?array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return null;
+        }
+
+        $direct = json_decode($text, true);
+        if (is_array($direct)) {
+            return $direct;
+        }
+
+        // Cari objek yang punya key "score" (hasil review) atau key umum lain.
+        $anchors = ['"score"', '"subject"', '"questions"', '"feedback"', '"body"'];
+        $start = false;
+        foreach ($anchors as $anchor) {
+            $pos = strpos($text, $anchor);
+            if ($pos === false) {
+                continue;
+            }
+            $brace = strrpos(substr($text, 0, $pos), '{');
+            if ($brace !== false) {
+                $start = $brace;
+                break;
+            }
+        }
+
+        if ($start === false) {
+            $start = strpos($text, '{');
+        }
+
+        if ($start === false) {
+            return null;
+        }
+
+        $depth = 0;
+        $inString = false;
+        $escape = false;
+        $len = strlen($text);
+
+        for ($i = $start; $i < $len; $i++) {
+            $ch = $text[$i];
+
+            if ($inString) {
+                if ($escape) {
+                    $escape = false;
+                } elseif ($ch === '\\') {
+                    $escape = true;
+                } elseif ($ch === '"') {
+                    $inString = false;
+                }
+                continue;
+            }
+
+            if ($ch === '"') {
+                $inString = true;
+                continue;
+            }
+
+            if ($ch === '{') {
+                $depth++;
+            } elseif ($ch === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    $slice = substr($text, $start, $i - $start + 1);
+                    $decoded = json_decode($slice, true);
+                    if (is_array($decoded)) {
+                        return $decoded;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function coverLetterPrompt(array $context): string

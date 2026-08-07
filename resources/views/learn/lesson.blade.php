@@ -25,7 +25,7 @@
         <div class="hidden max-w-md flex-1 items-center md:flex">
             <div class="relative w-full">
                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft/60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="search" placeholder="Cari modul/konten" class="w-full rounded-xl border border-brand/15 bg-surface py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft/50 outline-none focus:border-brand">
+                <input type="search" placeholder="Cari modul/konten" class="w-full rounded-xl border border-brand/15 bg-surface py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft/50 outline-none focus:border-brand focus:ring-0 focus:bg-surface">
             </div>
         </div>
 

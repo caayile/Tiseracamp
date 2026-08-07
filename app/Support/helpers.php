@@ -123,3 +123,83 @@ if (! function_exists('cv_job_board_recommendations')) {
         ], $roles);
     }
 }
+
+if (! function_exists('payment_account')) {
+    /**
+     * Rekening tujuan transfer yang dikelola admin.
+     *
+     * @return array{bank_name:string,account_number:string,account_holder:string}
+     */
+    function payment_account(): array
+    {
+        static $memo = null;
+        if (is_array($memo)) {
+            return $memo;
+        }
+
+        $account = \App\Models\PaymentAccount::current();
+
+        return $memo = [
+            'bank_name' => (string) $account->bank_name,
+            'account_number' => (string) $account->account_number,
+            'account_holder' => (string) $account->account_holder,
+        ];
+    }
+}
+
+if (! function_exists('forget_home_cache')) {
+    function forget_home_cache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('home.page.v2');
+    }
+}
+
+if (! function_exists('notification_bell_payload')) {
+    /**
+     * Payload notifikasi untuk navbar (cache file + memo per request).
+     *
+     * @return array{rows: list<array<string, mixed>>, unread: int}
+     */
+    function notification_bell_payload(): array
+    {
+        static $memo = null;
+        if (is_array($memo)) {
+            return $memo;
+        }
+
+        $userId = auth()->id();
+        if (! $userId) {
+            return $memo = ['rows' => [], 'unread' => 0];
+        }
+
+        $cacheKey = 'notif-bell-'.$userId;
+        $payload = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if (! is_array($payload) || ! isset($payload['rows'], $payload['unread'])) {
+            $rows = \App\Models\AppNotification::query()
+                ->where('user_id', $userId)
+                ->latest('id')
+                ->limit(4)
+                ->get(['id', 'title', 'body', 'link', 'read_at', 'created_at'])
+                ->map(fn ($n) => [
+                    'id' => $n->id,
+                    'title' => $n->title,
+                    'body' => $n->body,
+                    'link' => $n->link,
+                    'read_at' => $n->read_at?->toIso8601String(),
+                    'created_at' => $n->created_at?->toIso8601String(),
+                ])
+                ->all();
+
+            $unreadTotal = \App\Models\AppNotification::query()
+                ->where('user_id', $userId)
+                ->whereNull('read_at')
+                ->count();
+
+            $payload = ['rows' => $rows, 'unread' => $unreadTotal];
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $payload, now()->addMinutes(5));
+        }
+
+        return $memo = $payload;
+    }
+}

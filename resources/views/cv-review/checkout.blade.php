@@ -67,14 +67,15 @@
             <div class="rounded-3xl border border-ink/8 bg-white p-6 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-[0.16em] text-brand-dark">Rekening tujuan</p>
                 <h3 class="mt-1 font-display text-lg font-semibold text-ink">Transfer bank</h3>
+                @php $bank = payment_account(); @endphp
                 <div class="mt-5 rounded-2xl border border-brand/25 bg-gradient-to-br from-brand-mist to-white p-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-brand-mid">BCA</p>
-                            <p class="mt-1 font-display text-2xl font-bold tracking-wide text-ink">1234567890</p>
-                            <p class="mt-1 text-sm text-ink-soft">a.n. PT Tiga Serangkai</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-brand-mid">{{ $bank['bank_name'] }}</p>
+                            <p class="mt-1 font-display text-2xl font-bold tracking-wide text-ink">{{ $bank['account_number'] }}</p>
+                            <p class="mt-1 text-sm text-ink-soft">a.n. {{ $bank['account_holder'] }}</p>
                         </div>
-                        <button type="button" data-copy="1234567890" class="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-ink transition hover:bg-brand-light">Salin</button>
+                        <button type="button" data-copy="{{ $bank['account_number'] }}" class="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-ink transition hover:bg-brand-light">Salin</button>
                     </div>
                 </div>
             </div>
