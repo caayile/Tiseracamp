@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Throwable;
 
 class CvReviewService
 {
@@ -137,70 +138,98 @@ class CvReviewService
         string $provider,
     ): array {
         $textContent = $this->extractPdfTextFallback($file);
-        if ($provider === 'groq') {
-            $textContent = mb_substr($textContent, 0, 8000);
-        }
+        $maxChars = $provider === 'groq' ? 6000 : 12000;
+        $textContent = mb_substr($textContent, 0, $maxChars);
 
-        $response = Http::timeout(120)
-            ->withToken($key)
-            ->acceptJson()
-            ->post($url, [
-                'model' => $model,
-                'temperature' => 0.1,
-                'response_format' => ['type' => 'json_object'],
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'Kamu adalah reviewer CV profesional untuk mahasiswa Indonesia. '
-                            .'Output WAJIB satu objek JSON valid saja. '
-                            .'Jangan ulang teks CV, jangan tulis penjelasan, jangan pakai markdown. '
-                            .'Mulai dengan { dan akhiri dengan }.',
+        $attempts = [
+            ['strict_json' => $provider !== 'groq', 'cv' => $textContent, 'temperature' => 0.1],
+            ['strict_json' => false, 'cv' => mb_substr($textContent, 0, 3500), 'temperature' => 0.05],
+        ];
+
+        $lastError = null;
+
+        foreach ($attempts as $attempt) {
+            try {
+                $payload = [
+                    'model' => $model,
+                    'temperature' => $attempt['temperature'],
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'Kamu adalah reviewer CV profesional untuk mahasiswa Indonesia. '
+                                .'Balas HANYA satu objek JSON valid. '
+                                .'Jangan ulang isi CV. Jangan markdown. Jangan teks di luar JSON. '
+                                .'Karakter pertama harus { dan karakter terakhir harus }.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $this->prompt($context)
+                                ."\n\n--- CV TEXT START ---\n".$attempt['cv']."\n--- CV TEXT END ---\n\n"
+                                .'Review CV di atas. OUTPUT JSON SAJA sesuai skema.',
+                        ],
                     ],
-                    [
-                        'role' => 'user',
-                        'content' => $this->prompt($context)
-                            ."\n\n--- CV TEXT START ---\n".$textContent."\n--- CV TEXT END ---\n\n"
-                            .'Buat review berdasarkan CV di atas. Balas HANYA JSON sesuai skema.',
-                    ],
-                ],
-            ]);
+                ];
 
-        $payload = $response->json();
-        $text = (string) data_get($payload, 'choices.0.message.content', '');
+                if ($attempt['strict_json']) {
+                    $payload['response_format'] = ['type' => 'json_object'];
+                }
 
-        if (! $response->successful()) {
-            $failed = (string) data_get($payload, 'error.failed_generation', '');
-            if ($response->status() === 400 && $failed !== '') {
-                try {
-                    $parsed = $this->parseJsonPayload($failed);
+                $response = Http::timeout(120)
+                    ->withToken($key)
+                    ->acceptJson()
+                    ->post($url, $payload);
+
+                $body = $response->json();
+                $text = (string) data_get($body, 'choices.0.message.content', '');
+                $failed = (string) data_get($body, 'error.failed_generation', '');
+
+                if ($response->successful() && $text !== '') {
+                    $parsed = $this->parseJsonPayload($text);
                     $parsed['provider'] = $provider;
 
                     return $parsed;
-                } catch (RuntimeException) {
-                    // fall through
                 }
+
+                if ($failed !== '') {
+                    try {
+                        $parsed = $this->parseJsonPayload($failed);
+                        $parsed['provider'] = $provider;
+
+                        return $parsed;
+                    } catch (RuntimeException $e) {
+                        $lastError = $e;
+                    }
+                }
+
+                Log::warning(strtoupper($provider).' CV review failed', [
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 800),
+                ]);
+
+                if (in_array($response->status(), [401, 403], true)) {
+                    throw new RuntimeException('API key '.strtoupper($provider).' tidak valid. Cek GROQ_API_KEY di .env.');
+                }
+
+                if ($response->status() === 429) {
+                    throw new RuntimeException('Kuota '.strtoupper($provider).' habis / rate limit. Tunggu 1–2 menit lalu coba lagi.');
+                }
+
+                $lastError = new RuntimeException(
+                    'AI '.strtoupper($provider).' gagal memproses CV (HTTP '.$response->status().'). Coba unggah ulang atau ganti file PDF berbasis teks.'
+                );
+            } catch (RuntimeException $e) {
+                // Auth/rate-limit: jangan retry.
+                if (str_contains($e->getMessage(), 'tidak valid') || str_contains($e->getMessage(), 'rate limit') || str_contains($e->getMessage(), 'Kuota')) {
+                    throw $e;
+                }
+                $lastError = $e;
+            } catch (Throwable $e) {
+                Log::warning(strtoupper($provider).' CV review exception', ['message' => $e->getMessage()]);
+                $lastError = new RuntimeException('Tidak bisa terhubung ke '.strtoupper($provider).'. Cek koneksi internet / API, lalu coba lagi.');
             }
-
-            Log::warning(strtoupper($provider).' CV review failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            if (in_array($response->status(), [401, 403], true)) {
-                throw new RuntimeException('API key '.strtoupper($provider).' tidak valid.');
-            }
-
-            if ($response->status() === 429) {
-                throw new RuntimeException('Kuota '.strtoupper($provider).' habis / rate limit. Coba lagi nanti.');
-            }
-
-            throw new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
         }
 
-        $parsed = $this->parseJsonPayload($text);
-        $parsed['provider'] = $provider;
-
-        return $parsed;
+        throw $lastError ?? new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
     }
 
     private function reviewWithOpenAi(UploadedFile $file, array $context = []): array
@@ -655,45 +684,78 @@ PROMPT;
      */
     private function openAiCompatibleJson(string $prompt, string $key, string $model, string $url, string $provider): array
     {
-        $response = Http::timeout(120)
-            ->withToken($key)
-            ->acceptJson()
-            ->post($url, [
+        $attempts = [
+            ['strict_json' => $provider !== 'groq', 'temperature' => 0.2],
+            ['strict_json' => false, 'temperature' => 0.1],
+        ];
+
+        $lastError = null;
+
+        foreach ($attempts as $attempt) {
+            $payload = [
                 'model' => $model,
-                'temperature' => 0.2,
-                'response_format' => ['type' => 'json_object'],
+                'temperature' => $attempt['temperature'],
                 'messages' => [
                     [
                         'role' => 'system',
                         'content' => 'Kamu adalah coach karier untuk mahasiswa Indonesia. '
-                            .'Output WAJIB satu objek JSON valid saja. Jangan tulis teks lain di luar JSON.',
+                            .'Balas HANYA satu objek JSON valid. Jangan teks lain di luar JSON.',
                     ],
                     ['role' => 'user', 'content' => $prompt."\n\nBalas HANYA JSON."],
                 ],
-            ]);
+            ];
 
-        $payload = $response->json();
-
-        if (! $response->successful()) {
-            $failed = (string) data_get($payload, 'error.failed_generation', '');
-            if ($response->status() === 400 && $failed !== '') {
-                try {
-                    return $this->decodeJsonObject($failed);
-                } catch (RuntimeException) {
-                    // fall through
-                }
+            if ($attempt['strict_json']) {
+                $payload['response_format'] = ['type' => 'json_object'];
             }
 
-            Log::warning(strtoupper($provider).' career AI failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-            throw new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
+            try {
+                $response = Http::timeout(120)
+                    ->withToken($key)
+                    ->acceptJson()
+                    ->post($url, $payload);
+
+                $body = $response->json();
+                $text = (string) data_get($body, 'choices.0.message.content', '');
+                $failed = (string) data_get($body, 'error.failed_generation', '');
+
+                if ($response->successful() && $text !== '') {
+                    return $this->decodeJsonObject($text);
+                }
+
+                if ($failed !== '') {
+                    try {
+                        return $this->decodeJsonObject($failed);
+                    } catch (RuntimeException $e) {
+                        $lastError = $e;
+                    }
+                }
+
+                Log::warning(strtoupper($provider).' career AI failed', [
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 800),
+                ]);
+
+                if (in_array($response->status(), [401, 403], true)) {
+                    throw new RuntimeException('API key '.strtoupper($provider).' tidak valid.');
+                }
+
+                if ($response->status() === 429) {
+                    throw new RuntimeException('Kuota '.strtoupper($provider).' habis / rate limit. Tunggu sebentar lalu coba lagi.');
+                }
+
+                $lastError = new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
+            } catch (RuntimeException $e) {
+                if (str_contains($e->getMessage(), 'tidak valid') || str_contains($e->getMessage(), 'rate limit') || str_contains($e->getMessage(), 'Kuota')) {
+                    throw $e;
+                }
+                $lastError = $e;
+            } catch (Throwable $e) {
+                $lastError = new RuntimeException('Tidak bisa terhubung ke '.strtoupper($provider).'. Coba lagi nanti.');
+            }
         }
 
-        $text = (string) data_get($payload, 'choices.0.message.content', '');
-
-        return $this->decodeJsonObject($text);
+        throw $lastError ?? new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
     }
 
     private function openAiJson(string $prompt): array
