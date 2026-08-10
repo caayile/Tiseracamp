@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Smalot\PdfParser\Parser;
 use Throwable;
 
 class CvReviewService
@@ -153,6 +154,8 @@ class CvReviewService
                 $payload = [
                     'model' => $model,
                     'temperature' => $attempt['temperature'],
+                    // Jangan melebihi TPM free tier llama-3.3-70b-versatile (12000 token/menit).
+                    'max_tokens' => 4000,
                     'messages' => [
                         [
                             'role' => 'system',
@@ -218,8 +221,8 @@ class CvReviewService
                     'AI '.strtoupper($provider).' gagal memproses CV (HTTP '.$response->status().'). Coba unggah ulang atau ganti file PDF berbasis teks.'
                 );
             } catch (RuntimeException $e) {
-                // Auth/rate-limit: jangan retry.
-                if (str_contains($e->getMessage(), 'tidak valid') || str_contains($e->getMessage(), 'rate limit') || str_contains($e->getMessage(), 'Kuota')) {
+                // Error kunci/kuota: jangan retry. Error parse (Respons AI tidak valid) boleh lanjut ke percobaan berikutnya.
+                if (str_contains($e->getMessage(), 'API key') || str_contains($e->getMessage(), 'rate limit') || str_contains($e->getMessage(), 'Kuota')) {
                     throw $e;
                 }
                 $lastError = $e;
@@ -246,24 +249,37 @@ class CvReviewService
 
     private function extractPdfTextFallback(UploadedFile $file): string
     {
-        $raw = $file->get();
-        // Best-effort extract readable strings from PDF binary for OpenAI text path.
-        $chunks = [];
-        if (preg_match_all('/\((\\\\.|[^\\\\)]){2,}\)/s', $raw, $matches)) {
-            foreach ($matches[0] as $match) {
-                $inner = trim($match, '()');
-                $inner = stripcslashes($inner);
-                $inner = preg_replace('/[^\P{C}\n\t]+/u', ' ', $inner) ?? $inner;
-                $inner = trim($inner);
-                if (mb_strlen($inner) >= 3) {
-                    $chunks[] = $inner;
-                }
-            }
+        $text = '';
+
+        // Prioritas: parser PDF asli (smalot/pdfparser). Hasilnya bersih untuk PDF Canva/dll.
+        try {
+            $pdf = (new Parser)->parseContent($file->get());
+            $text = trim((string) $pdf->getText());
+        } catch (Throwable $e) {
+            Log::warning('PDF parser gagal, pakai regex fallback', ['error' => $e->getMessage()]);
+            $text = '';
         }
 
-        $text = trim(implode("\n", array_slice($chunks, 0, 400)));
+        // Fallback: best-effort scan string literal dari biner PDF.
         if (mb_strlen($text) < 80) {
-            throw new RuntimeException('Tidak bisa membaca teks CV. Pakai GEMINI_API_KEY agar PDF dibaca langsung, atau unggah PDF berbasis teks.');
+            $raw = $file->get();
+            $chunks = [];
+            if (preg_match_all('/\((\\\\.|[^\\\\)]){2,}\)/s', $raw, $matches)) {
+                foreach ($matches[0] as $match) {
+                    $inner = trim($match, '()');
+                    $inner = stripcslashes($inner);
+                    $inner = preg_replace('/[^\P{C}\n\t]+/u', ' ', $inner) ?? $inner;
+                    $inner = trim($inner);
+                    if (mb_strlen($inner) >= 3) {
+                        $chunks[] = $inner;
+                    }
+                }
+            }
+            $text = trim(implode("\n", array_slice($chunks, 0, 400)));
+        }
+
+        if (mb_strlen($text) < 80) {
+            throw new RuntimeException('Tidak bisa membaca teks CV. Unggah PDF berbasis teks (bukan hasil scan gambar), atau format ulang CV dari Canva/Word ke PDF standar.');
         }
 
         return mb_substr($text, 0, 12000);
@@ -387,7 +403,9 @@ PROMPT;
     {
         $data = $this->extractJsonObject($text);
         if (! is_array($data)) {
-            throw new RuntimeException('Respons AI tidak valid. Coba unggah ulang.');
+            Log::warning('AI JSON parse failed', ['text' => mb_substr($text, 0, 2000)]);
+
+            throw new RuntimeException('Respons AI tidak valid. Coba lagi; jika terus gagal, gunakan file CV PDF berbasis teks.');
         }
 
         $score = max(0, min(100, (int) ($data['score'] ?? 0)));
@@ -417,6 +435,7 @@ PROMPT;
                         'current' => '',
                         'improved' => '',
                     ];
+
                     continue;
                 }
                 if (! is_array($suggestion)) {
@@ -695,6 +714,8 @@ PROMPT;
             $payload = [
                 'model' => $model,
                 'temperature' => $attempt['temperature'],
+                // Jangan melebihi TPM free tier llama-3.3-70b-versatile (12000 token/menit).
+                'max_tokens' => 4000,
                 'messages' => [
                     [
                         'role' => 'system',
@@ -746,7 +767,8 @@ PROMPT;
 
                 $lastError = new RuntimeException('Gagal menghubungi '.strtoupper($provider).'. Coba lagi nanti.');
             } catch (RuntimeException $e) {
-                if (str_contains($e->getMessage(), 'tidak valid') || str_contains($e->getMessage(), 'rate limit') || str_contains($e->getMessage(), 'Kuota')) {
+                // Error kunci/kuota: jangan retry.
+                if (str_contains($e->getMessage(), 'API key') || str_contains($e->getMessage(), 'rate limit') || str_contains($e->getMessage(), 'Kuota')) {
                     throw $e;
                 }
                 $lastError = $e;
@@ -776,6 +798,8 @@ PROMPT;
     {
         $data = $this->extractJsonObject($text);
         if (! is_array($data)) {
+            Log::warning('AI JSON parse failed (career/interview)', ['text' => mb_substr($text, 0, 2000)]);
+
             throw new RuntimeException('Respons AI tidak valid. Coba lagi.');
         }
 
@@ -790,6 +814,15 @@ PROMPT;
     private function extractJsonObject(string $text): ?array
     {
         $text = trim($text);
+        if ($text === '') {
+            return null;
+        }
+
+        // Lepas pembungkus markdown ```json ... ``` jika model menambahkan.
+        $text = preg_replace('/^\s*```(?:json)?\s*/i', '', $text);
+        $text = preg_replace('/```\s*$/', '', $text);
+        $text = trim($text);
+
         if ($text === '') {
             return null;
         }
@@ -822,6 +855,26 @@ PROMPT;
             return null;
         }
 
+        $slice = $this->balancedJsonSlice($text, $start);
+        if ($slice !== null) {
+            $decoded = json_decode($slice, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Coba perbaiki JSON yang terpotong (respons AI kepotong di tengah).
+        $snippet = substr($text, $start);
+        $repaired = $this->repairTruncatedJson($snippet);
+        if ($repaired !== null) {
+            return $repaired;
+        }
+
+        return null;
+    }
+
+    private function balancedJsonSlice(string $text, int $start): ?string
+    {
         $depth = 0;
         $inString = false;
         $escape = false;
@@ -838,30 +891,101 @@ PROMPT;
                 } elseif ($ch === '"') {
                     $inString = false;
                 }
+
                 continue;
             }
 
             if ($ch === '"') {
                 $inString = true;
+
                 continue;
             }
 
-            if ($ch === '{') {
+            if ($ch === '{' || $ch === '[') {
                 $depth++;
-            } elseif ($ch === '}') {
+            } elseif ($ch === '}' || $ch === ']') {
                 $depth--;
                 if ($depth === 0) {
-                    $slice = substr($text, $start, $i - $start + 1);
-                    $decoded = json_decode($slice, true);
-                    if (is_array($decoded)) {
-                        return $decoded;
-                    }
-                    break;
+                    return substr($text, $start, $i - $start + 1);
                 }
             }
         }
 
         return null;
+    }
+
+    private function repairTruncatedJson(string $text): ?array
+    {
+        $stack = [];
+        $inString = false;
+        $escape = false;
+        $len = strlen($text);
+        $result = '';
+
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $text[$i];
+
+            if ($inString) {
+                $result .= $ch;
+                if ($escape) {
+                    $escape = false;
+                } elseif ($ch === '\\') {
+                    $escape = true;
+                } elseif ($ch === '"') {
+                    $inString = false;
+                }
+
+                continue;
+            }
+
+            if ($ch === '"') {
+                $inString = true;
+                $result .= $ch;
+
+                continue;
+            }
+
+            if ($ch === '{' || $ch === '[') {
+                $stack[] = $ch;
+                $result .= $ch;
+
+                continue;
+            }
+
+            if ($ch === '}' || $ch === ']') {
+                if ($stack) {
+                    array_pop($stack);
+                    $result .= $ch;
+                } else {
+                    break;
+                }
+
+                continue;
+            }
+
+            $result .= $ch;
+        }
+
+        if ($inString) {
+            $lastQuote = strrpos($result, '"');
+            if ($lastQuote !== false) {
+                $result = substr($result, 0, $lastQuote + 1);
+            }
+        }
+
+        $result = rtrim($result);
+        while ($result !== '' && in_array(substr($result, -1), [',', ':'], true)) {
+            $result = rtrim(substr($result, 0, -1));
+        }
+
+        while ($stack) {
+            $open = array_pop($stack);
+            $result .= $open === '{' ? '}' : ']';
+        }
+
+        $decoded = json_decode($result, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function coverLetterPrompt(array $context): string
@@ -980,6 +1104,7 @@ PROMPT;
         foreach ($career['skill_fit']['gaps'] ?? [] as $gap) {
             if (is_string($gap)) {
                 $gaps[] = ['title' => $gap, 'detail' => ''];
+
                 continue;
             }
             if (! is_array($gap)) {
@@ -995,6 +1120,7 @@ PROMPT;
         foreach ($career['experience_fit']['suggestions'] ?? [] as $suggestion) {
             if (is_string($suggestion)) {
                 $experienceSuggestions[] = ['title' => $suggestion, 'detail' => ''];
+
                 continue;
             }
             if (! is_array($suggestion)) {
