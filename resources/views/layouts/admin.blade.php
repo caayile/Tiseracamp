@@ -28,6 +28,7 @@
             <a href="{{ route('admin.payments.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payments.*') ? 'bg-white/10' : '' }}">Pembayaran</a>
             <a href="{{ route('admin.payment-account.edit') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payment-account.*') ? 'bg-white/10' : '' }}">Rekening Bayar</a>
             <a href="{{ route('admin.cv-subscriptions.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.cv-subscriptions.*') ? 'bg-white/10' : '' }}">Paket CV AI</a>
+            <a href="{{ route('admin.cv-plans.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.cv-plans.*') ? 'bg-white/10' : '' }}">Harga Paket CV</a>
             <a href="{{ route('admin.content.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.content.*') ? 'bg-white/10' : '' }}">Berita & Content</a>
             <form method="POST" action="{{ route('logout') }}" class="mt-2">
                 @csrf

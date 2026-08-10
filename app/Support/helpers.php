@@ -55,6 +55,34 @@ if (! function_exists('youtube_embed_url')) {
     }
 }
 
+if (! function_exists('cv_plans')) {
+    /**
+     * Daftar paket Review CV AI yang aktif (diurutkan), atau satu paket berdasarkan kode.
+     *
+     * @return array<string, array{code:string,name:string,tagline:string,price:int,reviews:?int,days:int,badge:?string,features:array}>|array{code:string,name:string,tagline:string,price:int,reviews:?int,days:int,badge:?string,features:array}|null
+     */
+    function cv_plans(?string $code = null): mixed
+    {
+        static $plans = null;
+
+        if ($plans === null) {
+            $plans = \App\Models\CvPlan::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get()
+                ->mapWithKeys(fn (\App\Models\CvPlan $plan) => [$plan->code => $plan->toPlanArray()])
+                ->all();
+        }
+
+        if ($code === null) {
+            return $plans;
+        }
+
+        return $plans[$code] ?? null;
+    }
+}
+
 if (! function_exists('cv_job_board_recommendations')) {
     /**
      * Build LinkedIn / Glints / Jobstreet search links for CV review roles.

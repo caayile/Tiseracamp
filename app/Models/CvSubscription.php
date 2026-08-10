@@ -82,7 +82,7 @@ class CvSubscription extends Model
 
     public function activate(): void
     {
-        $days = (int) (config('cv_plans.'.$this->plan_code.'.days') ?? 30);
+        $days = (int) (cv_plans($this->plan_code)['days'] ?? 30);
 
         $this->forceFill([
             'status' => 'active',

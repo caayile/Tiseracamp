@@ -17,7 +17,7 @@ class CvReviewController extends Controller
 {
     public function plans(): View
     {
-        $plans = config('cv_plans');
+        $plans = cv_plans();
         $subscription = auth()->user()->activeCvSubscription();
         $pending = auth()->user()->cvSubscriptions()
             ->where('status', 'waiting_verification')
@@ -29,7 +29,7 @@ class CvReviewController extends Controller
 
     public function checkout(string $plan): View|RedirectResponse
     {
-        $planConfig = config('cv_plans.'.$plan);
+        $planConfig = cv_plans($plan);
         abort_unless(is_array($planConfig), 404);
 
         $subscription = auth()->user()->activeCvSubscription();
@@ -49,7 +49,7 @@ class CvReviewController extends Controller
 
     public function purchase(Request $request, string $plan): RedirectResponse
     {
-        $planConfig = config('cv_plans.'.$plan);
+        $planConfig = cv_plans($plan);
         abort_unless(is_array($planConfig), 404);
 
         $subscription = auth()->user()->activeCvSubscription();

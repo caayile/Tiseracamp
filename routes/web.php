@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BatchController as AdminBatchController;
 use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\ContentController as AdminContentController;
 use App\Http\Controllers\Admin\CvSubscriptionController as AdminCvSubscriptionController;
+use App\Http\Controllers\Admin\CvPlanController as AdminCvPlanController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GradeController as AdminGradeController;
 use App\Http\Controllers\Admin\PaymentAccountController as AdminPaymentAccountController;
@@ -216,6 +217,13 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
 
     Route::get('/cv-subscriptions', [AdminCvSubscriptionController::class, 'index'])->name('cv-subscriptions.index');
     Route::post('/cv-subscriptions/{subscription}/verify', [AdminCvSubscriptionController::class, 'verify'])->name('cv-subscriptions.verify');
+
+    Route::get('/cv-plans', [AdminCvPlanController::class, 'index'])->name('cv-plans.index');
+    Route::get('/cv-plans/create', [AdminCvPlanController::class, 'create'])->name('cv-plans.create');
+    Route::post('/cv-plans', [AdminCvPlanController::class, 'store'])->name('cv-plans.store');
+    Route::get('/cv-plans/{cvPlan}/edit', [AdminCvPlanController::class, 'edit'])->name('cv-plans.edit');
+    Route::put('/cv-plans/{cvPlan}', [AdminCvPlanController::class, 'update'])->name('cv-plans.update');
+    Route::delete('/cv-plans/{cvPlan}', [AdminCvPlanController::class, 'destroy'])->name('cv-plans.destroy');
 
     Route::get('/schedules', [AdminScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules', [AdminScheduleController::class, 'store'])->name('schedules.store');
