@@ -16,9 +16,18 @@ class ProgramController extends Controller
         // Halaman katalog dipisah: default bootcamp, ?type=internship untuk magang
         $catalogType = $type === 'internship' ? 'internship' : 'bootcamp';
 
+        $isTsuStudent = auth()->user()?->isTsuStudent() ?? false;
+        $scope = $isTsuStudent && $catalogType === 'internship' && $request->string('scope')->toString() === 'tsu'
+            ? 'tsu'
+            : 'all';
+
         $query = Program::published()
             ->with(['partner', 'mentor', 'category'])
             ->where('type', $catalogType);
+
+        if ($catalogType === 'internship') {
+            $query->forAudience($scope === 'tsu');
+        }
 
         if ($category = $request->string('category')->toString()) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $category));
@@ -37,7 +46,7 @@ class ProgramController extends Controller
 
         $programs = $query->latest()->paginate(9)->withQueryString();
 
-        return view('programs.index', compact('programs', 'catalogType'));
+        return view('programs.index', compact('programs', 'catalogType', 'isTsuStudent', 'scope'));
     }
 
     public function show(string $slug): View

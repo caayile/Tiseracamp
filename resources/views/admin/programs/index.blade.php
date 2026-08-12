@@ -14,13 +14,28 @@
 @endphp
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
     <p class="text-sm text-ink-soft">{{ $headingCopy }}</p>
-    @if ($viewType === 'job')
-        <a href="{{ route('admin.programs.create', ['type' => 'job']) }}" class="btn-primary">Tambah Lowongan Kerja</a>
-    @elseif ($viewType === 'bootcamp')
-        <a href="{{ route('admin.programs.create', ['type' => 'bootcamp']) }}" class="btn-primary">Tambah Bootcamp</a>
-    @else
-        <a href="{{ route('admin.programs.create', ['type' => 'internship']) }}" class="btn-primary">Tambah Lowongan Magang</a>
-    @endif
+    <div class="flex flex-wrap items-center gap-3">
+        <form method="GET" class="flex items-center gap-2">
+            <input type="hidden" name="type" value="{{ $viewType }}">
+            <input type="search" name="q" value="{{ request('q') }}"
+                   placeholder="Cari judul, partner, mentor..."
+                   class="input-field w-64">
+            <select name="audience" class="input-field" onchange="this.form.submit()">
+                <option value="">Semua tipe pengguna</option>
+                <option value="all" @selected($audience === 'all')>Terbuka umum</option>
+                <option value="both" @selected($audience === 'both')>Umum + TS Group</option>
+                <option value="tsu" @selected($audience === 'tsu')>Prioritas TS Group</option>
+                <option value="none" @selected($audience === 'none')>Tidak tampil</option>
+            </select>
+        </form>
+        @if ($viewType === 'job')
+            <a href="{{ route('admin.programs.create', ['type' => 'job']) }}" class="btn-primary">Tambah Lowongan Kerja</a>
+        @elseif ($viewType === 'bootcamp')
+            <a href="{{ route('admin.programs.create', ['type' => 'bootcamp']) }}" class="btn-primary">Tambah Bootcamp</a>
+        @else
+            <a href="{{ route('admin.programs.create', ['type' => 'internship']) }}" class="btn-primary">Tambah Lowongan Magang</a>
+        @endif
+    </div>
 </div>
 
 <div class="card-soft overflow-x-auto">
@@ -29,6 +44,7 @@
             <tr>
                 <th class="px-5 py-3 font-medium">Judul</th>
                 <th class="px-5 py-3 font-medium">Tipe</th>
+                <th class="px-5 py-3 font-medium">Tipe pengguna</th>
                 <th class="px-5 py-3 font-medium">Status lowongan</th>
                 <th class="px-5 py-3 font-medium">Mentor</th>
                 <th class="px-5 py-3 font-medium">Approval</th>
@@ -40,6 +56,17 @@
                 <tr class="border-t border-brand/10">
                     <td class="px-5 py-3 font-medium">{{ $program->title }}</td>
                     <td class="px-5 py-3">{{ $program->typeLabel() }}</td>
+                    <td class="px-5 py-3">
+                        @if ($program->audience === 'both')
+                            <span class="inline-flex rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">Umum + TS Group</span>
+                        @elseif ($program->isTsuOnly())
+                            <span class="inline-flex rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">Prioritas TS Group</span>
+                        @elseif ($program->isHiddenFromAll())
+                            <span class="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">Tidak tampil</span>
+                        @else
+                            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">Terbuka umum</span>
+                        @endif
+                    </td>
                     <td class="px-5 py-3">
                         @if (in_array($program->type, ['internship', 'job'], true))
                             <form method="POST" action="{{ route('admin.programs.toggle-open', $program) }}" class="inline-flex items-center gap-3">
@@ -85,7 +112,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-5 py-8 text-center text-ink-soft">Belum ada data.</td>
+                    <td colspan="7" class="px-5 py-8 text-center text-ink-soft">Belum ada data.</td>
                 </tr>
             @endforelse
         </tbody>

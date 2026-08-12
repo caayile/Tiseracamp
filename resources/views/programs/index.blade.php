@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', $catalogType === 'internship' ? 'Lowongan Magang' : 'Bootcamp & Program')
+@section('title', $catalogType === 'internship' ? 'Lowongan Magang' : 'Bootcamp')
 
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
     <div class="mx-auto max-w-6xl px-4 py-12">
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-mid">Katalog</p>
         <h1 class="section-title mt-2">
-            {{ $catalogType === 'internship' ? 'Lowongan Magang' : 'Bootcamp & Program' }}
+            {{ $catalogType === 'internship' ? 'Lowongan Magang' : 'Bootcamp' }}
         </h1>
         <p class="mt-3 max-w-2xl text-ink-soft">
             {{ $catalogType === 'internship'
@@ -18,6 +18,9 @@
         <form method="GET" class="mt-8">
             @if ($catalogType === 'internship')
                 <input type="hidden" name="type" value="internship">
+                @if ($isTsuStudent)
+                    <input type="hidden" name="scope" value="{{ $scope }}">
+                @endif
             @endif
 
             <div class="flex items-center gap-2 rounded-full border border-ink/10 bg-panel p-1.5 pl-4 shadow-[0_18px_40px_-24px_rgba(11,31,42,0.4)] sm:gap-3 sm:p-2 sm:pl-6">
@@ -38,14 +41,27 @@
 </section>
 
 <section class="mx-auto max-w-6xl px-4 py-12">
+    @if ($catalogType === 'internship' && $isTsuStudent)
+        <div class="mb-8 flex flex-wrap gap-2">
+            <a href="{{ route('programs.index', ['type' => 'internship', 'scope' => 'all']) }}"
+               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'all' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+                Semua Lowongan
+            </a>
+            <a href="{{ route('programs.index', ['type' => 'internship', 'scope' => 'tsu']) }}"
+               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'tsu' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+                TS Group
+            </a>
+        </div>
+    @endif
+
     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @forelse ($programs as $program)
             <div class="reveal">
-                <x-program-card :program="$program" />
+                <x-program-card :program="$program" :scope="$scope" />
             </div>
         @empty
             <div class="card-soft col-span-full p-10 text-center text-ink-soft">
-                Belum ada {{ $catalogType === 'internship' ? 'lowongan magang' : 'program' }} yang cocok dengan pencarian ini.
+                Belum ada {{ $catalogType === 'internship' ? 'lowongan magang' : 'bootcamp' }} yang cocok dengan pencarian ini.
             </div>
         @endforelse
     </div>

@@ -149,23 +149,37 @@ class Program extends Model
         return $this->isListingOpen();
     }
 
+    public function isForTsu(): bool
+    {
+        return in_array($this->audience, ['tsu', 'both'], true);
+    }
+
     public function isTsuOnly(): bool
     {
         return $this->audience === 'tsu';
     }
 
+    public function isHiddenFromAll(): bool
+    {
+        return $this->audience === 'none';
+    }
+
     public function isVisibleTo(?User $user): bool
     {
-        return ! $this->isTsuOnly() || ($user?->isTsuStudent() ?? false);
+        if ($this->audience === 'tsu') {
+            return $user?->isTsuStudent() ?? false;
+        }
+
+        return ! $this->isHiddenFromAll();
     }
 
     public function scopeForAudience(Builder $query, bool $tsuOnly): Builder
     {
         if (! $tsuOnly) {
-            return $query->where(fn (Builder $q) => $q->where('audience', 'all')->orWhereNull('audience'));
+            return $query->where(fn (Builder $q) => $q->whereIn('audience', ['all', 'both'])->orWhereNull('audience'));
         }
 
-        return $query->where('audience', 'tsu');
+        return $query->whereIn('audience', ['tsu', 'both']);
     }
 
     public function isListingOpen(): bool

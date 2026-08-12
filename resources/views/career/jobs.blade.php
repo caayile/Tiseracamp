@@ -41,7 +41,7 @@
             </a>
             <a href="{{ route('career.jobs', ['scope' => 'tsu']) }}"
                class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'tsu' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
-                Prioritas TS Group
+                TS Group
             </a>
         </div>
     @endif
@@ -49,7 +49,7 @@
     <div class="mt-10 grid gap-5 lg:grid-cols-2">
         @forelse ($programs as $program)
             <div class="reveal">
-                <x-program-card :program="$program" />
+                <x-program-card :program="$program" :scope="$scope" />
             </div>
         @empty
             <div class="card-soft col-span-full p-10 text-center text-ink-soft">

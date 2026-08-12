@@ -19,15 +19,28 @@ class ProgramController extends Controller
     public function index(): View
     {
         $type = request()->string('type')->toString();
+        $audience = request()->string('audience')->toString();
+        $search = trim(request()->string('q')->toString());
 
         $query = Program::with(['partner', 'mentor', 'category', 'batches'])->latest();
         if (in_array($type, ['internship', 'bootcamp', 'job'], true)) {
             $query->where('type', $type);
         }
+        if (in_array($audience, ['all', 'tsu', 'both', 'none'], true)) {
+            $query->where('audience', $audience);
+        }
+        if ($search) {
+            $needle = '%'.mb_strtolower($search).'%';
+            $query->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(title) LIKE ?', [$needle])
+                    ->orWhereHas('partner', fn ($p) => $p->whereRaw('LOWER(name) LIKE ?', [$needle]))
+                    ->orWhereHas('mentor', fn ($m) => $m->whereRaw('LOWER(name) LIKE ?', [$needle]));
+            });
+        }
 
         $programs = $query->paginate(10)->withQueryString();
 
-        return view('admin.programs.index', compact('programs', 'type'));
+        return view('admin.programs.index', compact('programs', 'type', 'audience'));
     }
 
     public function create(Request $request): View
@@ -159,6 +172,7 @@ class ProgramController extends Controller
                 'responsibilities' => $this->parseBenefits($request->input('responsibilities_text')),
                 'price' => 0,
                 'level' => 'Beginner',
+                'audience' => $data['audience'] ?? 'all',
             ]);
 
             return redirect()->route('admin.programs.index', ['type' => 'internship'])->with('success', 'Detail lowongan magang diperbarui.');
@@ -374,7 +388,7 @@ class ProgramController extends Controller
             'category_id' => ['nullable', 'exists:categories,id'],
             'mentor_id' => ['nullable', 'exists:users,id'],
             'approval_status' => ['nullable', 'in:draft,pending,approved,rejected'],
-            'audience' => ['nullable', 'in:all,tsu'],
+            'audience' => ['nullable', 'in:all,tsu,both,none'],
         ]);
     }
 
@@ -412,7 +426,7 @@ class ProgramController extends Controller
         }
 
         $data['price'] = $data['price'] ?? 0;
-        $data['audience'] = 'all';
+        $data['audience'] = $data['audience'] ?? 'all';
 
         return $data;
     }

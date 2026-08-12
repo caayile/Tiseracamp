@@ -38,15 +38,15 @@
             <a href="{{ route('news.index') }}" class="{{ $isNews ? $navActive : $navClass }}">Berita</a>
             @auth
                 @if (auth()->user()->isStudent())
-                    <div class="group relative">
-                        <a href="{{ route('career.gallery') }}" class="{{ $isCareer ? $navActive : $navClass }} inline-flex items-center gap-2" aria-haspopup="menu" aria-controls="career-menu-desktop" data-career-toggle="desktop">
+                    <div class="relative">
+                        <button type="button" class="{{ $isCareer ? $navActive : $navClass }} inline-flex items-center gap-2" aria-haspopup="menu" aria-controls="career-menu-desktop" aria-expanded="false" data-career-toggle="desktop">
                             Karier
-                            <svg class="h-4 w-4 text-ink-soft transition duration-200 group-hover:rotate-180 group-focus-within:rotate-180" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <svg data-career-chevron class="h-4 w-4 text-ink-soft transition duration-200" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                 <path d="M6 8l4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                        </a>
+                        </button>
 
-                        <div id="career-menu-desktop" class="invisible absolute left-0 top-full z-50 mt-2 w-56 origin-top scale-95 overflow-hidden rounded-2xl border border-ink/10 bg-panel p-2 opacity-0 shadow-[0_24px_70px_-32px_rgba(11,31,42,0.35)] transition duration-200 group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100" data-career-menu="desktop">
+                        <div id="career-menu-desktop" class="hidden absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-ink/10 bg-panel p-2 shadow-[0_24px_70px_-32px_rgba(11,31,42,0.35)]" data-career-menu="desktop">
                             <a href="{{ route('career.gallery') }}" class="block rounded-xl px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-brand-mist">
                                 Galeri Portofolio
                             </a>

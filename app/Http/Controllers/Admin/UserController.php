@@ -22,7 +22,7 @@ class UserController extends Controller
                 $sub->where('is_tsu', false)->orWhereNull('is_tsu');
             }))
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('admin.users.index', compact('users'));

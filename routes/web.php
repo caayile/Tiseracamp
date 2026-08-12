@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CvSubscriptionController as AdminCvSubscriptionCo
 use App\Http\Controllers\Admin\CvPlanController as AdminCvPlanController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GradeController as AdminGradeController;
+use App\Http\Controllers\Admin\LogbookController as AdminLogbookController;
 use App\Http\Controllers\Admin\PaymentAccountController as AdminPaymentAccountController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\PortfolioController as AdminPortfolioController;
@@ -215,6 +216,9 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::get('/grades', [AdminGradeController::class, 'index'])->name('grades.index');
     Route::put('/grades/{enrollment}', [AdminGradeController::class, 'update'])->name('grades.update');
     Route::get('/grades/{enrollment}/print', [AdminGradeController::class, 'print'])->name('grades.print');
+
+    Route::get('/logbooks', [AdminLogbookController::class, 'index'])->name('logbooks.index');
+    Route::get('/logbooks/{user}', [AdminLogbookController::class, 'show'])->name('logbooks.show');
 
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');

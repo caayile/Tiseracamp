@@ -13,14 +13,23 @@ use Illuminate\View\View;
 
 class PaymentController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $payments = Payment::with(['user', 'program', 'enrollment'])->latest()->paginate(20);
-        $cvSubscriptions = CvSubscription::with('user')
-            ->latest()
-            ->paginate(20, ['*'], 'cv_page');
+        $tab = $request->string('tab')->toString() === 'all' ? 'all' : 'pending';
 
-        return view('admin.payments.index', compact('payments', 'cvSubscriptions'));
+        $payments = Payment::with(['user', 'program', 'enrollment'])
+            ->when($tab === 'pending', fn ($q) => $q->where('status', 'waiting_verification'))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $cvSubscriptions = CvSubscription::with('user')
+            ->when($tab === 'pending', fn ($q) => $q->where('status', 'waiting_verification'))
+            ->latest()
+            ->paginate(10, ['*'], 'cv_page')
+            ->withQueryString();
+
+        return view('admin.payments.index', compact('payments', 'cvSubscriptions', 'tab'));
     }
 
     public function verify(Request $request, Payment $payment): RedirectResponse

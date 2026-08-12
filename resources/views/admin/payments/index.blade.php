@@ -16,10 +16,23 @@
         <a href="{{ route('admin.payment-account.edit') }}" class="btn-secondary text-xs">Ubah rekening</a>
     </div>
 
+    <div class="mb-6 flex flex-wrap gap-2">
+        <a href="{{ route('admin.payments.index', ['tab' => 'pending']) }}"
+           class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $tab === 'pending' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+            Perlu Verifikasi
+        </a>
+        <a href="{{ route('admin.payments.index', ['tab' => 'all']) }}"
+           class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $tab === 'all' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+            Semua
+        </a>
+    </div>
+
     <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
             <h2 class="font-display text-lg font-semibold text-ink">Paket Review CV AI</h2>
-            <p class="text-sm text-ink-soft">Konfirmasi bukti transfer langganan Review CV AI. Gunakan tombol hijau untuk aktifkan.</p>
+            <p class="text-sm text-ink-soft">
+                {{ $tab === 'pending' ? 'Konfirmasi bukti transfer langganan Review CV AI yang belum diverifikasi.' : 'Riwayat pembayaran langganan Review CV AI.' }}
+            </p>
         </div>
         <a href="{{ route('admin.cv-subscriptions.index') }}" class="btn-ghost text-xs">Lihat semua paket CV</a>
     </div>
@@ -98,7 +111,9 @@
 <div>
     <div class="mb-3">
         <h2 class="font-display text-lg font-semibold text-ink">Pembayaran Program / Bootcamp</h2>
-        <p class="text-sm text-ink-soft">Verifikasi pembayaran kelas seperti biasa.</p>
+        <p class="text-sm text-ink-soft">
+            {{ $tab === 'pending' ? 'Verifikasi pembayaran kelas yang belum diverifikasi.' : 'Riwayat pembayaran program dan bootcamp.' }}
+        </p>
     </div>
 
     <div class="card-soft overflow-hidden">

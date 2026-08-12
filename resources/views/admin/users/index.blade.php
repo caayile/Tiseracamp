@@ -4,7 +4,7 @@
 @section('heading', 'Kelola User')
 
 @section('content')
-<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+<div class="grid gap-6">
     <div class="card-soft min-w-0 overflow-hidden">
         <div class="border-b border-brand/10 px-5 py-4">
             <form method="GET" class="flex flex-wrap gap-2">
@@ -88,33 +88,37 @@
                 </tbody>
             </table>
         </div>
-        <div class="px-5 py-4">{{ $users->links() }}</div>
+        <div class="flex items-center justify-between gap-3 border-t border-brand/10 px-5 py-4">
+            {{ $users->links() }}
+        </div>
     </div>
 
-    <form method="POST" action="{{ route('admin.users.store') }}" class="card-soft h-fit space-y-4 p-5">
+    <form method="POST" action="{{ route('admin.users.store') }}" class="card-soft space-y-4 p-5">
         @csrf
         <h2 class="font-display text-lg font-semibold">Buat user</h2>
-        <div>
-            <label class="mb-1 block text-sm font-medium">Nama</label>
-            <input type="text" name="name" class="input-field" required>
+        <div class="grid gap-4 md:grid-cols-2">
+            <div>
+                <label class="mb-1 block text-sm font-medium">Nama</label>
+                <input type="text" name="name" class="input-field" required>
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium">Email</label>
+                <input type="email" name="email" class="input-field" required>
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium">Password</label>
+                <input type="password" name="password" class="input-field" required>
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium">Role</label>
+                <select name="role" class="input-field" required>
+                    <option value="student">Student</option>
+                    <option value="mentor">Mentor</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
         </div>
-        <div>
-            <label class="mb-1 block text-sm font-medium">Email</label>
-            <input type="email" name="email" class="input-field" required>
-        </div>
-        <div>
-            <label class="mb-1 block text-sm font-medium">Password</label>
-            <input type="password" name="password" class="input-field" required>
-        </div>
-        <div>
-            <label class="mb-1 block text-sm font-medium">Role</label>
-            <select name="role" class="input-field" required>
-                <option value="student">Student</option>
-                <option value="mentor">Mentor</option>
-                <option value="admin">Admin</option>
-            </select>
-        </div>
-        <button class="btn-primary w-full" type="submit">Buat user</button>
+        <button class="btn-primary" type="submit">Buat user</button>
     </form>
 </div>
 @endsection
