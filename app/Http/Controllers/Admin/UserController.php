@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\AppNotification;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ class UserController extends Controller
     {
         $users = User::query()
             ->when($request->filled('role'), fn ($q) => $q->where('role', $request->string('role')))
+            ->when($request->string('tsu')->toString() === 'tsu', fn ($q) => $q->where('is_tsu', true))
+            ->when($request->string('tsu')->toString() === 'non_tsu', fn ($q) => $q->where(function ($sub) {
+                $sub->where('is_tsu', false)->orWhereNull('is_tsu');
+            }))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -62,5 +67,27 @@ class UserController extends Controller
         $user->delete();
 
         return back()->with('success', 'User dihapus.');
+    }
+
+    public function revokeTsu(User $user): RedirectResponse
+    {
+        abort_unless($user->isTsuStudent(), 404);
+
+        $user->update([
+            'is_tsu' => false,
+            'screening_completed_at' => null,
+            'ktm_path' => null,
+        ]);
+
+        ActivityLog::record(auth()->user(), 'revoke_tsu', $user);
+
+        AppNotification::create([
+            'user_id' => $user->id,
+            'title' => 'Status TSU dicabut',
+            'body' => 'Status mahasiswa TSU kamu telah dicabut oleh admin. Kamu kini menjadi pengguna umum.',
+            'type' => 'warning',
+        ]);
+
+        return back()->with('success', 'Status TSU '.$user->name.' dicabut, pengguna dialihkan ke umum.');
     }
 }

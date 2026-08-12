@@ -46,10 +46,13 @@ class CareerController extends Controller
     public function jobs(Request $request): View
     {
         $search = trim($request->string('q')->toString());
+        $isTsuStudent = auth()->user()?->isTsuStudent() ?? false;
+        $scope = $isTsuStudent && $request->string('scope')->toString() === 'tsu' ? 'tsu' : 'all';
 
         $programs = Program::published()
             ->with(['partner', 'mentor', 'category'])
             ->where('type', 'job')
+            ->forAudience($scope === 'tsu')
             ->when($search, fn ($query) => $query->where(function ($subQuery) use ($search) {
                 $needle = '%'.mb_strtolower($search).'%';
                 $subQuery->whereRaw('LOWER(title) LIKE ?', [$needle])
@@ -61,7 +64,7 @@ class CareerController extends Controller
             ->paginate(9)
             ->withQueryString();
 
-        return view('career.jobs', compact('programs', 'search'));
+        return view('career.jobs', compact('programs', 'search', 'isTsuStudent', 'scope'));
     }
 
     public function storePortfolio(Request $request): RedirectResponse

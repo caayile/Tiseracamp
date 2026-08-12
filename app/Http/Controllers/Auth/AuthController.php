@@ -56,7 +56,7 @@ class AuthController extends Controller
         }
 
         // Selalu ke dashboard sesuai role (hindari intended yang salah role)
-        return redirect()->route($user->dashboardRoute());
+        return redirect()->route($user->postAuthRoute());
     }
 
     public function showRegister(): View
@@ -111,7 +111,7 @@ class AuthController extends Controller
         }
 
         if ($user->email_verified_at) {
-            return redirect()->route($user->dashboardRoute());
+            return redirect()->route($user->postAuthRoute());
         }
 
         return view('auth.verify');
@@ -145,7 +145,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()
-            ->route($user->dashboardRoute())
+            ->route($user->postAuthRoute())
             ->with('success', 'Email berhasil diverifikasi. Selamat datang!');
     }
 
@@ -154,7 +154,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($user->email_verified_at) {
-            return redirect()->route($user->dashboardRoute());
+            return redirect()->route($user->postAuthRoute());
         }
 
         $mailSent = $this->sendVerificationMail($user);

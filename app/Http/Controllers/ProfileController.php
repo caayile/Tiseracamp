@@ -65,6 +65,7 @@ class ProfileController extends Controller
             'education_level' => ['nullable', 'in:D3,D4,S1'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'expertise' => ['nullable', 'string', 'max:500'],
+            'ktm' => ['nullable', 'file', 'mimes:png,jpg,jpeg,pdf', 'max:5120'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
@@ -79,6 +80,10 @@ class ProfileController extends Controller
 
         if ($user->isMentor()) {
             $user->expertise = array_values(array_filter(array_map('trim', explode(',', $data['expertise'] ?? ''))));
+        }
+
+        if ($user->isStudent() && $user->isTsuStudent() && $request->hasFile('ktm')) {
+            $user->ktm_path = $request->file('ktm')->store('ktm', media_disk());
         }
 
         if ($request->hasFile('avatar')) {

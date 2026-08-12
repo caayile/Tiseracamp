@@ -16,6 +16,7 @@ class Program extends Model
         'excerpt', 'description', 'benefits', 'qualifications', 'required_documents',
         'preferred_skills', 'responsibilities', 'partner_id',
         'category_id', 'mentor_id', 'is_published', 'is_open', 'is_featured', 'approval_status',
+        'audience',
     ];
 
     protected function casts(): array
@@ -146,6 +147,25 @@ class Program extends Model
         }
 
         return $this->isListingOpen();
+    }
+
+    public function isTsuOnly(): bool
+    {
+        return $this->audience === 'tsu';
+    }
+
+    public function isVisibleTo(?User $user): bool
+    {
+        return ! $this->isTsuOnly() || ($user?->isTsuStudent() ?? false);
+    }
+
+    public function scopeForAudience(Builder $query, bool $tsuOnly): Builder
+    {
+        if (! $tsuOnly) {
+            return $query->where(fn (Builder $q) => $q->where('audience', 'all')->orWhereNull('audience'));
+        }
+
+        return $query->where('audience', 'tsu');
     }
 
     public function isListingOpen(): bool

@@ -47,6 +47,8 @@ class ProgramController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        abort_unless($program->isVisibleTo(auth()->user()), 404);
+
         // Dipakai navbar untuk highlight Magang vs Bootcamp tanpa query ekstra.
         view()->share('navProgramType', $program->type);
 

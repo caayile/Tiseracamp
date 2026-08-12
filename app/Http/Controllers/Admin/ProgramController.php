@@ -178,6 +178,7 @@ class ProgramController extends Controller
                 'benefits' => $this->parseBenefits($request->input('benefits_text')),
                 'qualifications' => $this->parseBenefits($request->input('qualifications_text')),
                 'level' => 'Intermediate',
+                'audience' => $data['audience'] ?? 'all',
             ]);
 
             return redirect()->route('admin.programs.index', ['type' => 'job'])->with('success', 'Detail lowongan kerja diperbarui.');
@@ -373,6 +374,7 @@ class ProgramController extends Controller
             'category_id' => ['nullable', 'exists:categories,id'],
             'mentor_id' => ['nullable', 'exists:users,id'],
             'approval_status' => ['nullable', 'in:draft,pending,approved,rejected'],
+            'audience' => ['nullable', 'in:all,tsu'],
         ]);
     }
 
@@ -389,6 +391,7 @@ class ProgramController extends Controller
             $data['responsibilities'] = $data['responsibilities'] ?? [];
             $data['qualifications'] = $data['qualifications'] ?? [];
             $data['duration_months'] = (int) ($data['duration_months'] ?? 0);
+            $data['audience'] = $data['audience'] ?? 'all';
 
             return $data;
         }
@@ -403,11 +406,13 @@ class ProgramController extends Controller
             $data['required_documents'] = [];
             $data['preferred_skills'] = [];
             $data['responsibilities'] = [];
+            $data['audience'] = 'all';
 
             return $data;
         }
 
         $data['price'] = $data['price'] ?? 0;
+        $data['audience'] = 'all';
 
         return $data;
     }

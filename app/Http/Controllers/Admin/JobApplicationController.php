@@ -14,6 +14,8 @@ class JobApplicationController extends Controller
     public function index(): View
     {
         $applications = JobApplication::with(['user', 'program'])
+            ->withExists(['user as is_tsu' => fn ($q) => $q->where('is_tsu', true)])
+            ->orderByDesc('is_tsu')
             ->latest()
             ->paginate(20);
 

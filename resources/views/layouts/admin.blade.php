@@ -15,24 +15,50 @@
             <p class="mt-2 text-xs text-white/60">Admin Panel</p>
         </div>
         <nav class="flex flex-col gap-1 p-3">
-            <a href="{{ route('admin.dashboard') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/10' : '' }}">Dashboard</a>
-            <a href="{{ route('admin.users.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/10' : '' }}">Users</a>
-            <a href="{{ route('admin.programs.index', ['type' => 'internship']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type', 'internship') === 'internship' && ! in_array(request('type'), ['job', 'bootcamp'], true) ? 'bg-white/10' : '' }}">Lowongan Magang</a>
-            <a href="{{ route('admin.programs.index', ['type' => 'job']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type') === 'job' ? 'bg-white/10' : '' }}">Lowongan Kerja</a>
-            <a href="{{ route('admin.programs.index', ['type' => 'bootcamp']) }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.programs.*') && request('type') === 'bootcamp' ? 'bg-white/10' : '' }}">Bootcamp</a>
-            <a href="{{ route('admin.applications.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.applications.*') ? 'bg-white/10' : '' }}">Seleksi Magang</a>
-            <a href="{{ route('admin.job-applications.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.job-applications.*') ? 'bg-white/10' : '' }}">Seleksi Lowongan</a>
-            <a href="{{ route('admin.grades.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.grades.*') ? 'bg-white/10' : '' }}">Nilai Magang</a>
-            <a href="{{ route('admin.schedules.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.schedules.*') ? 'bg-white/10' : '' }}">Sesi Magang</a>
-            <a href="{{ route('admin.chat.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.chat.*') ? 'bg-white/10' : '' }}">Chat Magang</a>
-            <a href="{{ route('admin.payments.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payments.*') ? 'bg-white/10' : '' }}">Pembayaran</a>
-            <a href="{{ route('admin.payment-account.edit') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.payment-account.*') ? 'bg-white/10' : '' }}">Rekening Bayar</a>
-            <a href="{{ route('admin.cv-subscriptions.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.cv-subscriptions.*') ? 'bg-white/10' : '' }}">Paket CV AI</a>
-            <a href="{{ route('admin.cv-plans.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.cv-plans.*') ? 'bg-white/10' : '' }}">Harga Paket CV</a>
-            <a href="{{ route('admin.content.index') }}" class="rounded-lg px-3 py-2.5 text-sm hover:bg-white/10 {{ request()->routeIs('admin.content.*') ? 'bg-white/10' : '' }}">Berita & Content</a>
+            @php
+                $navItems = [
+                    ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'match' => 'admin.dashboard', 'icon' => 'M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z'],
+                    ['label' => 'Users', 'route' => 'admin.users.index', 'match' => 'admin.users.*', 'icon' => 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75'],
+                    ['label' => 'Lowongan Magang', 'route' => 'admin.programs.index', 'params' => ['type' => 'internship'], 'match' => 'admin.programs.*', 'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 'active' => request('type', 'internship') === 'internship' && ! in_array(request('type'), ['job', 'bootcamp'], true)],
+                    ['label' => 'Lowongan Kerja', 'route' => 'admin.programs.index', 'params' => ['type' => 'job'], 'match' => 'admin.programs.*', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', 'active' => request('type') === 'job'],
+                    ['label' => 'Bootcamp', 'route' => 'admin.programs.index', 'params' => ['type' => 'bootcamp'], 'match' => 'admin.programs.*', 'icon' => 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14zM12 14v5', 'active' => request('type') === 'bootcamp'],
+                    ['label' => 'Seleksi Magang', 'route' => 'admin.applications.index', 'match' => 'admin.applications.*', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['label' => 'Seleksi Lowongan', 'route' => 'admin.job-applications.index', 'match' => 'admin.job-applications.*', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+                    ['label' => 'Galeri Portofolio', 'route' => 'admin.portfolios.index', 'match' => 'admin.portfolios.*', 'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
+                    ['label' => 'Nilai Magang', 'route' => 'admin.grades.index', 'match' => 'admin.grades.*', 'icon' => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
+                    ['label' => 'Sesi Magang', 'route' => 'admin.schedules.index', 'match' => 'admin.schedules.*', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+                    ['label' => 'Chat Magang', 'route' => 'admin.chat.index', 'match' => 'admin.chat.*', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
+                    ['label' => 'Pembayaran', 'route' => 'admin.payments.index', 'match' => 'admin.payments.*', 'icon' => 'M3 10h18M7 15h3m-6 4h16a2 2 0 002-2V7a2 2 0 00-2-2H3a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                    ['label' => 'Rekening Bayar', 'route' => 'admin.payment-account.edit', 'match' => 'admin.payment-account.*', 'icon' => 'M3 6h18v12H3V6zM3 10h18M7 15h2'],
+                    ['label' => 'Paket CV AI', 'route' => 'admin.cv-subscriptions.index', 'match' => 'admin.cv-subscriptions.*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                    ['label' => 'Harga Paket CV', 'route' => 'admin.cv-plans.index', 'match' => 'admin.cv-plans.*', 'icon' => 'M20 12V8a2 2 0 00-2-2H6a2 2 0 00-2 2v4m16 0a2 2 0 00-2 2h-2a2 2 0 00-2 2h-4a2 2 0 00-2-2H6a2 2 0 00-2 2m16 0v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4'],
+                    ['label' => 'Berita & Content', 'route' => 'admin.content.index', 'match' => 'admin.content.*', 'icon' => 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v14m2-12v12a2 2 0 01-2 2M5 9h9'],
+                ];
+            @endphp
+
+            @foreach ($navItems as $item)
+                @php
+                    $isActive = request()->routeIs($item['match']) && ($item['active'] ?? true);
+                    $itemRoute = isset($item['params'])
+                        ? route($item['route'], $item['params'])
+                        : route($item['route']);
+                @endphp
+                <a href="{{ $itemRoute }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 {{ $isActive ? 'bg-white/10' : '' }}">
+                    <svg class="h-5 w-5 shrink-0 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
+                    </svg>
+                    {{ $item['label'] }}
+                </a>
+            @endforeach
+
             <form method="POST" action="{{ route('logout') }}" class="mt-2">
                 @csrf
-                <button class="w-full rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/10" type="submit">Logout</button>
+                <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-white/10" type="submit">
+                    <svg class="h-5 w-5 shrink-0 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                </button>
             </form>
         </nav>
     </aside>

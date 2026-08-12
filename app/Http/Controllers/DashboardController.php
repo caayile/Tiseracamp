@@ -30,6 +30,10 @@ class DashboardController extends Controller
             return redirect()->route('mentor.dashboard');
         }
 
+        if ($user->needsScreening()) {
+            return redirect()->route('screening.show');
+        }
+
         $enrollments = Enrollment::with(['program.mentor', 'program.partner', 'certificate', 'batch', 'testimonial'])
             ->where('user_id', $user->id)
             ->latest()

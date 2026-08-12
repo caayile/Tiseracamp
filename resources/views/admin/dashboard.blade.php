@@ -45,6 +45,19 @@
     @endforeach
 </div>
 
+<div class="mt-6 grid gap-4 sm:grid-cols-2">
+    <div class="card-soft p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Mahasiswa TSU</p>
+        <p class="mt-2 font-display text-3xl font-bold text-ink">{{ $tsuStats['tsu'] }}</p>
+        <a href="{{ route('admin.users.index', ['tsu' => 'tsu']) }}" class="mt-2 inline-block text-xs font-semibold text-brand-mid hover:underline">Lihat daftar →</a>
+    </div>
+    <div class="card-soft p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">Pengguna umum</p>
+        <p class="mt-2 font-display text-3xl font-bold text-ink">{{ $tsuStats['non_tsu'] }}</p>
+        <a href="{{ route('admin.users.index', ['tsu' => 'non_tsu']) }}" class="mt-2 inline-block text-xs font-semibold text-brand-mid hover:underline">Lihat daftar →</a>
+    </div>
+</div>
+
 <div class="mt-8 grid gap-6 lg:grid-cols-2">
     <div class="card-soft overflow-hidden">
         <div class="border-b border-brand/10 px-5 py-4">

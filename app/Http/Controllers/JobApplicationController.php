@@ -14,6 +14,7 @@ class JobApplicationController extends Controller
     public function create(Program $program): View|RedirectResponse
     {
         abort_unless($program->type === 'job' && $program->is_published && $program->approval_status === 'approved', 404);
+        abort_unless($program->isVisibleTo(auth()->user()), 404);
 
         if (! $program->isJobOpen()) {
             return redirect()->route('programs.show', $program->slug)
@@ -42,6 +43,7 @@ class JobApplicationController extends Controller
     public function store(Request $request, Program $program): RedirectResponse
     {
         abort_unless($program->type === 'job' && $program->is_published && $program->approval_status === 'approved', 404);
+        abort_unless($program->isVisibleTo(auth()->user()), 404);
 
         if (! $program->isJobOpen()) {
             return redirect()->route('programs.show', $program->slug)
@@ -119,6 +121,7 @@ class JobApplicationController extends Controller
     public function status(Program $program): View
     {
         abort_unless($program->type === 'job', 404);
+        abort_unless($program->isVisibleTo(auth()->user()), 404);
 
         $application = JobApplication::where('user_id', auth()->id())
             ->where('program_id', $program->id)

@@ -158,6 +158,29 @@
                 </div>
             </div>
 
+            <div class="rounded-2xl border border-brand/15 bg-gradient-to-br from-brand-mist/50 to-panel p-4">
+                <label class="mb-3 block text-sm font-semibold text-ink">Sasaran pelamar</label>
+                <div class="flex flex-col gap-3 sm:flex-row sm:gap-6">
+                    <label class="flex items-center gap-3 rounded-xl border border-brand/15 bg-panel px-4 py-3 text-sm @checked(old('audience', $program->audience ?? 'all') === 'all' ? 'border-brand/40 bg-brand-mist/40' : '')">
+                        <input type="radio" name="audience" value="all"
+                               @checked(old('audience', $program->audience ?? 'all') === 'all') class="h-4 w-4">
+                        <span>
+                            <span class="block font-semibold text-ink">Terbuka umum</span>
+                            <span class="block text-xs text-ink-soft">Terlihat oleh semua pengguna.</span>
+                        </span>
+                    </label>
+                    <label class="flex items-center gap-3 rounded-xl border border-brand/15 bg-panel px-4 py-3 text-sm @checked(old('audience', $program->audience ?? 'all') === 'tsu' ? 'border-brand/40 bg-brand-mist/40' : '')">
+                        <input type="radio" name="audience" value="tsu"
+                               @checked(old('audience', $program->audience ?? 'all') === 'tsu') class="h-4 w-4">
+                        <span>
+                            <span class="block font-semibold text-ink">Prioritas TS Group</span>
+                            <span class="block text-xs text-ink-soft">Hanya terlihat oleh mahasiswa TSU.</span>
+                        </span>
+                    </label>
+                </div>
+                @error('audience') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Lokasi</label>
                 <input type="text" name="location" value="{{ old('location', $program->location) }}" class="input-field" placeholder="Contoh: Surakarta / Remote">

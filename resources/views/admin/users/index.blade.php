@@ -14,6 +14,11 @@
                         <option value="{{ $role }}" @selected(request('role') === $role)>{{ ucfirst($role) }}</option>
                     @endforeach
                 </select>
+                <select name="tsu" class="input-field w-auto" onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    <option value="tsu" @selected(request('tsu') === 'tsu')>Mahasiswa TSU</option>
+                    <option value="non_tsu" @selected(request('tsu') === 'non_tsu')>Pengguna umum</option>
+                </select>
             </form>
         </div>
 
@@ -24,6 +29,7 @@
                         <th class="px-4 py-3 font-medium">Nama</th>
                         <th class="px-4 py-3 font-medium">Email</th>
                         <th class="px-4 py-3 font-medium">Role</th>
+                        <th class="px-4 py-3 font-medium">Tipe pengguna</th>
                         <th class="px-4 py-3 font-medium">Status</th>
                         <th class="px-4 py-3 font-medium text-right">Aksi</th>
                     </tr>
@@ -32,8 +38,7 @@
                     @foreach ($users as $user)
                         <tr class="border-t border-brand/10">
                             <td class="px-4 py-3 font-medium text-ink">{{ $user->name }}</td>
-                            <td class="max-w-[200px] truncate px-4 py-3 text-ink-soft" title="{{ $user->email }}">{{ $user->email }}</td>
-                            <td class="px-4 py-3">
+                            <td class="max-w-[200px] truncate px-4 py-3 text-ink-soft" title="{{ $user->email }}">{{ $user->email }}</td>                            <td class="px-4 py-3">
                                 <form method="POST" action="{{ route('admin.users.update', $user) }}" id="user-update-{{ $user->id }}">
                                     @csrf
                                     @method('PUT')
@@ -43,6 +48,13 @@
                                         @endforeach
                                     </select>
                                 </form>
+                            </td>
+                            <td class="px-4 py-3">
+                                @if ($user->isTsuStudent())
+                                    <span class="badge bg-brand/15 text-brand-dark ring-brand/30">TSU</span>
+                                @else
+                                    <span class="badge">Umum</span>
+                                @endif
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap items-center gap-2">
@@ -56,6 +68,12 @@
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     <button class="btn-ghost text-xs" type="submit" form="user-update-{{ $user->id }}">Update</button>
+                                    @if ($user->isTsuStudent())
+                                        <form method="POST" action="{{ route('admin.users.revoke-tsu', $user) }}" onsubmit="return confirm('Cabut status TSU {{ $user->name }}? Pengguna akan dialihkan ke umum dan harus screening ulang.')">
+                                            @csrf
+                                            <button class="btn-ghost text-xs text-amber-600" type="submit">Cabut TSU</button>
+                                        </form>
+                                    @endif
                                     @if ($user->id !== auth()->id())
                                         <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Hapus user ini?')">
                                             @csrf

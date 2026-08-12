@@ -19,7 +19,12 @@
             @forelse ($applications as $application)
                 <tr class="border-t border-brand/10 align-top">
                     <td class="px-5 py-3">
-                        <p class="font-medium">{{ $application->full_name }}</p>
+                        <p class="font-medium">
+                            {{ $application->full_name }}
+                            @if ($application->is_tsu)
+                                <span class="badge ml-1 bg-brand/15 text-brand-dark ring-brand/30">Prioritas TSU</span>
+                            @endif
+                        </p>
                         <p class="text-xs text-ink-soft">{{ $application->email }} · {{ $application->phone }}</p>
                         @if ($application->motivation)
                             <p class="mt-1 text-xs text-ink-soft line-clamp-2">{{ $application->motivation }}</p>

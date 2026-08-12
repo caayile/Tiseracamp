@@ -33,7 +33,7 @@
         <nav class="hidden items-center gap-1 md:flex">
             <a href="{{ route('home') }}" class="{{ $isHome ? $navActive : $navClass }}">Beranda</a>
             <a href="{{ route('cv-review.index') }}" class="{{ $isCvReview ? $navActive : $navClass }}">Review CV AI</a>
-            <a href="{{ route('programs.index') }}" class="{{ $isPrograms ? $navActive : $navClass }}">Bootcamp & Program</a>
+            <a href="{{ route('programs.index') }}" class="{{ $isPrograms ? $navActive : $navClass }}">Bootcamp</a>
             <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="{{ $isMagang ? $navActive : $navClass }}">Magang</a>
             <a href="{{ route('news.index') }}" class="{{ $isNews ? $navActive : $navClass }}">Berita</a>
             @auth
@@ -92,7 +92,7 @@
         <div class="mx-auto flex max-w-6xl flex-col gap-2">
             <a href="{{ route('home') }}" class="{{ ($isHome ? $navActive : $navClass).' justify-start' }}">Beranda</a>
             <a href="{{ route('cv-review.index') }}" class="{{ ($isCvReview ? $navActive : $navClass).' justify-start' }}">Review CV AI</a>
-            <a href="{{ route('programs.index') }}" class="{{ ($isPrograms ? $navActive : $navClass).' justify-start' }}">Bootcamp & Program</a>
+            <a href="{{ route('programs.index') }}" class="{{ ($isPrograms ? $navActive : $navClass).' justify-start' }}">Bootcamp</a>
             <a href="{{ route('programs.index', ['type' => 'internship']) }}" class="{{ ($isMagang ? $navActive : $navClass).' justify-start' }}">Magang</a>
             <a href="{{ route('news.index') }}" class="{{ ($isNews ? $navActive : $navClass).' justify-start' }}">Berita</a>
             @auth

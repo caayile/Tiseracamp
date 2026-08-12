@@ -20,6 +20,9 @@
         </div>
 
         <form method="GET" class="w-full sm:w-auto">
+            @if ($isTsuStudent)
+                <input type="hidden" name="scope" value="{{ $scope }}">
+            @endif
             <div class="relative">
                 <input type="search" name="q" value="{{ $search ?? '' }}" placeholder="Cari posisi, divisi, atau lokasi"
                        class="input-field w-full pr-12 pl-4 py-3 text-sm" />
@@ -29,6 +32,19 @@
             </div>
         </form>
     </div>
+
+    @if ($isTsuStudent)
+        <div class="mt-8 flex flex-wrap gap-2">
+            <a href="{{ route('career.jobs', ['scope' => 'all']) }}"
+               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'all' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+                Semua Lowongan
+            </a>
+            <a href="{{ route('career.jobs', ['scope' => 'tsu']) }}"
+               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'tsu' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+                Prioritas TS Group
+            </a>
+        </div>
+    @endif
 
     <div class="mt-10 grid gap-5 lg:grid-cols-2">
         @forelse ($programs as $program)

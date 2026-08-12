@@ -15,6 +15,7 @@ use Illuminate\Notifications\Notifiable;
     'name', 'email', 'google_id', 'password', 'role', 'avatar', 'phone',
     'university', 'major', 'semester', 'education_level', 'bio',
     'expertise', 'status', 'rating', 'otp_code', 'otp_expires_at', 'email_verified_at',
+    'is_tsu', 'ktm_path', 'screening_completed_at',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
@@ -30,6 +31,8 @@ class User extends Authenticatable
             'expertise' => 'array',
             'otp_expires_at' => 'datetime',
             'rating' => 'float',
+            'is_tsu' => 'boolean',
+            'screening_completed_at' => 'datetime',
         ];
     }
 
@@ -122,6 +125,21 @@ class User extends Authenticatable
         return $this->status === 'active';
     }
 
+    public function isTsuStudent(): bool
+    {
+        return $this->is_tsu === true;
+    }
+
+    public function hasCompletedScreening(): bool
+    {
+        return $this->screening_completed_at !== null;
+    }
+
+    public function needsScreening(): bool
+    {
+        return $this->isStudent() && ! $this->hasCompletedScreening();
+    }
+
     public function dashboardRoute(): string
     {
         return match ($this->role) {
@@ -129,5 +147,10 @@ class User extends Authenticatable
             'mentor' => 'mentor.dashboard',
             default => 'dashboard',
         };
+    }
+
+    public function postAuthRoute(): string
+    {
+        return $this->needsScreening() ? 'screening.show' : $this->dashboardRoute();
     }
 }

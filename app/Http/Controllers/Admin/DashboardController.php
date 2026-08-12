@@ -21,6 +21,9 @@ class DashboardController extends Controller
             ->groupBy('role')
             ->pluck('total', 'role');
 
+        $totalStudents = (int) ($roleCounts['student'] ?? 0);
+        $tsuStudents = User::where('role', 'student')->where('is_tsu', true)->count();
+
         $enrollmentStats = Enrollment::query()
             ->selectRaw("count(*) as total")
             ->selectRaw("count(*) filter (where status = 'active') as active")
@@ -32,12 +35,16 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', [
             'stats' => [
-                'users' => (int) ($roleCounts['student'] ?? 0),
+                'users' => $totalStudents,
                 'mentors' => (int) ($roleCounts['mentor'] ?? 0),
                 'programs' => Program::count(),
                 'active_enrollments' => (int) ($enrollmentStats->active ?? 0),
                 'revenue' => (float) Payment::where('status', 'paid')->sum('amount'),
                 'completion_rate' => $totalEnrollments ? round(($completed / $totalEnrollments) * 100) : 0,
+            ],
+            'tsuStats' => [
+                'tsu' => $tsuStudents,
+                'non_tsu' => $totalStudents - $tsuStudents,
             ],
             'recentEnrollments' => Enrollment::with(['user:id,name,email', 'program:id,title'])
                 ->latest()

@@ -24,6 +24,11 @@
             <div>
                 <h1 class="section-title">Edit profil</h1>
                 <p class="mt-1 text-sm text-ink-soft">{{ $user->email }} · {{ ucfirst($user->role) }}</p>
+                @if (! $isMentor)
+                    <span class="badge mt-2 {{ $user->isTsuStudent() ? 'bg-brand/15 text-brand-dark ring-brand/30' : '' }}">
+                        {{ $user->isTsuStudent() ? 'Mahasiswa TSU' : 'Pengguna umum' }}
+                    </span>
+                @endif
             </div>
         </div>
     </div>
@@ -103,6 +108,23 @@
                 </div>
             @endunless
         </div>
+
+        @if (! $isMentor && $user->isTsuStudent())
+            <div class="border-t border-brand/10 pt-4">
+                <p class="mb-1.5 block text-sm font-medium">Kartu Tanda Mahasiswa (KTM)</p>
+                @if (filled($user->ktm_path))
+                    <p class="mb-2 text-xs text-ink-soft">
+                        KTM sudah diunggah —
+                        <a href="{{ media_url($user->ktm_path) }}" target="_blank" class="font-semibold text-brand-dark underline">Lihat KTM</a>.
+                        Upload ulang di bawah untuk mengganti.
+                    </p>
+                @else
+                    <p class="mb-2 text-xs text-ink-soft">Belum ada KTM. Untuk mahasiswa TSU, KTM wajib diunggah.</p>
+                @endif
+                <input type="file" name="ktm" accept=".png,.jpg,.jpeg,.pdf" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+                @error('ktm') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+        @endif
 
         <div>
             <label class="mb-1.5 block text-sm font-medium">Bio</label>

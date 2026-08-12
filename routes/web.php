@@ -11,11 +11,13 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GradeController as AdminGradeController;
 use App\Http\Controllers\Admin\PaymentAccountController as AdminPaymentAccountController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Admin\PortfolioController as AdminPortfolioController;
 use App\Http\Controllers\Admin\ProgramController as AdminProgramController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\ScreeningController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CvReviewController;
@@ -75,6 +77,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/verify-email', [AuthController::class, 'showVerify'])->name('verify.show');
     Route::post('/verify-email/resend', [AuthController::class, 'resendVerification'])->name('verify.resend');
+
+    Route::get('/screening', [ScreeningController::class, 'show'])->name('screening.show');
+    Route::post('/screening', [ScreeningController::class, 'store'])->name('screening.store');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -182,6 +187,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users/{user}/revoke-tsu', [AdminUserController::class, 'revokeTsu'])->name('users.revoke-tsu');
 
     Route::get('/programs', [AdminProgramController::class, 'index'])->name('programs.index');
     Route::get('/programs/create', [AdminProgramController::class, 'create'])->name('programs.create');
@@ -248,4 +254,8 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::put('/content/categories/{category}', [AdminContentController::class, 'updateCategory'])->name('content.categories.update');
     Route::delete('/content/categories/{category}', [AdminContentController::class, 'destroyCategory'])->name('content.categories.destroy');
     Route::post('/content/broadcast', [AdminContentController::class, 'broadcast'])->name('content.broadcast');
+
+    Route::get('/portfolios', [AdminPortfolioController::class, 'index'])->name('portfolios.index');
+    Route::post('/portfolios', [AdminPortfolioController::class, 'store'])->name('portfolios.store');
+    Route::delete('/portfolios/{portfolio}', [AdminPortfolioController::class, 'destroy'])->name('portfolios.destroy');
 });
