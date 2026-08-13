@@ -34,6 +34,14 @@ class ScreeningController extends Controller
 
         $data = $request->validate([
             'is_tsu' => ['required', 'in:0,1'],
+            'tsu_status' => ['nullable', 'required_if:is_tsu,1', 'in:active,fresh_graduate'],
+            'semester' => [
+                'nullable',
+                'required_if:tsu_status,active',
+                'integer',
+                'min:1',
+                'max:14',
+            ],
             'ktm' => [
                 'nullable',
                 'required_if:is_tsu,1',
@@ -41,23 +49,49 @@ class ScreeningController extends Controller
                 'mimes:png,jpg,jpeg,pdf',
                 'max:5120',
             ],
+        ], [
+            'tsu_status.required_if' => 'Pilih Mahasiswa Aktif atau Fresh Graduate.',
+            'semester.required_if' => 'Isi semester saat ini.',
+            'ktm.required_if' => 'Unggah KTM dulu.',
         ]);
 
-        $ktmPath = null;
-        if ($data['is_tsu'] === '1' && $request->hasFile('ktm')) {
+        $isTsu = $data['is_tsu'] === '1';
+        $tsuStatus = $isTsu ? ($data['tsu_status'] ?? null) : null;
+        $semester = $isTsu && $tsuStatus === 'active'
+            ? (string) $data['semester']
+            : ($isTsu ? null : $user->semester);
+
+        $ktmPath = $user->ktm_path;
+        if ($isTsu && $request->hasFile('ktm')) {
             $ktmPath = $request->file('ktm')->store('ktm', media_disk());
+        } elseif (! $isTsu) {
+            $ktmPath = null;
         }
 
         $user->forceFill([
-            'is_tsu' => (bool) $data['is_tsu'],
+            'is_tsu' => $isTsu,
+            'tsu_status' => $tsuStatus,
+            'semester' => $semester,
             'ktm_path' => $ktmPath,
+            'tsu_verified_at' => null,
             'screening_completed_at' => $user->screening_completed_at ?? now(),
         ])->save();
 
+        award_achievement($user, 'screening_done');
+
+        if ($isTsu) {
+            notify_admins(
+                'KTM menunggu verifikasi',
+                $user->name.' mengajukan status TSU ('.$user->tsuStatusLabel().').',
+                'info',
+                route('admin.users.index', ['tsu' => 'pending'])
+            );
+        }
+
         return redirect()
             ->route('dashboard')
-            ->with('success', $user->isTsuStudent()
-                ? 'Terima kasih! Kartu Tanda Mahasiswa (KTM) kamu sudah kami terima. Selamat datang, mahasiswa TSU!'
+            ->with('success', $isTsu
+                ? 'KTM sudah kami terima. Kamu bisa login dan memakai fitur umum. Fitur khusus TSU aktif setelah admin menyetujui KTM.'
                 : 'Terima kasih! Pengaturan akun sudah lengkap. Selamat menjelajah!');
     }
 }

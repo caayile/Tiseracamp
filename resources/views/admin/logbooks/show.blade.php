@@ -52,6 +52,20 @@
                                  class="max-h-48 rounded-xl border border-brand/10 object-cover">
                         </a>
                     @endif
+                    <p class="mt-3 text-xs font-semibold text-brand-mid">{{ $entry->statusLabel() }}</p>
+                    @if ($entry->reviewer_note)
+                        <p class="mt-1 text-xs text-ink-soft">Catatan: {{ $entry->reviewer_note }}</p>
+                    @endif
+                    <form method="POST" action="{{ route('admin.logbooks.review', $entry) }}" class="mt-4 grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_auto]">
+                        @csrf
+                        <select name="status" class="input-field text-sm">
+                            <option value="reviewed" @selected($entry->status === 'reviewed')>Sudah direview</option>
+                            <option value="revision" @selected($entry->status === 'revision')>Perlu revisi</option>
+                            <option value="submitted" @selected(($entry->status ?? 'submitted') === 'submitted')>Menunggu</option>
+                        </select>
+                        <input type="text" name="reviewer_note" value="{{ $entry->reviewer_note }}" class="input-field text-sm" placeholder="Catatan untuk siswa">
+                        <button class="btn-primary text-sm" type="submit">Simpan review</button>
+                    </form>
                 </div>
             </div>
         </div>

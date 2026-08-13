@@ -179,6 +179,7 @@ if (! function_exists('forget_home_cache')) {
     function forget_home_cache(): void
     {
         \Illuminate\Support\Facades\Cache::forget('home.page.v2');
+        \Illuminate\Support\Facades\Cache::forget('home.page.v3');
     }
 }
 
@@ -229,5 +230,67 @@ if (! function_exists('notification_bell_payload')) {
         }
 
         return $memo = $payload;
+    }
+}
+
+if (! function_exists('notify_user')) {
+    function notify_user(int $userId, string $title, string $body, string $type = 'info', ?string $link = null): void
+    {
+        \App\Models\AppNotification::create([
+            'user_id' => $userId,
+            'title' => $title,
+            'body' => $body,
+            'type' => $type,
+            'link' => $link,
+        ]);
+        forget_notification_bell($userId);
+    }
+}
+
+if (! function_exists('notify_admins')) {
+    function notify_admins(string $title, string $body, string $type = 'info', ?string $link = null, ?int $exceptUserId = null): void
+    {
+        \App\Models\User::query()
+            ->where('role', 'admin')
+            ->where('status', 'active')
+            ->when($exceptUserId, fn ($q) => $q->where('id', '!=', $exceptUserId))
+            ->pluck('id')
+            ->each(fn ($id) => notify_user((int) $id, $title, $body, $type, $link));
+    }
+}
+
+if (! function_exists('forget_notification_bell')) {
+    function forget_notification_bell(?int $userId = null): void
+    {
+        $userId = $userId ?? auth()->id();
+        if ($userId) {
+            \Illuminate\Support\Facades\Cache::forget('notif-bell-'.$userId);
+        }
+    }
+}
+
+if (! function_exists('award_achievement')) {
+    function award_achievement(\App\Models\User $user, string $code): void
+    {
+        $achievement = \App\Models\Achievement::query()->where('code', $code)->first();
+        if (! $achievement) {
+            return;
+        }
+
+        if ($user->achievements()->where('achievements.id', $achievement->id)->exists()) {
+            return;
+        }
+
+        $user->achievements()->attach($achievement->id, ['earned_at' => now()]);
+
+        \App\Models\AppNotification::create([
+            'user_id' => $user->id,
+            'title' => 'Badge baru: '.$achievement->name,
+            'body' => $achievement->description ?: 'Kamu mendapatkan pencapaian baru.',
+            'type' => 'success',
+            'link' => route('dashboard'),
+        ]);
+
+        forget_notification_bell($user->id);
     }
 }

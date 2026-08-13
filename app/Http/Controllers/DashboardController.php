@@ -47,8 +47,9 @@ class DashboardController extends Controller
             ->get();
 
         $notifications = AppNotification::where('user_id', $user->id)->latest()->take(5)->get();
+        $achievements = $user->achievements()->orderByPivot('earned_at', 'desc')->get();
 
-        return view('dashboard.index', compact('enrollments', 'schedules', 'notifications'));
+        return view('dashboard.index', compact('enrollments', 'schedules', 'notifications', 'achievements'));
     }
 
     public function enroll(Program $program): RedirectResponse
@@ -63,15 +64,21 @@ class DashboardController extends Controller
             return redirect()->route('payments.checkout', $program);
         }
 
+        if (! $program->hasAvailableSeat()) {
+            return back()->with('error', 'Kuota batch program ini sudah penuh.');
+        }
+
         Enrollment::firstOrCreate(
             ['user_id' => auth()->id(), 'program_id' => $program->id],
             [
                 'status' => 'active',
                 'progress' => 0,
                 'enrolled_at' => now(),
-                'batch_id' => $program->batches()->where('status', 'active')->value('id'),
+                'batch_id' => $program->enrollableBatchId(),
             ]
         );
+
+        award_achievement(auth()->user(), 'first_enrollment');
 
         AppNotification::create([
             'user_id' => auth()->id(),
@@ -277,6 +284,10 @@ class DashboardController extends Controller
         $wasIncomplete = ! $enrollment->isCompleted();
         $enrollment->recalculateProgress();
         $enrollment->refresh();
+
+        if ($wasIncomplete && $enrollment->isCompleted()) {
+            award_achievement(auth()->user(), 'course_complete');
+        }
 
         if ($wasIncomplete && $enrollment->isCompleted() && $enrollment->canWriteTestimonial()) {
             AppNotification::create([

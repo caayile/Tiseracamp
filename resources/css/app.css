@@ -357,23 +357,13 @@
     }
 
     @media (min-width: 768px) {
-        .panel-sidebar.panel-sidebar-admin {
-            display: flex !important;
-            flex-direction: column;
-        }
-
-        .panel-main-admin {
-            margin-left: 18rem;
-            width: auto;
-        }
-    }
-
-    @media (min-width: 1024px) {
+        .panel-sidebar.panel-sidebar-admin,
         .panel-sidebar.panel-sidebar-mentor {
             display: flex !important;
             flex-direction: column;
         }
 
+        .panel-main-admin,
         .panel-main-mentor {
             margin-left: 18rem;
             width: auto;

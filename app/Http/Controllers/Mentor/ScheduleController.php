@@ -69,6 +69,33 @@ class ScheduleController extends Controller
         return back()->with('success', 'Jadwal dibuat.');
     }
 
+    public function update(Request $request, ClassSchedule $schedule): RedirectResponse
+    {
+        abort_unless($schedule->mentor_id === auth()->id(), 403);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:160'],
+            'description' => ['nullable', 'string'],
+            'starts_at' => ['required', 'date'],
+            'ends_at' => ['nullable', 'date', 'after:starts_at'],
+            'meeting_url' => ['nullable', 'url'],
+            'materials_url' => ['nullable', 'url'],
+            'materials_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $schedule->update($data);
+
+        return back()->with('success', 'Jadwal diperbarui.');
+    }
+
+    public function destroy(ClassSchedule $schedule): RedirectResponse
+    {
+        abort_unless($schedule->mentor_id === auth()->id(), 403);
+        $schedule->delete();
+
+        return back()->with('success', 'Jadwal dihapus.');
+    }
+
     public function uploadRecording(Request $request, ClassSchedule $schedule): RedirectResponse
     {
         abort_unless($schedule->mentor_id === auth()->id(), 403);

@@ -14,7 +14,10 @@ class JobApplicationController extends Controller
     public function create(Program $program): View|RedirectResponse
     {
         abort_unless($program->type === 'job' && $program->is_published && $program->approval_status === 'approved', 404);
-        abort_unless($program->isVisibleTo(auth()->user()), 404);
+
+        if ($redirect = $this->tsuGate($program)) {
+            return $redirect;
+        }
 
         if (! $program->isJobOpen()) {
             return redirect()->route('programs.show', $program->slug)
@@ -43,7 +46,10 @@ class JobApplicationController extends Controller
     public function store(Request $request, Program $program): RedirectResponse
     {
         abort_unless($program->type === 'job' && $program->is_published && $program->approval_status === 'approved', 404);
-        abort_unless($program->isVisibleTo(auth()->user()), 404);
+
+        if ($redirect = $this->tsuGate($program)) {
+            return $redirect;
+        }
 
         if (! $program->isJobOpen()) {
             return redirect()->route('programs.show', $program->slug)
@@ -113,9 +119,29 @@ class JobApplicationController extends Controller
             'link' => route('jobs.status', $program),
         ]);
 
+        notify_admins(
+            'Lamaran kerja baru',
+            $user->name.' melamar '.$program->title.'.',
+            'info',
+            route('admin.job-applications.index')
+        );
+
         return redirect()
             ->route('jobs.status', $program)
             ->with('success', 'Lamaran berhasil dikirim.');
+    }
+
+    private function tsuGate(Program $program): ?RedirectResponse
+    {
+        if ($program->isVisibleTo(auth()->user())) {
+            return null;
+        }
+
+        return redirect()
+            ->route(auth()->user()?->isTsuPending() ? 'dashboard' : 'career.jobs')
+            ->with('error', auth()->user()?->isTsuPending()
+                ? 'Lowongan khusus TSU aktif setelah admin menyetujui KTM.'
+                : 'Lowongan ini tidak tersedia untuk akunmu.');
     }
 
     public function status(Program $program): View

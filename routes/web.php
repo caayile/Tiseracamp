@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AchievementController as AdminAchievementController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\CareerResourceController as AdminCareerResourceController;
 use App\Http\Controllers\Admin\JobApplicationController as AdminJobApplicationController;
+use App\Http\Controllers\Admin\SitePageController as AdminSitePageController;
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
 use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\ContentController as AdminContentController;
@@ -19,7 +22,11 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\ScreeningController;
+use App\Http\Controllers\Admin\PartnerController as AdminPartnerController;
+use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CareerController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CvReviewController;
 use App\Http\Controllers\DashboardController;
@@ -30,9 +37,13 @@ use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\Mentor\AnnouncementController as MentorAnnouncementController;
+use App\Http\Controllers\Mentor\ApplicationController as MentorApplicationController;
 use App\Http\Controllers\Mentor\AssignmentController as MentorAssignmentController;
 use App\Http\Controllers\Mentor\ChatController as MentorChatController;
 use App\Http\Controllers\Mentor\DashboardController as MentorDashboardController;
+use App\Http\Controllers\Mentor\DiscussionController as MentorDiscussionController;
+use App\Http\Controllers\Mentor\GradeController as MentorGradeController;
+use App\Http\Controllers\Mentor\LogbookController as MentorLogbookController;
 use App\Http\Controllers\Mentor\ProgramController as MentorProgramController;
 use App\Http\Controllers\Mentor\ScheduleController as MentorScheduleController;
 use App\Http\Controllers\NotificationController;
@@ -51,6 +62,7 @@ Route::get('/programs', [ProgramController::class, 'index'])->name('programs.ind
 Route::get('/programs/{slug}', [ProgramController::class, 'show'])->name('programs.show');
 Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('pages.terms');
 Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/sertifikat/{code}', [CertificateController::class, 'verify'])->name('certificates.verify');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -132,6 +144,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
+    Route::get('/chat/{conversation}/poll', [ChatController::class, 'poll'])->name('chat.poll');
     Route::post('/chat/{conversation}', [ChatController::class, 'send'])->name('chat.send');
     Route::post('/programs/{program}/chat', [ChatController::class, 'start'])->name('chat.start');
 
@@ -141,8 +154,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/career', [CareerController::class, 'index'])->name('career.index');
     Route::get('/career/portfolios', [CareerController::class, 'gallery'])->name('career.gallery');
     Route::get('/career/jobs', [CareerController::class, 'jobs'])->name('career.jobs');
+    Route::get('/career/resources', [CareerController::class, 'resources'])->name('career.resources');
+    Route::get('/career/resources/{careerResource}', [CareerController::class, 'showResource'])->name('career.resources.show');
     Route::post('/career/portfolio', [CareerController::class, 'storePortfolio'])->name('career.portfolio.store');
     Route::delete('/career/portfolio/{portfolio}', [CareerController::class, 'destroyPortfolio'])->name('career.portfolio.destroy');
+
+    Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
 
     Route::get('/jobs/{program}/apply', [JobApplicationController::class, 'create'])->name('jobs.apply');
     Route::post('/jobs/{program}/apply', [JobApplicationController::class, 'store'])->name('jobs.store');
@@ -164,19 +182,36 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/programs', [MentorProgramController::class, 'index'])->name('programs.index');
     Route::get('/programs/create', [MentorProgramController::class, 'create'])->name('programs.create');
     Route::post('/programs', [MentorProgramController::class, 'store'])->name('programs.store');
+    Route::get('/programs/{program}/edit', [MentorProgramController::class, 'edit'])->name('programs.edit');
+    Route::put('/programs/{program}', [MentorProgramController::class, 'update'])->name('programs.update');
     Route::get('/programs/{program}/curriculum', [MentorProgramController::class, 'curriculum'])->name('programs.curriculum');
     Route::get('/programs/{program}/students', [MentorProgramController::class, 'students'])->name('programs.students');
     Route::post('/enrollments/{enrollment}/rate', [MentorProgramController::class, 'rateStudent'])->name('enrollments.rate');
     Route::post('/programs/{program}/modules', [MentorProgramController::class, 'storeModule'])->name('modules.store');
     Route::post('/modules/{module}/lessons', [MentorProgramController::class, 'storeLesson'])->name('lessons.store');
+    Route::delete('/modules/{module}', [MentorProgramController::class, 'destroyModule'])->name('modules.destroy');
+    Route::delete('/lessons/{lesson}', [MentorProgramController::class, 'destroyLesson'])->name('lessons.destroy');
     Route::post('/lessons/{lesson}/assignments', [MentorAssignmentController::class, 'store'])->name('assignments.store');
     Route::post('/assignments/{assignment}/questions', [MentorAssignmentController::class, 'storeQuestion'])->name('assignments.questions');
     Route::get('/submissions', [MentorAssignmentController::class, 'submissions'])->name('submissions');
     Route::post('/submissions/{submission}/review', [MentorAssignmentController::class, 'review'])->name('submissions.review');
     Route::get('/schedules', [MentorScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules', [MentorScheduleController::class, 'store'])->name('schedules.store');
+    Route::put('/schedules/{schedule}', [MentorScheduleController::class, 'update'])->name('schedules.update');
+    Route::delete('/schedules/{schedule}', [MentorScheduleController::class, 'destroy'])->name('schedules.destroy');
     Route::post('/schedules/{schedule}/recording', [MentorScheduleController::class, 'uploadRecording'])->name('schedules.recording');
+    Route::get('/applications', [MentorApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/discussions', [MentorDiscussionController::class, 'index'])->name('discussions.index');
+    Route::get('/discussions/{discussion}', [MentorDiscussionController::class, 'show'])->name('discussions.show');
+    Route::get('/logbooks', [MentorLogbookController::class, 'index'])->name('logbooks.index');
+    Route::post('/logbooks/{logbook}/review', [MentorLogbookController::class, 'review'])->name('logbooks.review');
+    Route::get('/grades', [MentorGradeController::class, 'index'])->name('grades.index');
+    Route::put('/grades/{enrollment}', [MentorGradeController::class, 'update'])->name('grades.update');
+    Route::get('/grades/{enrollment}/print', [MentorGradeController::class, 'print'])->name('grades.print');
+    Route::get('/announcements', [MentorAnnouncementController::class, 'index'])->name('announcements.index');
     Route::post('/announcements', [MentorAnnouncementController::class, 'store'])->name('announcements.store');
+    Route::put('/announcements/{announcement}', [MentorAnnouncementController::class, 'update'])->name('announcements.update');
+    Route::delete('/announcements/{announcement}', [MentorAnnouncementController::class, 'destroy'])->name('announcements.destroy');
     Route::get('/chat', [MentorChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [MentorChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{conversation}', [MentorChatController::class, 'send'])->name('chat.send');
@@ -188,6 +223,8 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users/{user}/approve-tsu', [AdminUserController::class, 'approveTsu'])->name('users.approve-tsu');
+    Route::post('/users/{user}/reject-tsu', [AdminUserController::class, 'rejectTsu'])->name('users.reject-tsu');
     Route::post('/users/{user}/revoke-tsu', [AdminUserController::class, 'revokeTsu'])->name('users.revoke-tsu');
 
     Route::get('/programs', [AdminProgramController::class, 'index'])->name('programs.index');
@@ -199,6 +236,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::put('/programs/{program}/publikasi', [AdminProgramController::class, 'updatePublikasi'])->name('programs.publikasi.update');
     Route::delete('/programs/{program}', [AdminProgramController::class, 'destroy'])->name('programs.destroy');
     Route::post('/programs/{program}/approve', [AdminProgramController::class, 'approve'])->name('programs.approve');
+    Route::post('/programs/{program}/reject', [AdminProgramController::class, 'reject'])->name('programs.reject');
     Route::post('/programs/{program}/toggle-open', [AdminProgramController::class, 'toggleOpen'])->name('programs.toggle-open');
     Route::get('/programs/{program}/curriculum', [AdminProgramController::class, 'curriculum'])->name('programs.curriculum');
     Route::post('/programs/{program}/modules', [AdminProgramController::class, 'storeModule'])->name('modules.store');
@@ -219,6 +257,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
 
     Route::get('/logbooks', [AdminLogbookController::class, 'index'])->name('logbooks.index');
     Route::get('/logbooks/{user}', [AdminLogbookController::class, 'show'])->name('logbooks.show');
+    Route::post('/logbooks/{logbook}/review', [AdminLogbookController::class, 'review'])->name('logbooks.review');
 
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');
@@ -258,6 +297,28 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::put('/content/categories/{category}', [AdminContentController::class, 'updateCategory'])->name('content.categories.update');
     Route::delete('/content/categories/{category}', [AdminContentController::class, 'destroyCategory'])->name('content.categories.destroy');
     Route::post('/content/broadcast', [AdminContentController::class, 'broadcast'])->name('content.broadcast');
+
+    Route::get('/career-resources', [AdminCareerResourceController::class, 'index'])->name('career-resources.index');
+    Route::post('/career-resources', [AdminCareerResourceController::class, 'store'])->name('career-resources.store');
+    Route::put('/career-resources/{careerResource}', [AdminCareerResourceController::class, 'update'])->name('career-resources.update');
+    Route::delete('/career-resources/{careerResource}', [AdminCareerResourceController::class, 'destroy'])->name('career-resources.destroy');
+
+    Route::get('/achievements', [AdminAchievementController::class, 'index'])->name('achievements.index');
+    Route::post('/achievements', [AdminAchievementController::class, 'store'])->name('achievements.store');
+    Route::put('/achievements/{achievement}', [AdminAchievementController::class, 'update'])->name('achievements.update');
+    Route::delete('/achievements/{achievement}', [AdminAchievementController::class, 'destroy'])->name('achievements.destroy');
+
+    Route::get('/site-pages', [AdminSitePageController::class, 'edit'])->name('site-pages.edit');
+    Route::put('/site-pages/{sitePage}', [AdminSitePageController::class, 'update'])->name('site-pages.update');
+
+    Route::get('/partners', [AdminPartnerController::class, 'index'])->name('partners.index');
+    Route::post('/partners', [AdminPartnerController::class, 'store'])->name('partners.store');
+    Route::put('/partners/{partner}', [AdminPartnerController::class, 'update'])->name('partners.update');
+    Route::delete('/partners/{partner}', [AdminPartnerController::class, 'destroy'])->name('partners.destroy');
+
+    Route::get('/testimonials', [AdminTestimonialController::class, 'index'])->name('testimonials.index');
+    Route::post('/testimonials/{testimonial}/publish', [AdminTestimonialController::class, 'publish'])->name('testimonials.publish');
+    Route::delete('/testimonials/{testimonial}', [AdminTestimonialController::class, 'destroy'])->name('testimonials.destroy');
 
     Route::get('/portfolios', [AdminPortfolioController::class, 'index'])->name('portfolios.index');
     Route::post('/portfolios', [AdminPortfolioController::class, 'store'])->name('portfolios.store');

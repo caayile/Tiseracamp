@@ -50,4 +50,25 @@ class JobApplication extends Model
     {
         return in_array($this->status, ['submitted', 'under_review'], true);
     }
+
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            'submitted' => 'Menunggu seleksi',
+            'under_review' => 'Sedang ditinjau',
+            'accepted' => 'Diterima',
+            'rejected' => 'Tidak diterima',
+            default => ucfirst((string) $this->status),
+        };
+    }
+
+    public function statusColor(): string
+    {
+        return match ($this->status) {
+            'submitted', 'under_review' => 'bg-amber-100 text-amber-800',
+            'accepted' => 'bg-emerald-100 text-emerald-800',
+            'rejected' => 'bg-red-100 text-red-700',
+            default => 'bg-slate-100 text-slate-700',
+        };
+    }
 }

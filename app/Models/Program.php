@@ -69,6 +69,33 @@ class Program extends Model
         return $this->hasMany(Batch::class);
     }
 
+    public function enrollableBatchId(): ?int
+    {
+        $batches = $this->batches()
+            ->where('status', 'active')
+            ->withCount('enrollments')
+            ->orderBy('id')
+            ->get();
+
+        if ($batches->isEmpty()) {
+            return null;
+        }
+
+        return $batches
+            ->first(fn (Batch $batch) => ! $batch->quota || $batch->enrollments_count < $batch->quota)
+            ?->id;
+    }
+
+    public function hasAvailableSeat(): bool
+    {
+        $batches = $this->batches()->where('status', 'active')->withCount('enrollments')->get();
+        if ($batches->isEmpty()) {
+            return true;
+        }
+
+        return $batches->contains(fn (Batch $batch) => ! $batch->quota || $batch->enrollments_count < $batch->quota);
+    }
+
     public function schedules(): HasMany
     {
         return $this->hasMany(ClassSchedule::class);

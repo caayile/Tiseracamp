@@ -22,6 +22,9 @@
                     <input type="hidden" name="scope" value="{{ $scope }}">
                 @endif
             @endif
+            @if (! empty($activeCategory))
+                <input type="hidden" name="category" value="{{ $activeCategory }}">
+            @endif
 
             <div class="flex items-center gap-2 rounded-full border border-ink/10 bg-panel p-1.5 pl-4 shadow-[0_18px_40px_-24px_rgba(11,31,42,0.4)] sm:gap-3 sm:p-2 sm:pl-6">
                 <input type="search" name="q" value="{{ request('q') }}"
@@ -41,6 +44,25 @@
 </section>
 
 <section class="mx-auto max-w-6xl px-4 py-12">
+    @if (($categories ?? collect())->isNotEmpty() && $catalogType === 'bootcamp')
+        <div class="mb-8 flex flex-wrap gap-2">
+            <a href="{{ route('programs.index') }}"
+               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ blank($activeCategory ?? null) ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+                Semua
+            </a>
+            @foreach ($categories as $category)
+                <a href="{{ route('programs.index', ['category' => $category->slug]) }}"
+                   class="rounded-full px-4 py-2 text-sm font-semibold transition {{ ($activeCategory ?? null) === $category->slug ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
+                    {{ $category->name }}
+                </a>
+            @endforeach
+        </div>
+    @endif
+    @if ($catalogType === 'internship' && auth()->user()?->isTsuPending())
+        <div class="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Filter <strong>TS Group</strong> aktif setelah admin menyetujui KTM. Sementara ini kamu melihat lowongan umum.
+        </div>
+    @endif
     @if ($catalogType === 'internship' && $isTsuStudent)
         <div class="mb-8 flex flex-wrap gap-2">
             <a href="{{ route('programs.index', ['type' => 'internship', 'scope' => 'all']) }}"

@@ -25,7 +25,7 @@
         <div class="hidden max-w-md flex-1 items-center md:flex">
             <div class="relative w-full">
                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft/60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="search" placeholder="Cari modul/konten" class="w-full rounded-xl border border-brand/15 bg-surface py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft/50 outline-none focus:border-brand focus:ring-0 focus:bg-surface">
+                <input type="search" data-lesson-search placeholder="Cari modul/konten" class="w-full rounded-xl border border-brand/15 bg-surface py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft/50 outline-none focus:border-brand focus:ring-0 focus:bg-surface">
             </div>
         </div>
 
@@ -202,7 +202,7 @@
 
                 <div class="flex-1 overflow-y-auto px-2 py-3">
                     @foreach ($program->modules as $module)
-                        <div class="mb-4">
+                        <div class="mb-4" data-lesson-module>
                             <p class="mb-2 px-2 text-[11px] font-bold uppercase tracking-wider text-ink-soft">{{ $module->title }}</p>
                             <div class="space-y-0.5">
                                 @foreach ($module->lessons as $item)
@@ -213,6 +213,7 @@
                                     @endphp
                                     @if ($isUnlocked)
                                         <a href="{{ route('learn.lesson', [$program, $item]) }}"
+                                           data-lesson-item data-search-text="{{ $module->title }} {{ $item->title }}"
                                            class="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition {{ $isCurrent ? 'bg-brand/20 font-semibold text-ink' : 'text-ink-soft hover:bg-brand-mist hover:text-ink' }}">
                                             <span class="line-clamp-2">{{ $item->title }}</span>
                                             @if ($isDone)
@@ -224,7 +225,7 @@
                                             @endif
                                         </a>
                                     @else
-                                        <div class="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm text-ink/35" title="Selesaikan materi sebelumnya">
+                                        <div data-lesson-item data-search-text="{{ $module->title }} {{ $item->title }}" class="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm text-ink/35" title="Selesaikan materi sebelumnya">
                                             <span class="line-clamp-2">{{ $item->title }}</span>
                                             <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                                 <rect x="5" y="11" width="14" height="10" rx="2"/>
@@ -295,6 +296,21 @@ document.querySelectorAll('[data-sidebar-toggle]').forEach((btn) => {
         document.querySelector('[data-learn-sidebar]')?.classList.toggle('translate-x-full');
     });
 });
+
+const lessonSearch = document.querySelector('[data-lesson-search]');
+if (lessonSearch) {
+    lessonSearch.addEventListener('input', () => {
+        const q = lessonSearch.value.trim().toLowerCase();
+        document.querySelectorAll('[data-lesson-item]').forEach((el) => {
+            const hay = (el.dataset.searchText || el.textContent || '').toLowerCase();
+            el.classList.toggle('hidden', q !== '' && !hay.includes(q));
+        });
+        document.querySelectorAll('[data-lesson-module]').forEach((mod) => {
+            const visible = [...mod.querySelectorAll('[data-lesson-item]')].some((el) => !el.classList.contains('hidden'));
+            mod.classList.toggle('hidden', q !== '' && !visible);
+        });
+    });
+}
 
 document.querySelectorAll('.learn-tab').forEach((tab) => {
     tab.addEventListener('click', () => {

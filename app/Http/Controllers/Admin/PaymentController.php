@@ -46,6 +46,11 @@ class PaymentController extends Controller
         ]);
 
         if ($data['status'] === 'paid') {
+            $payment->loadMissing('program');
+            if ($payment->program && ! $payment->program->hasAvailableSeat()) {
+                return back()->with('error', 'Kuota batch sudah penuh. Buka batch baru sebelum verifikasi.');
+            }
+
             $enrollment = $payment->grantClassAccess();
 
             AppNotification::create([

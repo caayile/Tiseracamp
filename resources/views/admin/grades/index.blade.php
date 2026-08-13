@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($panelLayout ?? 'layouts.admin')
 
 @section('title', 'Nilai Magang')
 @section('heading', 'Nilai Peserta Magang')
@@ -48,13 +48,13 @@
                         @endif
                     </div>
                     @if ($enrollment->hasGrade())
-                        <a href="{{ route('admin.grades.print', $enrollment) }}"
+                        <a href="{{ route($gradePrintRouteName ?? 'admin.grades.print', $enrollment) }}"
                            target="_blank"
                            class="btn-secondary text-sm">Preview cetak</a>
                     @endif
                 </div>
 
-                <form method="POST" action="{{ route('admin.grades.update', $enrollment) }}" class="mt-4 space-y-5 border-t border-brand/10 pt-4">
+                <form method="POST" action="{{ route($gradeUpdateRouteName ?? 'admin.grades.update', $enrollment) }}" class="mt-4 space-y-5 border-t border-brand/10 pt-4">
                     @csrf
                     @method('PUT')
 

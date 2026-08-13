@@ -1,12 +1,13 @@
 @extends('layouts.mentor')
 
-@section('title', 'Buat Bootcamp')
-@section('heading', 'Tambah Bootcamp')
+@section('title', $program->exists ? 'Edit Bootcamp' : 'Buat Bootcamp')
+@section('heading', $program->exists ? 'Edit Bootcamp' : 'Tambah Bootcamp')
 
 @section('content')
 <div class="mx-auto max-w-3xl">
-    <form method="POST" action="{{ route('mentor.programs.store') }}" enctype="multipart/form-data" class="card-soft space-y-4 p-6">
+    <form method="POST" action="{{ $program->exists ? route('mentor.programs.update', $program) : route('mentor.programs.store') }}" enctype="multipart/form-data" class="card-soft space-y-4 p-6">
         @csrf
+        @if ($program->exists) @method('PUT') @endif
         <input type="hidden" name="type" value="bootcamp">
 
         <div class="rounded-xl border border-brand/15 bg-brand-mist/50 p-4">
@@ -19,7 +20,7 @@
 
         <div>
             <label class="mb-1.5 block text-sm font-medium">Judul program</label>
-            <input type="text" name="title" value="{{ old('title') }}" class="input-field" placeholder="Contoh: Digital Marketing Intensive" required>
+            <input type="text" name="title" value="{{ old('title', $program->title) }}" class="input-field" placeholder="Contoh: Digital Marketing Intensive" required>
             @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
 
@@ -28,7 +29,7 @@
                 <label class="mb-1.5 block text-sm font-medium">Level</label>
                 <select name="level" class="input-field" required>
                     @foreach (['Beginner', 'Intermediate', 'Advanced'] as $level)
-                        <option value="{{ $level }}" @selected(old('level', 'Beginner') === $level)>{{ $level }}</option>
+                        <option value="{{ $level }}" @selected(old('level', $program->level ?? 'Beginner') === $level)>{{ $level }}</option>
                     @endforeach
                 </select>
             </div>
@@ -41,14 +42,14 @@
         <div class="grid gap-4 md:grid-cols-2">
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Harga (Rp)</label>
-                <input type="number" name="price" value="{{ old('price', 0) }}" class="input-field" min="0" required>
+                <input type="number" name="price" value="{{ old('price', $program->price ?? 0) }}" class="input-field" min="0" required>
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Kategori</label>
                 <select name="category_id" class="input-field">
                     <option value="">— Pilih kategori —</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                        <option value="{{ $category->id }}" @selected(old('category_id', $program->category_id) == $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
                 <p class="mt-1 text-xs text-ink-soft">Untuk mengelompokkan bootcamp di katalog (mis. Web, Data, Design).</p>
@@ -60,24 +61,24 @@
 
         <div>
             <label class="mb-1.5 block text-sm font-medium">Ringkasan singkat</label>
-            <textarea name="excerpt" rows="2" class="input-field" placeholder="Ditampilkan di kartu program">{{ old('excerpt') }}</textarea>
+            <textarea name="excerpt" rows="2" class="input-field" placeholder="Ditampilkan di kartu program">{{ old('excerpt', $program->excerpt) }}</textarea>
         </div>
 
         <div>
             <label class="mb-1.5 block text-sm font-medium">Deskripsi</label>
-            <textarea name="description" rows="4" class="input-field">{{ old('description') }}</textarea>
+            <textarea name="description" rows="4" class="input-field">{{ old('description', $program->description) }}</textarea>
         </div>
 
         <div>
             <label class="mb-1.5 block text-sm font-medium">Benefits (satu baris satu item)</label>
-            <textarea name="benefits_text" rows="4" class="input-field" placeholder="Mentor industri&#10;Project portfolio&#10;Sertifikat">{{ old('benefits_text') }}</textarea>
+            <textarea name="benefits_text" rows="4" class="input-field" placeholder="Mentor industri&#10;Project portfolio&#10;Sertifikat">{{ old('benefits_text', collect($program->benefits ?? [])->implode("\n")) }}</textarea>
             <p class="mt-1 text-xs text-ink-soft">Muncul di samping foto mentor di katalog & halaman detail.</p>
         </div>
 
         <p class="rounded-xl bg-brand-mist p-3 text-xs text-ink-soft">Lowongan magang dikelola admin. Mentor hanya mengajukan bootcamp — admin akan review sebelum tampil di katalog.</p>
 
         <div class="flex gap-3 pt-2">
-            <button class="btn-primary" type="submit">Ajukan Bootcamp</button>
+            <button class="btn-primary" type="submit">{{ $program->exists ? 'Simpan perubahan' : 'Ajukan Bootcamp' }}</button>
             <a href="{{ route('mentor.programs.index') }}" class="btn-secondary">Batal</a>
         </div>
     </form>

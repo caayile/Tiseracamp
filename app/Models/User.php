@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
     'name', 'email', 'google_id', 'password', 'role', 'avatar', 'phone',
     'university', 'major', 'semester', 'education_level', 'bio',
     'expertise', 'status', 'rating', 'otp_code', 'otp_expires_at', 'email_verified_at',
-    'is_tsu', 'ktm_path', 'screening_completed_at',
+    'is_tsu', 'tsu_status', 'ktm_path', 'tsu_verified_at', 'screening_completed_at',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
@@ -32,6 +32,7 @@ class User extends Authenticatable
             'otp_expires_at' => 'datetime',
             'rating' => 'float',
             'is_tsu' => 'boolean',
+            'tsu_verified_at' => 'datetime',
             'screening_completed_at' => 'datetime',
         ];
     }
@@ -127,7 +128,26 @@ class User extends Authenticatable
 
     public function isTsuStudent(): bool
     {
-        return $this->is_tsu === true;
+        return $this->is_tsu === true && $this->tsu_verified_at !== null;
+    }
+
+    public function isTsuPending(): bool
+    {
+        return $this->is_tsu === true && $this->tsu_verified_at === null;
+    }
+
+    public function isTsuActiveStudent(): bool
+    {
+        return $this->isTsuStudent() && $this->tsu_status === 'active';
+    }
+
+    public function tsuStatusLabel(): string
+    {
+        return match ($this->tsu_status) {
+            'active' => 'Mahasiswa Aktif',
+            'fresh_graduate' => 'Fresh Graduate',
+            default => 'Mahasiswa TSU',
+        };
     }
 
     public function hasCompletedScreening(): bool

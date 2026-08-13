@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             'logbook_entries', 'internship_applications',
             'lessons', 'modules', 'programs', 'partners', 'categories', 'achievement_user',
             'achievements', 'portfolios', 'career_resources', 'articles', 'banners', 'faqs',
-            'activity_logs', 'users',
+            'activity_logs', 'users', 'site_pages',
         ] as $table) {
             if (Schema::hasTable($table)) {
                 \DB::table($table)->delete();
@@ -257,5 +257,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         unset($admin, $student);
+
+        $this->call(PlatformContentSeeder::class);
     }
 }

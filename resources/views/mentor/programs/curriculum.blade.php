@@ -17,6 +17,7 @@
 
 <div class="mb-6 flex flex-wrap gap-3">
     <a href="{{ route('mentor.programs.index') }}" class="btn-secondary">← Kembali</a>
+    <a href="{{ route('mentor.programs.edit', $program) }}" class="btn-ghost">Edit bootcamp</a>
     <a href="{{ route('mentor.programs.students', $program) }}" class="btn-ghost">Lihat siswa</a>
 </div>
 
@@ -40,6 +41,10 @@
                     <h2 class="font-display text-lg font-semibold">{{ $module->sort_order }}. {{ $module->title }}</h2>
                     <p class="mt-1 text-xs text-ink-soft">{{ $module->lessons->count() }} materi</p>
                 </div>
+                <form method="POST" action="{{ route('mentor.modules.destroy', $module) }}" onsubmit="return confirm('Hapus modul ini beserta materinya?')">
+                    @csrf @method('DELETE')
+                    <button class="text-xs font-semibold text-red-600 hover:underline" type="submit">Hapus modul</button>
+                </form>
             </div>
 
             <ul class="mt-4 space-y-2">
@@ -59,9 +64,15 @@
                                     <span class="ml-2 text-[11px] font-semibold text-amber-800">· {{ $lesson->assignment->questions->count() }} soal</span>
                                 @endif
                             </div>
+                            <div class="flex items-center gap-2">
                             @if ($lesson->assignment)
                                 <span class="badge">{{ $lesson->assignment->kind === 'quiz' ? 'Quiz' : 'Tugas' }}</span>
                             @endif
+                                <form method="POST" action="{{ route('mentor.lessons.destroy', $lesson) }}" onsubmit="return confirm('Hapus materi ini?')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-xs font-semibold text-red-600 hover:underline" type="submit">Hapus</button>
+                                </form>
+                            </div>
                         </div>
 
                         @if ($lesson->assignment?->isQuiz())

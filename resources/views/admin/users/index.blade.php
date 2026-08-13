@@ -17,6 +17,7 @@
                 <select name="tsu" class="input-field w-auto" onchange="this.form.submit()">
                     <option value="">Semua</option>
                     <option value="tsu" @selected(request('tsu') === 'tsu')>Mahasiswa TSU</option>
+                    <option value="pending" @selected(request('tsu') === 'pending')>KTM menunggu</option>
                     <option value="non_tsu" @selected(request('tsu') === 'non_tsu')>Pengguna umum</option>
                 </select>
             </form>
@@ -50,10 +51,18 @@
                                 </form>
                             </td>
                             <td class="px-4 py-3">
-                                @if ($user->isTsuStudent())
-                                    <span class="badge bg-brand/15 text-brand-dark ring-brand/30">TSU</span>
+                                @if ($user->isTsuPending())
+                                    <span class="badge bg-amber-100 text-amber-800">KTM menunggu</span>
+                                @elseif ($user->isTsuStudent())
+                                    <span class="badge bg-brand/15 text-brand-dark ring-brand/30">TSU · {{ $user->tsuStatusLabel() }}</span>
+                                    @if ($user->isTsuActiveStudent() && filled($user->semester))
+                                        <p class="mt-1 text-[11px] text-ink-soft">Semester {{ $user->semester }}</p>
+                                    @endif
                                 @else
                                     <span class="badge">Umum</span>
+                                @endif
+                                @if (filled($user->ktm_path))
+                                    <a href="{{ media_url($user->ktm_path) }}" target="_blank" class="mt-1 block text-[11px] font-semibold text-brand-mid hover:underline">Lihat KTM</a>
                                 @endif
                             </td>
                             <td class="px-4 py-3">
@@ -68,7 +77,16 @@
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     <button class="btn-ghost text-xs" type="submit" form="user-update-{{ $user->id }}">Update</button>
-                                    @if ($user->isTsuStudent())
+                                    @if ($user->isTsuPending())
+                                        <form method="POST" action="{{ route('admin.users.approve-tsu', $user) }}">
+                                            @csrf
+                                            <button class="btn-primary text-xs" type="submit">Setujui TSU</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('admin.users.reject-tsu', $user) }}" onsubmit="return confirm('Tolak pengajuan TSU {{ $user->name }}?')">
+                                            @csrf
+                                            <button class="btn-ghost text-xs text-amber-600" type="submit">Tolak</button>
+                                        </form>
+                                    @elseif ($user->isTsuStudent())
                                         <form method="POST" action="{{ route('admin.users.revoke-tsu', $user) }}" onsubmit="return confirm('Cabut status TSU {{ $user->name }}? Pengguna akan dialihkan ke umum dan harus screening ulang.')">
                                             @csrf
                                             <button class="btn-ghost text-xs text-amber-600" type="submit">Cabut TSU</button>

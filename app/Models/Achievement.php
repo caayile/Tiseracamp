@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Achievement extends Model
 {
-    protected $fillable = ['name', 'icon', 'description'];
+    protected $fillable = ['code', 'name', 'icon', 'description'];
 
     public function users(): BelongsToMany
     {

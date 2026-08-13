@@ -16,6 +16,10 @@ class InternshipApplicationController extends Controller
     {
         abort_unless($program->type === 'internship' && $program->is_published && $program->approval_status === 'approved', 404);
 
+        if ($redirect = $this->tsuGate($program)) {
+            return $redirect;
+        }
+
         if (! $program->isInternshipOpen()) {
             return redirect()->route('programs.show', $program->slug)
                 ->with('error', 'Lowongan magang ini sedang ditutup.');
@@ -53,6 +57,10 @@ class InternshipApplicationController extends Controller
     public function store(Request $request, Program $program): RedirectResponse
     {
         abort_unless($program->type === 'internship' && $program->is_published && $program->approval_status === 'approved', 404);
+
+        if ($redirect = $this->tsuGate($program)) {
+            return $redirect;
+        }
 
         if (! $program->isInternshipOpen()) {
             return redirect()->route('programs.show', $program->slug)
@@ -170,32 +178,39 @@ class InternshipApplicationController extends Controller
         ]);
 
         if ($program->mentor_id) {
-            AppNotification::create([
-                'user_id' => $program->mentor_id,
-                'title' => 'Pendaftar magang baru',
-                'body' => $user->name.' mendaftar ke '.$program->title,
-                'type' => 'info',
-                'link' => route('admin.applications.index'),
-            ]);
+            notify_user(
+                $program->mentor_id,
+                'Pendaftar magang baru',
+                $user->name.' mendaftar ke '.$program->title,
+                'info',
+                route('mentor.applications.index')
+            );
         }
 
-        \App\Models\User::query()
-            ->where('role', 'admin')
-            ->where('status', 'active')
-            ->when($program->mentor_id, fn ($q) => $q->where('id', '!=', $program->mentor_id))
-            ->each(function ($admin) use ($user, $program) {
-                AppNotification::create([
-                    'user_id' => $admin->id,
-                    'title' => 'Pendaftar magang baru',
-                    'body' => $user->name.' mendaftar ke '.$program->title,
-                    'type' => 'info',
-                    'link' => route('admin.applications.index'),
-                ]);
-            });
+        notify_admins(
+            'Pendaftar magang baru',
+            $user->name.' mendaftar ke '.$program->title,
+            'info',
+            route('admin.applications.index'),
+            $program->mentor_id
+        );
 
         return redirect()
             ->route('internships.status', $program)
             ->with('success', 'Formulir & dokumen terkirim. Menunggu proses seleksi.');
+    }
+
+    private function tsuGate(Program $program): ?RedirectResponse
+    {
+        if ($program->isVisibleTo(auth()->user())) {
+            return null;
+        }
+
+        return redirect()
+            ->route(auth()->user()?->isTsuPending() ? 'dashboard' : 'programs.index', ['type' => 'internship'])
+            ->with('error', auth()->user()?->isTsuPending()
+                ? 'Lowongan khusus TSU aktif setelah admin menyetujui KTM.'
+                : 'Lowongan ini tidak tersedia untuk akunmu.');
     }
 
     public function status(Program $program): View|RedirectResponse

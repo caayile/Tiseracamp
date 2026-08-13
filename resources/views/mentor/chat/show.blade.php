@@ -23,7 +23,7 @@
             Balasanmu akan muncul sebagai <strong class="text-brand-deeper">Mentor</strong> di sisi siswa.
         </div>
 
-        <div class="flex-1 space-y-3 overflow-y-auto bg-[#F4FBFE] p-5" style="max-height: 55vh;">
+        <div class="flex-1 space-y-3 overflow-y-auto bg-[#F4FBFE] p-5" style="max-height: 55vh;" data-chat-thread data-poll-url="{{ route('chat.poll', $conversation) }}" data-last-id="{{ $conversation->messages->last()?->id ?? 0 }}">
             @forelse ($conversation->messages as $message)
                 @php $mine = $message->user_id === auth()->id(); @endphp
                 <div class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
@@ -49,4 +49,5 @@
         </form>
     </div>
 </div>
+@include('partials.chat-poll')
 @endsection

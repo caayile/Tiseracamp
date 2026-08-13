@@ -228,7 +228,7 @@ class ContentController extends Controller
             'audience' => ['required', 'in:all,student,mentor'],
         ]);
 
-        Announcement::create([
+        $announcement = Announcement::create([
             'user_id' => auth()->id(),
             'title' => $data['title'],
             'body' => $data['body'],
@@ -246,7 +246,9 @@ class ContentController extends Controller
                 'title' => $data['title'],
                 'body' => $data['body'],
                 'type' => 'broadcast',
+                'link' => route('announcements.show', $announcement),
             ]);
+            forget_notification_bell($user->id);
         }
 
         return back()->with('success', 'Broadcast dikirim ke '.$users->count().' user.');

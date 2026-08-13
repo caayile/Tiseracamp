@@ -67,6 +67,29 @@ class ChatController extends Controller
         return redirect()->route('chat.show', $conversation);
     }
 
+    public function poll(Request $request, Conversation $conversation)
+    {
+        $user = auth()->user();
+        abort_unless(in_array($user->id, [$conversation->student_id, $conversation->mentor_id], true) || $user->isAdmin(), 403);
+
+        $afterId = (int) $request->query('after', 0);
+        $messages = $conversation->messages()
+            ->with('user:id,name')
+            ->when($afterId > 0, fn ($q) => $q->where('id', '>', $afterId))
+            ->orderBy('id')
+            ->get(['id', 'user_id', 'body', 'created_at']);
+
+        return response()->json([
+            'messages' => $messages->map(fn (Message $message) => [
+                'id' => $message->id,
+                'mine' => $message->user_id === $user->id,
+                'name' => $message->user?->name,
+                'body' => $message->body,
+                'time' => $message->created_at?->format('H:i'),
+            ]),
+        ]);
+    }
+
     public function send(Request $request, Conversation $conversation): RedirectResponse
     {
         $user = auth()->user();

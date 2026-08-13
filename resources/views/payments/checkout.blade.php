@@ -28,6 +28,10 @@
                 </div>
             @endforeach
         </div>
+
+        <div class="mt-6">
+            @include('partials.payment-verification-note')
+        </div>
     </div>
 </section>
 
@@ -104,7 +108,7 @@
                         </div>
                         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                             <p class="text-[11px] font-semibold uppercase text-slate-400">Estimasi</p>
-                            <p class="mt-1 text-sm font-bold text-[#0B1F2A]">Verifikasi 1×24 jam</p>
+                            <p class="mt-1 text-sm font-bold text-[#0B1F2A]">Senin–Jumat 08.00–16.00 WIB</p>
                         </div>
                     </div>
                 </div>

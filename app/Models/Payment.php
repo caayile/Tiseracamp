@@ -53,9 +53,7 @@ class Payment extends Model
         if (! $enrollment->exists) {
             $enrollment->progress = 0;
             $enrollment->enrolled_at = now();
-            $enrollment->batch_id = $this->program?->batches
-                ?->firstWhere('status', 'active')
-                ?->id
+            $enrollment->batch_id = $this->program?->enrollableBatchId()
                 ?? $this->program?->batches?->first()?->id;
         }
 

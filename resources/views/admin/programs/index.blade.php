@@ -89,10 +89,16 @@
                     <td class="px-5 py-3">
                         <span class="badge">{{ $program->approval_status }}</span>
                         @if ($program->approval_status === 'pending')
-                            <form method="POST" action="{{ route('admin.programs.approve', $program) }}" class="mt-1">
-                                @csrf
-                                <button class="btn-primary text-xs" type="submit">Approve</button>
-                            </form>
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                <form method="POST" action="{{ route('admin.programs.approve', $program) }}">
+                                    @csrf
+                                    <button class="btn-primary text-xs" type="submit">Approve</button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.programs.reject', $program) }}" onsubmit="return confirm('Tolak bootcamp ini?')">
+                                    @csrf
+                                    <button class="btn-ghost text-xs text-red-600" type="submit">Tolak</button>
+                                </form>
+                            </div>
                         @endif
                     </td>
                     <td class="px-5 py-3">

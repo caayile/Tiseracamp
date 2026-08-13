@@ -19,10 +19,10 @@
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 @include('partials.theme-toggle')
-                @if ($program->mentor)
+                @if ($program->mentor || $program->type === 'internship')
                     <form method="POST" action="{{ route('chat.start', $program) }}">
                         @csrf
-                        <button class="rounded-xl border border-brand/40 bg-brand-mist px-4 py-2 text-sm font-semibold text-brand-mid transition hover:bg-brand/20" type="submit">Chat mentor</button>
+                        <button class="rounded-xl border border-brand/40 bg-brand-mist px-4 py-2 text-sm font-semibold text-brand-mid transition hover:bg-brand/20" type="submit">{{ $program->mentor ? 'Chat mentor' : 'Chat PIC' }}</button>
                     </form>
                 @endif
                 <div class="w-40">
@@ -93,6 +93,13 @@
                     <p class="mt-2 text-sm text-ink-soft">{{ $currentLesson->type }} · {{ $currentLesson->duration_minutes }} menit</p>
                     <p class="mt-4 text-sm leading-relaxed text-ink-soft">{{ \Illuminate\Support\Str::limit(strip_tags($currentLesson->content), 220) }}</p>
                     <a href="{{ route('learn.lesson', [$program, $currentLesson]) }}" class="mt-6 inline-flex rounded-xl bg-[#27CCF5] px-5 py-2.5 text-sm font-semibold text-[#0B1F2A] transition hover:bg-[#7DE6FA]">Buka materi</a>
+                @elseif ($program->type === 'internship')
+                    <p class="font-display text-xl font-semibold text-ink">Onboarding magang</p>
+                    <p class="mt-2 text-sm text-ink-soft">Tidak ada modul kelas. Lanjutkan dengan logbook, jadwal, dan chat PIC.</p>
+                    <div class="mt-5 flex flex-wrap gap-2">
+                        <a href="{{ route('profile.logbook') }}" class="btn-primary text-sm">Isi logbook</a>
+                        <a href="{{ route('schedules.index') }}" class="btn-secondary text-sm">Lihat jadwal</a>
+                    </div>
                 @else
                     <p class="font-display text-xl font-semibold text-ink">Kurikulum masih kosong</p>
                 @endif

@@ -25,9 +25,12 @@
                 <h1 class="section-title">Edit profil</h1>
                 <p class="mt-1 text-sm text-ink-soft">{{ $user->email }} · {{ ucfirst($user->role) }}</p>
                 @if (! $isMentor)
-                    <span class="badge mt-2 {{ $user->isTsuStudent() ? 'bg-brand/15 text-brand-dark ring-brand/30' : '' }}">
-                        {{ $user->isTsuStudent() ? 'Mahasiswa TSU' : 'Pengguna umum' }}
+                    <span class="badge mt-2 {{ $user->isTsuStudent() || $user->isTsuPending() ? 'bg-brand/15 text-brand-dark ring-brand/30' : '' }}">
+                        {{ $user->isTsuPending() ? 'TSU menunggu verifikasi KTM' : ($user->isTsuStudent() ? 'TSU · '.$user->tsuStatusLabel() : 'Pengguna umum') }}
                     </span>
+                    @if (filled($user->ktm_path))
+                        <span class="badge mt-2 bg-emerald-100 text-emerald-800">KTM terunggah</span>
+                    @endif
                 @endif
             </div>
         </div>
@@ -109,15 +112,40 @@
             @endunless
         </div>
 
-        @if (! $isMentor && $user->isTsuStudent())
+        @if (! $isMentor && ($user->isTsuStudent() || filled($user->ktm_path)))
+            @php
+                $ktmUrl = media_url($user->ktm_path);
+                $ktmIsImage = filled($user->ktm_path) && preg_match('/\.(jpe?g|png|webp|gif)$/i', $user->ktm_path);
+            @endphp
             <div class="border-t border-brand/10 pt-4">
                 <p class="mb-1.5 block text-sm font-medium">Kartu Tanda Mahasiswa (KTM)</p>
-                @if (filled($user->ktm_path))
-                    <p class="mb-2 text-xs text-ink-soft">
-                        KTM sudah diunggah —
-                        <a href="{{ media_url($user->ktm_path) }}" target="_blank" class="font-semibold text-brand-dark underline">Lihat KTM</a>.
-                        Upload ulang di bawah untuk mengganti.
-                    </p>
+                <p class="mb-3 text-xs text-ink-soft">
+                    @if ($user->isTsuPending())
+                        KTM sudah terunggah. Status TSU aktif setelah admin menyetujui.
+                    @elseif ($user->isTsuStudent())
+                        Terdeteksi & disetujui admin: <strong>{{ $user->tsuStatusLabel() }}</strong>
+                        @if ($user->isTsuActiveStudent() && filled($user->semester))
+                            · Semester {{ $user->semester }}
+                        @endif
+                    @else
+                        File KTM tersimpan di akunmu.
+                    @endif
+                </p>
+
+                @if (filled($ktmUrl))
+                    <div class="mb-3 overflow-hidden rounded-2xl border border-brand/20 bg-brand-mist/30">
+                        @if ($ktmIsImage)
+                            <a href="{{ $ktmUrl }}" target="_blank" rel="noopener noreferrer" class="block">
+                                <img src="{{ $ktmUrl }}" alt="KTM {{ $user->name }}" class="max-h-72 w-full object-contain bg-white">
+                            </a>
+                        @else
+                            <a href="{{ $ktmUrl }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-4 py-4 text-sm font-semibold text-brand-dark hover:bg-brand/10">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/20 text-brand-deeper">PDF</span>
+                                Lihat dokumen KTM
+                            </a>
+                        @endif
+                    </div>
+                    <p class="mb-2 text-xs text-ink-soft">Upload ulang di bawah jika ingin mengganti.</p>
                 @else
                     <p class="mb-2 text-xs text-ink-soft">Belum ada KTM. Untuk mahasiswa TSU, KTM wajib diunggah.</p>
                 @endif

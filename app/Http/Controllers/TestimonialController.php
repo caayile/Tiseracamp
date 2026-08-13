@@ -24,8 +24,10 @@ class TestimonialController extends Controller
 
         if ($enrollment->testimonial) {
             return redirect()
-                ->to(route('home').'#testimoni')
-                ->with('success', 'Testimoni untuk program ini sudah terkirim dan tampil di beranda.');
+                ->route('dashboard')
+                ->with('success', $enrollment->testimonial->is_published
+                    ? 'Testimoni untuk program ini sudah tayang di beranda.'
+                    : 'Testimoni sudah terkirim dan menunggu review admin.');
         }
 
         return view('testimonials.create', compact('enrollment'));
@@ -43,8 +45,8 @@ class TestimonialController extends Controller
 
         if ($enrollment->testimonial()->exists()) {
             return redirect()
-                ->to(route('home').'#testimoni')
-                ->with('success', 'Testimoni untuk program ini sudah terkirim dan tampil di beranda.');
+                ->route('dashboard')
+                ->with('success', 'Testimoni untuk program ini sudah terkirim.');
         }
 
         $data = $request->validate([
@@ -60,11 +62,18 @@ class TestimonialController extends Controller
             'role_label' => filled($data['role_label'] ?? null)
                 ? trim($data['role_label'])
                 : ($enrollment->program?->title ?: $enrollment->program?->typeLabel()),
-            'is_published' => true,
+            'is_published' => false,
         ]);
 
+        notify_admins(
+            'Testimoni baru',
+            auth()->user()->name.' mengirim testimoni untuk '.$enrollment->program?->title.'.',
+            'info',
+            route('admin.testimonials.index')
+        );
+
         return redirect()
-            ->to(route('home').'#testimoni')
-            ->with('success', 'Terima kasih! Testimoni magang/bootcamp-mu sudah tampil di beranda.');
+            ->route('dashboard')
+            ->with('success', 'Terima kasih! Testimoni menunggu review admin sebelum tampil di beranda.');
     }
 }

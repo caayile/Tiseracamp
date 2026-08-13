@@ -1,10 +1,11 @@
-@extends('layouts.app')
+@extends(! empty($mentorMode) ? 'layouts.mentor' : 'layouts.app')
 
 @section('title', $discussion->title)
+@section('heading', 'Diskusi')
 
 @section('content')
-<section class="mx-auto max-w-3xl px-4 py-10">
-    <x-back-nav :fallback="route('learn.show', $discussion->program)" class="mb-4" />
+<section class="{{ ! empty($mentorMode) ? '' : 'mx-auto max-w-3xl px-4 py-10' }}">
+    <x-back-nav :fallback="! empty($mentorMode) ? route('mentor.discussions.index') : route('learn.show', $discussion->program)" class="mb-4" />
 
     <article class="card-soft mt-6 p-6">
         <h1 class="font-display text-2xl font-semibold">{{ $discussion->title }}</h1>

@@ -11,6 +11,7 @@
 </head>
 <body class="min-h-screen bg-surface text-ink">
     @include('partials.navbar')
+    @include('partials.tsu-pending-banner')
 
     @if (session('success'))
         <div class="mx-auto max-w-6xl px-4 pt-4">

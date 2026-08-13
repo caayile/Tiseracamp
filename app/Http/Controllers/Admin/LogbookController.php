@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LogbookEntry;
 use App\Models\Program;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -82,5 +83,30 @@ class LogbookController extends Controller
             'totalHours' => $totalHours,
             'programCount' => $programCount,
         ]);
+    }
+
+    public function review(Request $request, LogbookEntry $logbook): RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', 'in:reviewed,revision,submitted'],
+            'reviewer_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $logbook->update([
+            'status' => $data['status'],
+            'reviewer_note' => $data['reviewer_note'] ?? null,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+        ]);
+
+        notify_user(
+            $logbook->user_id,
+            'Logbook direview',
+            'Admin meninjau entri "'.$logbook->title.'".',
+            $data['status'] === 'revision' ? 'warning' : 'info',
+            route('profile.logbook')
+        );
+
+        return back()->with('success', 'Review logbook disimpan.');
     }
 }

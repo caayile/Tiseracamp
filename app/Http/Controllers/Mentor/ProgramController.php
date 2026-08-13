@@ -48,7 +48,7 @@ class ProgramController extends Controller
             'benefits_text' => ['nullable', 'string'],
         ]);
 
-        Program::create([
+        $program = Program::create([
             'title' => $data['title'],
             'slug' => Str::slug($data['title']).'-'.Str::random(4),
             'type' => 'bootcamp',
@@ -67,7 +67,87 @@ class ProgramController extends Controller
             'approval_status' => 'pending',
         ]);
 
+        notify_admins(
+            'Bootcamp menunggu approval',
+            auth()->user()->name.' mengajukan '.$program->title.'.',
+            'info',
+            route('admin.programs.index', ['type' => 'bootcamp'])
+        );
+
         return redirect()->route('mentor.programs.index')->with('success', 'Bootcamp diajukan. Menunggu approve admin.');
+    }
+
+    public function edit(Program $program): View
+    {
+        abort_unless($program->mentor_id === auth()->id(), 403);
+        abort_unless($program->type === 'bootcamp', 404);
+
+        return view('mentor.programs.form', [
+            'program' => $program,
+            'categories' => Category::orderBy('name')->get(),
+        ]);
+    }
+
+    public function update(Request $request, Program $program): RedirectResponse
+    {
+        abort_unless($program->mentor_id === auth()->id(), 403);
+        abort_unless($program->type === 'bootcamp', 404);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:160'],
+            'level' => ['required', 'string'],
+            'duration_months' => ['required', 'integer', 'min:1'],
+            'price' => ['required', 'integer', 'min:0'],
+            'excerpt' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'],
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'benefits_text' => ['nullable', 'string'],
+        ]);
+
+        $wasRejected = $program->approval_status === 'rejected';
+
+        $program->update([
+            'title' => $data['title'],
+            'level' => $data['level'],
+            'duration_months' => $data['duration_months'],
+            'price' => $data['price'],
+            'excerpt' => $data['excerpt'] ?? null,
+            'description' => $data['description'] ?? null,
+            'category_id' => $data['category_id'] ?? null,
+            'benefits' => collect(preg_split('/\r\n|\r|\n/', $data['benefits_text'] ?? ''))
+                ->map(fn ($l) => trim($l))->filter()->values()->all(),
+            'approval_status' => $wasRejected ? 'pending' : $program->approval_status,
+            'is_published' => $wasRejected ? false : $program->is_published,
+        ]);
+
+        if ($wasRejected) {
+            notify_admins(
+                'Bootcamp diajukan ulang',
+                auth()->user()->name.' memperbaiki '.$program->title.'.',
+                'info',
+                route('admin.programs.index', ['type' => 'bootcamp'])
+            );
+        }
+
+        return redirect()->route('mentor.programs.index')->with('success', $wasRejected
+            ? 'Perubahan disimpan dan diajukan ulang ke admin.'
+            : 'Bootcamp diperbarui.');
+    }
+
+    public function destroyModule(Module $module): RedirectResponse
+    {
+        abort_unless($module->program->mentor_id === auth()->id(), 403);
+        $module->delete();
+
+        return back()->with('success', 'Modul dihapus.');
+    }
+
+    public function destroyLesson(\App\Models\Lesson $lesson): RedirectResponse
+    {
+        abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
+        $lesson->delete();
+
+        return back()->with('success', 'Materi dihapus.');
     }
 
     public function curriculum(Program $program): View

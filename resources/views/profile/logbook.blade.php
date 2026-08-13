@@ -80,7 +80,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-semibold uppercase tracking-wide text-brand-mid">{{ $entry->program->title }}</p>
                             <p class="mt-1 font-semibold text-ink">{{ $entry->title }}</p>
-                            <p class="mt-1 text-xs text-ink-soft">{{ $entry->entry_date->translatedFormat('d M Y') }} · {{ $entry->hours }} jam</p>
+                            <p class="mt-1 text-xs text-ink-soft">{{ $entry->entry_date->translatedFormat('d M Y') }} · {{ $entry->hours }} jam · {{ $entry->statusLabel() }}</p>
                             <div class="mt-3 space-y-2 text-sm">
                                 <div>
                                     <p class="text-xs font-semibold uppercase tracking-wide text-ink/50">Aktivitas</p>
@@ -93,6 +93,9 @@
                                     </div>
                                 @endif
                             </div>
+                            @if ($entry->reviewer_note)
+                                <p class="mt-3 text-sm text-ink-soft"><span class="font-semibold text-ink">Catatan reviewer:</span> {{ $entry->reviewer_note }}</p>
+                            @endif
                             @if ($entry->attachment_path)
                                 <a href="{{ media_url($entry->attachment_path) }}" target="_blank" class="mt-3 block">
                                     <img src="{{ media_url($entry->attachment_path) }}" alt="Dokumentasi logbook" class="max-h-48 rounded-xl border border-brand/10 object-cover">

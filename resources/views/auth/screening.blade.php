@@ -68,9 +68,47 @@
                     <input type="radio" name="is_tsu" value="1" class="mt-0.5 h-5 w-5 shrink-0 accent-brand" data-tsu-trigger @checked(old('is_tsu') === '1')>
                     <span>
                         <span class="block font-semibold text-ink">Mahasiswa TSU</span>
-                        <span class="mt-0.5 block text-xs text-ink-soft">Mahasiswa aktif Tiga Serangkai — dapat fasilitas khusus. Wajib unggah KTM.</span>
+                        <span class="mt-0.5 block text-xs text-ink-soft">Mahasiswa / alumni Tiga Serangkai — fitur khusus aktif setelah admin menyetujui KTM. Wajib unggah KTM.</span>
                     </span>
                 </label>
+
+                <div class="{{ old('is_tsu') === '1' ? '' : 'hidden' }} ml-1 space-y-4 rounded-2xl border border-brand/20 bg-brand-mist/40 p-4 sm:ml-8" data-tsu-details>
+                    <div>
+                        <p class="text-sm font-semibold text-ink">Status TSU <span class="text-red-500">*</span></p>
+                        <p class="mt-0.5 text-xs text-ink-soft">Pilih salah satu.</p>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-ink/10 bg-panel p-3.5 transition has-[:checked]:border-brand has-[:checked]:ring-1 has-[:checked]:ring-brand/40">
+                            <input type="radio" name="tsu_status" value="active" class="mt-0.5 h-4 w-4 shrink-0 accent-brand" data-tsu-status @checked(old('tsu_status') === 'active')>
+                            <span>
+                                <span class="block text-sm font-semibold text-ink">Mahasiswa Aktif</span>
+                                <span class="mt-0.5 block text-xs text-ink-soft">Masih kuliah di TSU — isi semester saat ini, lalu unggah KTM.</span>
+                            </span>
+                        </label>
+                        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-ink/10 bg-panel p-3.5 transition has-[:checked]:border-brand has-[:checked]:ring-1 has-[:checked]:ring-brand/40">
+                            <input type="radio" name="tsu_status" value="fresh_graduate" class="mt-0.5 h-4 w-4 shrink-0 accent-brand" data-tsu-status @checked(old('tsu_status') === 'fresh_graduate')>
+                            <span>
+                                <span class="block text-sm font-semibold text-ink">Fresh Graduate</span>
+                                <span class="mt-0.5 block text-xs text-ink-soft">Baru lulus TSU — lanjut unggah KTM tanpa isi semester.</span>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="hidden text-xs text-red-600" data-tsu-status-error>Pilih Mahasiswa Aktif atau Fresh Graduate.</p>
+                    @error('tsu_status') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+
+                    <div class="{{ old('tsu_status') === 'active' ? '' : 'hidden' }} space-y-1.5" data-semester-wrap>
+                        <label class="block text-sm font-semibold text-ink" for="screening-semester">Semester saat ini <span class="text-red-500">*</span></label>
+                        <input id="screening-semester" type="number" name="semester" min="1" max="14" inputmode="numeric"
+                               value="{{ old('semester') }}"
+                               class="input-field max-w-[12rem]"
+                               placeholder="Contoh: 6"
+                               data-semester-input>
+                        <p class="hidden text-xs text-red-600" data-semester-error>Isi semester (1–14).</p>
+                        @error('semester') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink/10 bg-surface p-4 transition has-[:checked]:border-brand has-[:checked]:bg-brand-mist has-[:checked]:ring-1 has-[:checked]:ring-brand/40">
                     <input type="radio" name="is_tsu" value="0" class="mt-0.5 h-5 w-5 shrink-0 accent-brand" data-tsu-trigger @checked(old('is_tsu') === '0')>
                     <span>
@@ -95,7 +133,7 @@
         <div data-step="3" class="hidden space-y-6">
             <div>
                 <h2 class="font-display text-xl font-bold text-ink">Unggah Kartu Tanda Mahasiswa</h2>
-                <p class="mt-1 text-sm text-ink-soft">KTM diperlukan sebagai verifikasi mahasiswa TSU. Pastikan foto/scan terlihat jelas.</p>
+                <p class="mt-1 text-sm text-ink-soft" data-ktm-copy>KTM diperlukan sebagai verifikasi TSU. Setelah unggah, kamu bisa login. Fitur khusus TSU aktif setelah admin menyetujui.</p>
             </div>
 
             <label class="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand/30 bg-surface px-4 py-10 text-center transition hover:border-brand/60 hover:bg-brand-mist/30" for="ktm-input">
@@ -148,13 +186,44 @@
 
     const tsuInputs = form.querySelectorAll('[data-tsu-trigger]');
     const tsuError = form.querySelector('[data-tsu-error]');
+    const tsuDetails = form.querySelector('[data-tsu-details]');
+    const tsuStatusInputs = form.querySelectorAll('[data-tsu-status]');
+    const tsuStatusError = form.querySelector('[data-tsu-status-error]');
+    const semesterWrap = form.querySelector('[data-semester-wrap]');
+    const semesterInput = form.querySelector('[data-semester-input]');
+    const semesterError = form.querySelector('[data-semester-error]');
     const ktmError = form.querySelector('[data-ktm-error]');
+    const ktmCopy = form.querySelector('[data-ktm-copy]');
     const fileInput = form.querySelector('[data-ktm-input]');
     const fileLabel = form.querySelector('[data-ktm-label]');
     const doneSummary = form.querySelector('[data-done-summary]');
 
     let currentStep = 1;
-    let currentMax = 3;
+
+    const selectedTsu = () => form.querySelector('input[name="is_tsu"]:checked');
+    const selectedStatus = () => form.querySelector('input[name="tsu_status"]:checked');
+
+    const syncTsuDetails = () => {
+        const tsu = selectedTsu();
+        const isTsu = tsu?.value === '1';
+        tsuDetails?.classList.toggle('hidden', !isTsu);
+
+        if (!isTsu) {
+            tsuStatusInputs.forEach((input) => { input.checked = false; });
+            if (semesterInput) semesterInput.value = '';
+            semesterWrap?.classList.add('hidden');
+            tsuStatusError?.classList.add('hidden');
+            semesterError?.classList.add('hidden');
+            return;
+        }
+
+        const status = selectedStatus()?.value;
+        semesterWrap?.classList.toggle('hidden', status !== 'active');
+        if (status !== 'active' && semesterInput) {
+            semesterInput.value = '';
+            semesterError?.classList.add('hidden');
+        }
+    };
 
     const setProgress = (step) => {
         progressLabel.textContent = `Langkah ${step} dari 3`;
@@ -172,19 +241,42 @@
     };
 
     const nextFromStatus = () => {
-        const checked = form.querySelector('input[name="is_tsu"]:checked');
+        const checked = selectedTsu();
         if (!checked) {
             tsuError.classList.remove('hidden');
             return;
         }
         tsuError.classList.add('hidden');
-        if (checked.value === '1') {
-            goTo(3);
-            currentMax = 3;
-        } else {
+
+        if (checked.value !== '1') {
             goTo(4);
-            currentMax = 3;
+            return;
         }
+
+        const status = selectedStatus();
+        if (!status) {
+            tsuStatusError?.classList.remove('hidden');
+            return;
+        }
+        tsuStatusError?.classList.add('hidden');
+
+        if (status.value === 'active') {
+            const semester = Number(semesterInput?.value || 0);
+            if (!semester || semester < 1 || semester > 14) {
+                semesterError?.classList.remove('hidden');
+                semesterInput?.focus();
+                return;
+            }
+            semesterError?.classList.add('hidden');
+        }
+
+        if (ktmCopy) {
+            ktmCopy.textContent = status.value === 'active'
+                ? 'KTM diperlukan sebagai verifikasi mahasiswa aktif TSU. Pastikan foto/scan terlihat jelas.'
+                : 'KTM diperlukan sebagai verifikasi fresh graduate TSU. Pastikan foto/scan terlihat jelas.';
+        }
+
+        goTo(3);
     };
 
     const nextFromKtm = () => {
@@ -193,7 +285,7 @@
             return;
         }
         ktmError.classList.add('hidden');
-        doneSummary.textContent = 'Terima kasih! KTM kamu sudah terlampir dan akunmu siap digunakan.';
+        doneSummary.textContent = 'KTM terlampir. Kamu sudah bisa login. Fitur khusus TSU aktif setelah admin menyetujui KTM.';
         goTo(4);
     };
 
@@ -207,15 +299,22 @@
         btn.addEventListener('click', () => {
             const target = +btn.dataset.prevStep;
             if (btn.dataset.prevKtm !== undefined) {
-                const checked = form.querySelector('input[name="is_tsu"]:checked');
-                goTo(checked && checked.value === '1' ? 3 : 2);
+                goTo(selectedTsu()?.value === '1' ? 3 : 2);
             } else {
                 goTo(target);
             }
         });
     });
 
-    tsuInputs.forEach((radio) => radio.addEventListener('change', () => tsuError.classList.add('hidden')));
+    tsuInputs.forEach((radio) => radio.addEventListener('change', () => {
+        tsuError.classList.add('hidden');
+        syncTsuDetails();
+    }));
+    tsuStatusInputs.forEach((radio) => radio.addEventListener('change', () => {
+        tsuStatusError?.classList.add('hidden');
+        syncTsuDetails();
+    }));
+    semesterInput?.addEventListener('input', () => semesterError?.classList.add('hidden'));
 
     if (fileInput && fileLabel) {
         fileInput.addEventListener('change', () => {
@@ -229,10 +328,15 @@
         });
     }
 
-    const preselectedTsu = form.querySelector('input[name="is_tsu"]:checked');
-    if (preselectedTsu && +preselectedTsu.value === 1) {
+    syncTsuDetails();
+
+    @if ($errors->has('ktm'))
         goTo(3);
-    }
+    @elseif ($errors->has('is_tsu') || $errors->has('tsu_status') || $errors->has('semester'))
+        goTo(2);
+    @elseif (old('is_tsu') === '1' && old('tsu_status'))
+        goTo(3);
+    @endif
 })();
 </script>
 @endsection

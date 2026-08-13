@@ -9,6 +9,14 @@
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-dark">Dashboard siswa</p>
         <h1 class="section-title mt-2">Halo, {{ auth()->user()->name }}</h1>
         <p class="mt-2 text-ink-soft">Pantau progress bootcamp & magang kamu di satu tempat.</p>
+        @if (auth()->user()->isTsuPending())
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p class="font-semibold">Menunggu verifikasi KTM</p>
+                <p class="mt-1">Kamu sudah login sebagai calon mahasiswa TSU. Fitur TS Group / magang internal muncul otomatis setelah admin menyetujui KTM.</p>
+            </div>
+        @elseif (auth()->user()->isTsuStudent())
+            <p class="mt-3 inline-flex rounded-full bg-brand/15 px-3 py-1 text-xs font-semibold text-brand-deeper">TSU · {{ auth()->user()->tsuStatusLabel() }} — fitur khusus aktif</p>
+        @endif
 
         <div class="mt-6 flex flex-wrap gap-2">
             <a href="{{ route('career.gallery') }}" class="btn-secondary">Karier</a>
@@ -90,6 +98,24 @@
         </div>
 
         <aside class="space-y-6">
+            <div class="card-soft p-5">
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="font-display text-lg font-semibold">Badge</h2>
+                    <a href="{{ route('announcements.index') }}" class="text-xs font-semibold text-brand-mid hover:underline">Pengumuman</a>
+                </div>
+                @forelse ($achievements as $achievement)
+                    <div class="mt-3 flex items-start gap-3 border-t border-brand/10 pt-3 first:mt-2 first:border-0 first:pt-0">
+                        <span class="text-xl leading-none">{{ $achievement->icon ?: '🏅' }}</span>
+                        <div>
+                            <p class="text-sm font-semibold text-ink">{{ $achievement->name }}</p>
+                            <p class="text-xs text-ink-soft">{{ $achievement->description }}</p>
+                        </div>
+                    </div>
+                @empty
+                    <p class="mt-3 text-sm text-ink-soft">Belum ada badge. Selesaikan screening, enroll, atau unggah portofolio untuk mulai mengumpulkan.</p>
+                @endforelse
+            </div>
+
             <div class="card-soft p-5">
                 <h2 class="font-display text-lg font-semibold">Jadwal mendatang</h2>
                 @forelse ($schedules as $schedule)

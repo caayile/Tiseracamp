@@ -95,6 +95,13 @@ class CvReviewController extends Controller
             'link' => route('cv-review.plans'),
         ]);
 
+        notify_admins(
+            'Pembayaran paket CV baru',
+            auth()->user()->name.' mengunggah bukti paket '.$newSubscription->plan_name.' ('.$newSubscription->invoice_code.').',
+            'payment',
+            route('admin.cv-subscriptions.index')
+        );
+
         return redirect()
             ->route('cv-review.plans')
             ->with('success', 'Bukti pembayaran diunggah. Setelah admin verifikasi, paket baru aktif.');
@@ -170,6 +177,8 @@ class CvReviewController extends Controller
             ]);
 
             $subscription?->consumeReview();
+
+            award_achievement(auth()->user(), 'first_cv_review');
 
             return redirect()
                 ->route('cv-review.show', $review)

@@ -10,6 +10,7 @@ use App\Models\Partner;
 use App\Models\Portfolio;
 use App\Models\Program;
 use App\Models\Testimonial;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
@@ -17,7 +18,7 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        $data = Cache::remember('home.page.v2', 90, function () {
+        $data = Cache::remember('home.page.v3', 90, function () {
             $featured = Program::published()
                 ->with(['partner', 'mentor'])
                 ->where('type', 'bootcamp')
@@ -56,6 +57,22 @@ class HomeController extends Controller
                 ->take(12)
                 ->get();
 
+            $heroStudents = User::query()
+                ->where('role', 'student')
+                ->where('status', 'active')
+                ->latest('id')
+                ->take(5)
+                ->get(['id', 'name', 'avatar'])
+                ->map(fn (User $user) => (object) [
+                    'name' => $user->name,
+                    'avatar' => $user->avatar,
+                ]);
+
+            $studentCount = User::query()
+                ->where('role', 'student')
+                ->where('status', 'active')
+                ->count();
+
             return compact(
                 'featured',
                 'programs',
@@ -65,7 +82,9 @@ class HomeController extends Controller
                 'faqs',
                 'articles',
                 'testimonials',
-                'portfolios'
+                'portfolios',
+                'heroStudents',
+                'studentCount'
             );
         });
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CareerResource;
 use App\Models\Portfolio;
 use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
@@ -67,6 +68,28 @@ class CareerController extends Controller
         return view('career.jobs', compact('programs', 'search', 'isTsuStudent', 'scope'));
     }
 
+    public function resources(Request $request): View
+    {
+        $type = $request->string('type')->toString();
+        $type = in_array($type, ['cv', 'interview', 'job'], true) ? $type : null;
+
+        $resources = CareerResource::query()
+            ->where('is_published', true)
+            ->when($type, fn ($query) => $query->where('type', $type))
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('career.resources', compact('resources', 'type'));
+    }
+
+    public function showResource(CareerResource $careerResource): View
+    {
+        abort_unless($careerResource->is_published, 404);
+
+        return view('career.resource-show', ['resource' => $careerResource]);
+    }
+
     public function storePortfolio(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -97,6 +120,8 @@ class CareerController extends Controller
             'project_url' => $data['project_url'] ?? null,
             'portfolio_file_url' => $data['portfolio_file_url'] ?? null,
         ]);
+
+        award_achievement(auth()->user(), 'first_portfolio');
 
         $label = $data['type'] === 'cv' ? 'CV' : 'Portofolio';
 

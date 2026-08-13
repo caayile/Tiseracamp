@@ -16,7 +16,7 @@
     </div>
 
     <div class="card-soft flex flex-1 flex-col overflow-hidden">
-        <div class="flex-1 space-y-4 overflow-y-auto bg-[#F8FCFD] p-4">
+        <div class="flex-1 space-y-4 overflow-y-auto bg-[#F8FCFD] p-4" data-chat-thread data-poll-url="{{ route('chat.poll', $conversation) }}" data-last-id="{{ $conversation->messages->last()?->id ?? 0 }}">
             @forelse ($conversation->messages as $message)
                 @php $mine = $message->user_id === auth()->id(); @endphp
                 <div class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
@@ -42,4 +42,5 @@
         </form>
     </div>
 </section>
+@include('partials.chat-poll')
 @endsection

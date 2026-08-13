@@ -12,4 +12,14 @@ class CareerResource extends Model
     {
         return ['is_published' => 'boolean'];
     }
+
+    public function typeLabel(): string
+    {
+        return match ($this->type) {
+            'cv' => 'Tips CV',
+            'interview' => 'Interview',
+            'job' => 'Lowongan',
+            default => ucfirst((string) $this->type),
+        };
+    }
 }

@@ -36,6 +36,10 @@
                 </div>
             @endforeach
         </div>
+
+        <div class="mt-6">
+            @include('partials.payment-verification-note')
+        </div>
     </div>
 </section>
 

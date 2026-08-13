@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Enrollment;
 use App\Models\InternshipApplication;
 use App\Models\Program;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -45,18 +47,27 @@ class ProgramController extends Controller
         }
 
         $programs = $query->latest()->paginate(9)->withQueryString();
+        $categories = Category::query()->orderBy('name')->get();
+        $activeCategory = $request->string('category')->toString();
 
-        return view('programs.index', compact('programs', 'catalogType', 'isTsuStudent', 'scope'));
+        return view('programs.index', compact('programs', 'catalogType', 'isTsuStudent', 'scope', 'categories', 'activeCategory'));
     }
 
-    public function show(string $slug): View
+    public function show(string $slug): View|RedirectResponse
     {
         $program = Program::published()
             ->with(['partner', 'mentor', 'category'])
             ->where('slug', $slug)
             ->firstOrFail();
 
-        abort_unless($program->isVisibleTo(auth()->user()), 404);
+        if (! $program->isVisibleTo(auth()->user())) {
+            if (auth()->user()?->isTsuPending() && $program->isTsuOnly()) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'Lowongan khusus TSU aktif setelah admin menyetujui KTM.');
+            }
+
+            abort(404);
+        }
 
         // Dipakai navbar untuk highlight Magang vs Bootcamp tanpa query ekstra.
         view()->share('navProgramType', $program->type);

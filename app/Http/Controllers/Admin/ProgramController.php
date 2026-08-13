@@ -260,7 +260,38 @@ class ProgramController extends Controller
     {
         $program->update(['approval_status' => 'approved', 'is_published' => true]);
 
+        if ($program->mentor_id) {
+            notify_user(
+                $program->mentor_id,
+                'Bootcamp disetujui',
+                $program->title.' sudah tayang di katalog.',
+                'success',
+                route('mentor.programs.curriculum', $program)
+            );
+        }
+
         return back()->with('success', 'Program disetujui & dipublish.');
+    }
+
+    public function reject(Request $request, Program $program): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $program->update(['approval_status' => 'rejected', 'is_published' => false]);
+
+        if ($program->mentor_id) {
+            notify_user(
+                $program->mentor_id,
+                'Bootcamp ditolak',
+                $program->title.($data['reason'] ? ' — '.$data['reason'] : ' Belum dapat dipublikasikan. Silakan perbaiki lalu ajukan ulang.'),
+                'warning',
+                route('mentor.programs.edit', $program)
+            );
+        }
+
+        return back()->with('success', 'Program ditolak.');
     }
 
     public function toggleOpen(Program $program): RedirectResponse

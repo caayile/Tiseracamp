@@ -48,6 +48,8 @@ class LogbookController extends Controller
             'attachment_path' => $path,
         ]);
 
+        award_achievement(auth()->user(), 'first_logbook');
+
         return redirect()
             ->route('profile.logbook')
             ->with('success', 'Entri logbook disimpan.');

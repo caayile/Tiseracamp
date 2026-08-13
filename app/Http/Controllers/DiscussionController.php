@@ -21,23 +21,61 @@ class DiscussionController extends Controller
             'lesson_id' => ['nullable', 'exists:lessons,id'],
         ]);
 
-        Discussion::create([
+        $discussion = Discussion::create([
             ...$data,
             'program_id' => $program->id,
             'user_id' => auth()->id(),
         ]);
+
+        if ($program->mentor_id && $program->mentor_id !== auth()->id()) {
+            notify_user(
+                $program->mentor_id,
+                'Diskusi baru',
+                auth()->user()->name.' membuka diskusi di '.$program->title.': '.$discussion->title,
+                'info',
+                route('mentor.discussions.show', $discussion)
+            );
+        }
 
         return back()->with('success', 'Diskusi dibuat.');
     }
 
     public function reply(Request $request, Discussion $discussion): RedirectResponse
     {
+        $discussion->load('program');
+        $enrolled = Enrollment::where('user_id', auth()->id())->where('program_id', $discussion->program_id)->exists();
+        $isStaff = auth()->user()->isAdmin()
+            || (auth()->user()->isMentor() && $discussion->program?->mentor_id === auth()->id());
+        abort_unless($enrolled || $isStaff, 403);
+
         $data = $request->validate(['body' => ['required', 'string']]);
         DiscussionReply::create([
             'discussion_id' => $discussion->id,
             'user_id' => auth()->id(),
             'body' => $data['body'],
         ]);
+
+        if ($discussion->user_id !== auth()->id()) {
+            notify_user(
+                $discussion->user_id,
+                'Balasan diskusi',
+                auth()->user()->name.' membalas: '.$discussion->title,
+                'info',
+                $isStaff ? route('discussions.show', $discussion) : route('discussions.show', $discussion)
+            );
+        }
+
+        if ($discussion->program?->mentor_id
+            && $discussion->program->mentor_id !== auth()->id()
+            && $discussion->user_id !== $discussion->program->mentor_id) {
+            notify_user(
+                $discussion->program->mentor_id,
+                'Balasan diskusi',
+                auth()->user()->name.' membalas di '.$discussion->program->title,
+                'info',
+                route('mentor.discussions.show', $discussion)
+            );
+        }
 
         return back()->with('success', 'Balasan dikirim.');
     }

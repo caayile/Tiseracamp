@@ -33,6 +33,12 @@
         </form>
     </div>
 
+    @if (auth()->user()?->isTsuPending())
+        <div class="mt-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Tab <strong>TS Group</strong> muncul otomatis setelah admin menyetujui KTM.
+        </div>
+    @endif
+
     @if ($isTsuStudent)
         <div class="mt-8 flex flex-wrap gap-2">
             <a href="{{ route('career.jobs', ['scope' => 'all']) }}"

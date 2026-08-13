@@ -26,6 +26,11 @@
         <div class="border-b border-ink/8 bg-brand-mist/50 px-4 py-3">
             <p class="truncate text-sm font-semibold text-ink">{{ $navUser->name }}</p>
             <p class="truncate text-xs text-ink-soft">{{ $navUser->email }}</p>
+            @if ($navUser->isStudent() && ($navUser->isTsuPending() || $navUser->isTsuStudent()))
+                <p class="mt-1 text-[11px] font-semibold {{ $navUser->isTsuPending() ? 'text-amber-700' : 'text-brand-deeper' }}">
+                    {{ $navUser->isTsuPending() ? 'KTM menunggu admin' : 'TSU · '.$navUser->tsuStatusLabel() }}
+                </p>
+            @endif
         </div>
         <div class="p-2">
             <a href="{{ route('profile.edit') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
@@ -34,6 +39,9 @@
             @if ($navUser->isStudent())
                 <a href="{{ route('profile.applications') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
                     Riwayat pendaftaran
+                </a>
+                <a href="{{ route('announcements.index') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
+                    Pengumuman
                 </a>
                 <a href="{{ route('payments.index') }}" class="block rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-brand/10">
                     Riwayat pembayaran

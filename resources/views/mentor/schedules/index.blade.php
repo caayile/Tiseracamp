@@ -74,8 +74,26 @@
                         @if ($schedule->recording_url)
                             <a href="{{ $schedule->recording_url }}" target="_blank" class="mt-1 inline-block text-xs text-brand-deeper hover:underline">Recording</a>
                         @endif
+                        <div class="flex gap-2">
+                            <form method="POST" action="{{ route('mentor.schedules.destroy', $schedule) }}" onsubmit="return confirm('Hapus jadwal ini?')">
+                                @csrf @method('DELETE')
+                                <button class="text-xs font-semibold text-red-600 hover:underline" type="submit">Hapus</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
+
+                <form method="POST" action="{{ route('mentor.schedules.update', $schedule) }}" class="mt-3 grid gap-2 md:grid-cols-2">
+                    @csrf @method('PUT')
+                    <input type="text" name="title" value="{{ $schedule->title }}" class="input-field text-sm" required>
+                    <input type="datetime-local" name="starts_at" value="{{ $schedule->starts_at->format('Y-m-d\\TH:i') }}" class="input-field text-sm" required>
+                    <input type="datetime-local" name="ends_at" value="{{ $schedule->ends_at?->format('Y-m-d\\TH:i') }}" class="input-field text-sm">
+                    <input type="url" name="meeting_url" value="{{ $schedule->meeting_url }}" class="input-field text-sm" placeholder="Meeting URL">
+                    <input type="url" name="materials_url" value="{{ $schedule->materials_url }}" class="input-field text-sm md:col-span-2" placeholder="Materi URL">
+                    <textarea name="materials_note" rows="2" class="input-field text-sm md:col-span-2" placeholder="Catatan">{{ $schedule->materials_note }}</textarea>
+                    <textarea name="description" rows="2" class="input-field text-sm md:col-span-2" placeholder="Deskripsi">{{ $schedule->description }}</textarea>
+                    <button class="btn-secondary text-sm" type="submit">Simpan perubahan</button>
+                </form>
 
                 @if (! $schedule->recording_url)
                     <form method="POST" action="{{ route('mentor.schedules.recording', $schedule) }}" class="mt-3 flex flex-wrap gap-2">

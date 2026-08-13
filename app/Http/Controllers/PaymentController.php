@@ -54,6 +54,13 @@ class PaymentController extends Controller
             'link' => route('payments.invoice', $payment),
         ]);
 
+        notify_admins(
+            'Bukti bayar baru',
+            auth()->user()->name.' mengunggah bukti untuk '.$program->title.' ('.$payment->invoice_code.').',
+            'payment',
+            route('admin.payments.index')
+        );
+
         return redirect()
             ->route('payments.invoice', $payment)
             ->with('success', 'Bukti pembayaran diunggah. Menunggu verifikasi admin.');

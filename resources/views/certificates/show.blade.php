@@ -55,6 +55,7 @@
                     <div class="rounded-2xl bg-brand-mist/70 p-4">
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Kode sertifikat</p>
                         <p class="mt-1 font-semibold text-ink">{{ $certificate->code }}</p>
+                        <a href="{{ route('certificates.verify', $certificate->code) }}" class="mt-2 inline-block text-[11px] font-semibold text-brand-mid hover:underline">Cek keaslian</a>
                     </div>
                 </div>
 

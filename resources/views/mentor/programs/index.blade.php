@@ -28,13 +28,14 @@
                 $statusCta = match ($program->approval_status) {
                     'approved' => 'Program aktif · kelola sekarang',
                     'pending' => 'Menunggu approval admin',
+                    'rejected' => 'Ditolak admin · edit & ajukan ulang',
                     default => 'Status: '.$program->approval_status,
                 };
             @endphp
             <x-program-card
                 :program="$program"
                 :cta="$statusCta"
-                :href="route('mentor.programs.curriculum', $program)"
+                :href="$program->approval_status === 'rejected' ? route('mentor.programs.edit', $program) : route('mentor.programs.curriculum', $program)"
                 :actions="true"
             />
         @endforeach

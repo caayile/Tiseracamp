@@ -4,13 +4,13 @@
 
 @section('content')
 @php
-    $portraits = [
-        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-        'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
-        'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
-    ];
+    $heroStudents = collect($heroStudents ?? []);
+    $studentCount = (int) ($studentCount ?? 0);
+    $faces = $heroStudents->values();
+    $initialsOf = fn (?string $name) => collect(explode(' ', (string) $name))
+        ->map(fn ($w) => mb_substr($w, 0, 1))
+        ->take(2)
+        ->implode('');
 @endphp
 
 <section class="relative overflow-hidden py-6 sm:py-8">
@@ -35,11 +35,24 @@
                 </div>
             </form>
 
+            @if ($faces->isNotEmpty())
             {{-- Left portraits --}}
             <div class="pointer-events-none absolute -left-4 top-36 hidden w-44 select-none lg:block xl:left-6 xl:w-52">
                 <div class="absolute left-8 top-0 h-16 w-16 rounded-full bg-[#F5C542]/90"></div>
-                <img src="{{ $portraits[1] }}" alt="" class="hero-portrait absolute left-0 top-10 h-28 w-28 opacity-70">
-                <img src="{{ $portraits[0] }}" alt="" class="hero-portrait absolute left-10 top-20 h-36 w-36 float-slow">
+                @if ($faces->get(1))
+                    @if ($faces[1]->avatar)
+                        <img src="{{ media_url($faces[1]->avatar) }}" alt="" class="hero-portrait absolute left-0 top-10 h-28 w-28 object-cover opacity-70">
+                    @else
+                        <span class="hero-portrait absolute left-0 top-10 flex h-28 w-28 items-center justify-center bg-[#0B1F2A] font-display text-lg font-bold text-brand opacity-70">{{ strtoupper($initialsOf($faces[1]->name)) }}</span>
+                    @endif
+                @endif
+                @if ($faces->get(0))
+                    @if ($faces[0]->avatar)
+                        <img src="{{ media_url($faces[0]->avatar) }}" alt="" class="hero-portrait absolute left-10 top-20 h-36 w-36 object-cover float-slow">
+                    @else
+                        <span class="hero-portrait absolute left-10 top-20 flex h-36 w-36 items-center justify-center bg-[#065A7A] font-display text-2xl font-bold text-brand float-slow">{{ strtoupper($initialsOf($faces[0]->name)) }}</span>
+                    @endif
+                @endif
                 <svg class="absolute -right-2 top-28 h-16 w-20 text-ink/55" viewBox="0 0 80 60" fill="none" aria-hidden="true">
                     <path d="M8 42C22 18 48 10 72 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                     <path d="M62 10l12 8-12 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -49,14 +62,33 @@
             {{-- Right portraits --}}
             <div class="pointer-events-none absolute -right-2 top-32 hidden w-48 select-none lg:block xl:right-4 xl:w-56">
                 <div class="absolute right-6 top-4 h-20 w-20 rounded-full bg-[#7B5CFF]/70"></div>
-                <img src="{{ $portraits[3] }}" alt="" class="hero-portrait absolute right-0 top-16 h-24 w-24 opacity-75">
-                <img src="{{ $portraits[2] }}" alt="" class="hero-portrait absolute right-10 top-6 h-40 w-40 float-slow">
-                <img src="{{ $portraits[4] }}" alt="" class="hero-portrait absolute right-16 top-44 h-20 w-20">
+                @if ($faces->get(3))
+                    @if ($faces[3]->avatar)
+                        <img src="{{ media_url($faces[3]->avatar) }}" alt="" class="hero-portrait absolute right-0 top-16 h-24 w-24 object-cover opacity-75">
+                    @else
+                        <span class="hero-portrait absolute right-0 top-16 flex h-24 w-24 items-center justify-center bg-[#0B1F2A] font-display text-sm font-bold text-brand opacity-75">{{ strtoupper($initialsOf($faces[3]->name)) }}</span>
+                    @endif
+                @endif
+                @if ($faces->get(2))
+                    @if ($faces[2]->avatar)
+                        <img src="{{ media_url($faces[2]->avatar) }}" alt="" class="hero-portrait absolute right-10 top-6 h-40 w-40 object-cover float-slow">
+                    @else
+                        <span class="hero-portrait absolute right-10 top-6 flex h-40 w-40 items-center justify-center bg-[#065A7A] font-display text-2xl font-bold text-brand float-slow">{{ strtoupper($initialsOf($faces[2]->name)) }}</span>
+                    @endif
+                @endif
+                @if ($faces->get(4))
+                    @if ($faces[4]->avatar)
+                        <img src="{{ media_url($faces[4]->avatar) }}" alt="" class="hero-portrait absolute right-16 top-44 h-20 w-20 object-cover">
+                    @else
+                        <span class="hero-portrait absolute right-16 top-44 flex h-20 w-20 items-center justify-center bg-[#0B1F2A] font-display text-xs font-bold text-brand">{{ strtoupper($initialsOf($faces[4]->name)) }}</span>
+                    @endif
+                @endif
                 <svg class="absolute -left-4 top-36 h-16 w-20 -scale-x-100 text-ink/55" viewBox="0 0 80 60" fill="none" aria-hidden="true">
                     <path d="M8 42C22 18 48 10 72 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                     <path d="M62 10l12 8-12 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
+            @endif
 
             <div class="relative mx-auto max-w-3xl text-center">
                 <div class="reveal mb-6 flex justify-center">
@@ -74,13 +106,23 @@
 
                 <div class="reveal mt-6 inline-flex items-center gap-3 rounded-full bg-white/95 px-3 py-2 text-left shadow-lg">
                     <div class="flex -space-x-2">
-                        @foreach (array_slice($portraits, 0, 3) as $avatar)
-                            <img src="{{ $avatar }}" alt="" class="h-8 w-8 rounded-full border-2 border-white object-cover">
-                        @endforeach
+                        @forelse ($faces->take(3) as $face)
+                            @if ($face->avatar)
+                                <img src="{{ media_url($face->avatar) }}" alt="" class="h-8 w-8 rounded-full border-2 border-white object-cover">
+                            @else
+                                <span class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#0B1F2A] text-[10px] font-bold text-brand">{{ strtoupper($initialsOf($face->name)) }}</span>
+                            @endif
+                        @empty
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#0B1F2A] text-[10px] font-bold text-brand">TS</span>
+                        @endforelse
                     </div>
                     <p class="pr-2 text-[11px] font-semibold leading-tight text-ink sm:text-xs">
-                        10K+ peserta aktif tiap bulan<br>
-                        <span class="font-medium text-ink-soft">di seluruh Indonesia</span>
+                        @if ($studentCount > 0)
+                            {{ number_format($studentCount) }} peserta terdaftar<br>
+                        @else
+                            Platform belajar & magang<br>
+                        @endif
+                        <span class="font-medium text-ink-soft">Tiga Serangkai</span>
                     </p>
                 </div>
             </div>

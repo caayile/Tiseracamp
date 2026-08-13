@@ -39,13 +39,18 @@ class ApplicationController extends Controller
         ]);
 
         if ($data['status'] === 'accepted') {
+            $application->loadMissing('program');
+            if ($application->program && ! $application->program->hasAvailableSeat()) {
+                return back()->with('error', 'Kuota batch magang ini sudah penuh. Buka batch baru dulu.');
+            }
+
             Enrollment::firstOrCreate(
                 ['user_id' => $application->user_id, 'program_id' => $application->program_id],
                 [
                     'status' => 'active',
                     'progress' => 0,
                     'enrolled_at' => now(),
-                    'batch_id' => $application->program->batches()->where('status', 'active')->value('id'),
+                    'batch_id' => $application->program?->enrollableBatchId(),
                 ]
             );
 
@@ -56,6 +61,12 @@ class ApplicationController extends Controller
                 'type' => 'success',
                 'link' => route('learn.show', $application->program),
             ]);
+
+            $application->loadMissing('user');
+            if ($application->user) {
+                award_achievement($application->user, 'internship_accepted');
+                award_achievement($application->user, 'first_enrollment');
+            }
         } elseif ($data['status'] === 'rejected') {
             AppNotification::create([
                 'user_id' => $application->user_id,

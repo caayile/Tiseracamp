@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
 use App\Models\InternshipApplication;
+use App\Models\JobApplication;
 use App\Models\LogbookEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,12 +28,17 @@ class ProfileController extends Controller
             ->latest()
             ->get();
 
+        $jobApplications = JobApplication::with('program')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
         $enrollments = Enrollment::with('program')
             ->where('user_id', $user->id)
             ->latest()
             ->get();
 
-        return view('profile.applications', compact('user', 'applications', 'enrollments'));
+        return view('profile.applications', compact('user', 'applications', 'jobApplications', 'enrollments'));
     }
 
     public function logbook(): View
@@ -82,7 +88,7 @@ class ProfileController extends Controller
             $user->expertise = array_values(array_filter(array_map('trim', explode(',', $data['expertise'] ?? ''))));
         }
 
-        if ($user->isStudent() && $user->isTsuStudent() && $request->hasFile('ktm')) {
+        if ($user->isStudent() && ($user->isTsuStudent() || filled($user->ktm_path)) && $request->hasFile('ktm')) {
             $user->ktm_path = $request->file('ktm')->store('ktm', media_disk());
         }
 

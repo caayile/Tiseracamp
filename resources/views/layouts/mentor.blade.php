@@ -14,37 +14,71 @@
         $initials = collect(explode(' ', $mentor->name))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('');
     @endphp
 
-    <aside class="panel-sidebar panel-sidebar-mentor overflow-x-hidden bg-gradient-to-b from-[#0B1F2A] via-[#0A3A4A] to-[#065A7A] text-white">
-        <div class="pointer-events-none absolute -right-16 top-24 h-48 w-48 rounded-full bg-brand/20 blur-3xl"></div>
-        <div class="border-b border-white/10 px-6 py-6">
-            <div class="flex items-center gap-3">
-                <x-brand-logo class="h-12 w-auto brightness-0 invert" />
-            </div>
+    <aside class="panel-sidebar panel-sidebar-mentor border-r border-brand/10 bg-[#0B1F2A] text-white">
+        <div class="border-b border-white/10 px-5 py-5">
+            <x-brand-logo class="h-14 w-auto brightness-0 invert" />
+            <p class="mt-2 text-xs text-white/60">Mentor Panel</p>
         </div>
 
-        <nav class="flex flex-1 flex-col gap-1 p-4">
+        <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
             @php
-                $links = [
-                    ['route' => 'mentor.dashboard', 'label' => 'Dashboard', 'match' => 'mentor.dashboard'],
-                    ['route' => 'mentor.programs.index', 'label' => 'Program Saya', 'match' => 'mentor.programs.*'],
-                    ['route' => 'mentor.submissions', 'label' => 'Review Tugas', 'match' => 'mentor.submissions*'],
-                    ['route' => 'mentor.schedules.index', 'label' => 'Jadwal Mentoring', 'match' => 'mentor.schedules.*'],
-                    ['route' => 'mentor.chat.index', 'label' => 'Chat Siswa', 'match' => 'mentor.chat.*'],
+                $navGroups = [
+                    'Overview' => [
+                        ['label' => 'Dashboard', 'route' => 'mentor.dashboard', 'match' => 'mentor.dashboard', 'icon' => 'M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z'],
+                    ],
+                    'Program' => [
+                        ['label' => 'Bootcamp Saya', 'route' => 'mentor.programs.index', 'match' => 'mentor.programs.*', 'icon' => 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14zM12 14v5'],
+                        ['label' => 'Tambah Bootcamp', 'route' => 'mentor.programs.create', 'match' => 'mentor.programs.create', 'icon' => 'M12 4v16m8-8H4'],
+                    ],
+                    'Mentoring' => [
+                        ['label' => 'Review Tugas', 'route' => 'mentor.submissions', 'match' => 'mentor.submissions*', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['label' => 'Jadwal Mentoring', 'route' => 'mentor.schedules.index', 'match' => 'mentor.schedules.*', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+                        ['label' => 'Pengumuman', 'route' => 'mentor.announcements.index', 'match' => 'mentor.announcements.*', 'icon' => 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z'],
+                        ['label' => 'Diskusi', 'route' => 'mentor.discussions.index', 'match' => 'mentor.discussions.*', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
+                        ['label' => 'Chat Siswa', 'route' => 'mentor.chat.index', 'match' => 'mentor.chat.*', 'icon' => 'M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z'],
+                    ],
+                    'Magang' => [
+                        ['label' => 'Pendaftar Magang', 'route' => 'mentor.applications.index', 'match' => 'mentor.applications.*', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['label' => 'Logbook', 'route' => 'mentor.logbooks.index', 'match' => 'mentor.logbooks.*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                        ['label' => 'Nilai Magang', 'route' => 'mentor.grades.index', 'match' => 'mentor.grades.*', 'icon' => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
+                    ],
+                    'Akun' => [
+                        ['label' => 'Edit Profil', 'route' => 'profile.edit', 'match' => 'profile.edit', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
+                        ['label' => 'Lihat Situs', 'route' => 'home', 'match' => 'home', 'icon' => 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ],
                 ];
             @endphp
-            @foreach ($links as $link)
-                <a href="{{ route($link['route']) }}"
-                   class="rounded-xl px-4 py-2.5 text-sm font-medium transition {{ request()->routeIs($link['match']) ? 'bg-white/15 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
-                    {{ $link['label'] }}
-                </a>
-            @endforeach
 
-            <a href="{{ route('home') }}" class="mt-auto rounded-xl px-4 py-2.5 text-sm text-white/60 transition hover:bg-white/10 hover:text-white">Lihat situs publik</a>
+            @foreach ($navGroups as $groupLabel => $items)
+                <p class="mt-3 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/40 first:mt-0">{{ $groupLabel }}</p>
+                @foreach ($items as $item)
+                    @php
+                        $isActive = request()->routeIs($item['match']);
+                        if (($item['route'] ?? '') === 'mentor.programs.index') {
+                            $isActive = request()->routeIs('mentor.programs.*') && ! request()->routeIs('mentor.programs.create');
+                        }
+                    @endphp
+                    <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 {{ $isActive ? 'bg-white/10' : '' }}">
+                        <svg class="h-5 w-5 shrink-0 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
+                        </svg>
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            @endforeach
+        </nav>
+
+        <div class="border-t border-white/10 p-3">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="w-full rounded-xl px-4 py-2.5 text-left text-sm text-white/60 transition hover:bg-white/10 hover:text-white" type="submit">Keluar</button>
+                <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-white/10" type="submit">
+                    <svg class="h-5 w-5 shrink-0 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                </button>
             </form>
-        </nav>
+        </div>
     </aside>
 
     <div class="panel-main panel-main-mentor">
@@ -119,11 +153,12 @@
                 </div>
             </div>
 
-            <div class="flex gap-2 overflow-x-auto border-t border-brand/10 px-4 py-2 lg:hidden">
+            <div class="flex gap-2 overflow-x-auto border-t border-brand/10 px-4 py-2 md:hidden">
                 <a href="{{ route('mentor.dashboard') }}" class="btn-ghost whitespace-nowrap text-xs">Dashboard</a>
                 <a href="{{ route('mentor.programs.index') }}" class="btn-ghost whitespace-nowrap text-xs">Program</a>
                 <a href="{{ route('mentor.schedules.index') }}" class="btn-ghost whitespace-nowrap text-xs">Jadwal</a>
                 <a href="{{ route('mentor.submissions') }}" class="btn-ghost whitespace-nowrap text-xs">Tugas</a>
+                <a href="{{ route('mentor.announcements.index') }}" class="btn-ghost whitespace-nowrap text-xs">Pengumuman</a>
                 <a href="{{ route('mentor.chat.index') }}" class="btn-ghost whitespace-nowrap text-xs">Chat</a>
             </div>
         </header>
@@ -138,5 +173,25 @@
             @yield('content')
         </div>
     </div>
+
+    <script>
+        (function () {
+            const sidebar = document.querySelector('.panel-sidebar-mentor');
+            if (! sidebar) return;
+
+            const scroller = sidebar.querySelector('nav') || sidebar;
+            const key = 'mentor-sidebar-scroll';
+            const saved = sessionStorage.getItem(key);
+            if (saved) {
+                scroller.scrollTop = parseInt(saved, 10);
+            }
+
+            sidebar.querySelectorAll('nav a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    sessionStorage.setItem(key, String(scroller.scrollTop));
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

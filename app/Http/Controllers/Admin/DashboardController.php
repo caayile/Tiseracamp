@@ -22,7 +22,7 @@ class DashboardController extends Controller
             ->pluck('total', 'role');
 
         $totalStudents = (int) ($roleCounts['student'] ?? 0);
-        $tsuStudents = User::where('role', 'student')->where('is_tsu', true)->count();
+        $tsuStudents = User::where('role', 'student')->where('is_tsu', true)->whereNotNull('tsu_verified_at')->count();
 
         $enrollmentStats = Enrollment::query()
             ->selectRaw("count(*) as total")
