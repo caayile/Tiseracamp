@@ -40,6 +40,32 @@
     html.dark .text-amber-800 {
         color: #fcd34d !important;
     }
+    .panel-sidebar {
+        background-color: #ffffff;
+        color: #0b1f2a;
+        border-color: rgba(11, 31, 42, 0.1);
+    }
+    .panel-sidebar-header,
+    .panel-sidebar-footer { border-color: rgba(11, 31, 42, 0.1); }
+    .panel-sidebar-subtitle { color: rgba(11, 31, 42, 0.55); }
+    .panel-sidebar-label { color: rgba(11, 31, 42, 0.4); }
+    .panel-sidebar-icon { color: rgba(11, 31, 42, 0.55); }
+    .panel-sidebar-logo { filter: none; }
+    .panel-sidebar-link:hover,
+    .panel-sidebar-link.is-active { background-color: rgba(39, 204, 245, 0.14); }
+    html.dark .panel-sidebar {
+        background-color: #0b1f2a !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    html.dark .panel-sidebar-header,
+    html.dark .panel-sidebar-footer { border-color: rgba(255, 255, 255, 0.1) !important; }
+    html.dark .panel-sidebar-subtitle { color: rgba(255, 255, 255, 0.6) !important; }
+    html.dark .panel-sidebar-label { color: rgba(255, 255, 255, 0.4) !important; }
+    html.dark .panel-sidebar-link:hover,
+    html.dark .panel-sidebar-link.is-active { background-color: rgba(255, 255, 255, 0.1) !important; }
+    html.dark .panel-sidebar-icon { color: rgba(255, 255, 255, 0.7) !important; }
+    html.dark .panel-sidebar-logo { filter: brightness(0) invert(1); }
     /* Dropdown notifikasi: tinggi terkunci ~3:4 */
     [data-notif-panel] {
         width: min(17.5rem, calc(100vw - 1.5rem)) !important;

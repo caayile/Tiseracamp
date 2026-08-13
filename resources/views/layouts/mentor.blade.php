@@ -14,10 +14,10 @@
         $initials = collect(explode(' ', $mentor->name))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('');
     @endphp
 
-    <aside class="panel-sidebar panel-sidebar-mentor border-r border-brand/10 bg-[#0B1F2A] text-white">
-        <div class="border-b border-white/10 px-5 py-5">
-            <x-brand-logo class="h-14 w-auto brightness-0 invert" />
-            <p class="mt-2 text-xs text-white/60">Mentor Panel</p>
+    <aside class="panel-sidebar panel-sidebar-mentor">
+        <div class="panel-sidebar-header border-b px-5 py-5">
+            <x-brand-logo class="panel-sidebar-logo h-14 w-auto" />
+            <p class="panel-sidebar-subtitle">Mentor Panel</p>
         </div>
 
         <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
@@ -50,7 +50,7 @@
             @endphp
 
             @foreach ($navGroups as $groupLabel => $items)
-                <p class="mt-3 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/40 first:mt-0">{{ $groupLabel }}</p>
+                <p class="panel-sidebar-label mt-3 px-3 text-[10px] font-bold uppercase tracking-[0.14em] first:mt-0">{{ $groupLabel }}</p>
                 @foreach ($items as $item)
                     @php
                         $isActive = request()->routeIs($item['match']);
@@ -58,8 +58,8 @@
                             $isActive = request()->routeIs('mentor.programs.*') && ! request()->routeIs('mentor.programs.create');
                         }
                     @endphp
-                    <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 {{ $isActive ? 'bg-white/10' : '' }}">
-                        <svg class="h-5 w-5 shrink-0 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <a href="{{ route($item['route']) }}" class="panel-sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition {{ $isActive ? 'is-active' : '' }}">
+                        <svg class="panel-sidebar-icon h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
                         </svg>
                         {{ $item['label'] }}
@@ -68,11 +68,11 @@
             @endforeach
         </nav>
 
-        <div class="border-t border-white/10 p-3">
+        <div class="panel-sidebar-footer border-t p-3">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-white/10" type="submit">
-                    <svg class="h-5 w-5 shrink-0 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <button class="panel-sidebar-link flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition" type="submit">
+                    <svg class="panel-sidebar-icon h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     Logout

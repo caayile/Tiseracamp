@@ -348,6 +348,42 @@
         overflow-x: hidden;
         overflow-y: auto;
         display: none;
+        background-color: var(--color-panel);
+        color: var(--color-ink);
+        border-right: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .panel-sidebar-header,
+    .panel-sidebar-footer {
+        border-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
+    }
+
+    .panel-sidebar-subtitle {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+    }
+
+    .panel-sidebar-label {
+        color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+    }
+
+    .panel-sidebar-link {
+        color: inherit;
+    }
+
+    .panel-sidebar-link:hover,
+    .panel-sidebar-link.is-active {
+        background-color: color-mix(in srgb, var(--color-brand) 14%, transparent);
+    }
+
+    .panel-sidebar-icon {
+        color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+    }
+
+    .panel-sidebar-logo {
+        filter: none;
     }
 
     .panel-main {
@@ -492,6 +528,38 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+html.dark .panel-sidebar {
+    background-color: #0b1f2a !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .panel-sidebar-header,
+html.dark .panel-sidebar-footer {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .panel-sidebar-subtitle {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+html.dark .panel-sidebar-label {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+html.dark .panel-sidebar-link:hover,
+html.dark .panel-sidebar-link.is-active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .panel-sidebar-icon {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+html.dark .panel-sidebar-logo {
+    filter: brightness(0) invert(1);
 }
 
 /* Remap permukaan terang yang masih hardcode di Blade */
