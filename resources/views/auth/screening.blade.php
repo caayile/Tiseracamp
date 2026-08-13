@@ -102,9 +102,10 @@
                         <input id="screening-semester" type="number" name="semester" min="1" max="14" inputmode="numeric"
                                value="{{ old('semester') }}"
                                class="input-field max-w-[12rem]"
-                               placeholder="Contoh: 6"
+                               placeholder="1–14"
                                data-semester-input>
-                        <p class="hidden text-xs text-red-600" data-semester-error>Isi semester (1–14).</p>
+                        <p class="text-xs text-ink-soft">Maksimal semester 14.</p>
+                        <p class="hidden text-xs text-red-600" data-semester-error>Isi semester 1–14.</p>
                         @error('semester') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>

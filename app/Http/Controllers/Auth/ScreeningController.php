@@ -52,6 +52,8 @@ class ScreeningController extends Controller
         ], [
             'tsu_status.required_if' => 'Pilih Mahasiswa Aktif atau Fresh Graduate.',
             'semester.required_if' => 'Isi semester saat ini.',
+            'semester.min' => 'Semester minimal 1.',
+            'semester.max' => 'Semester maksimal 14.',
             'ktm.required_if' => 'Unggah KTM dulu.',
         ]);
 

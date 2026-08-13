@@ -96,7 +96,15 @@
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium">Semester / tingkat</label>
-                    <input type="text" name="semester" value="{{ old('semester', $user->semester) }}" class="input-field" placeholder="Semester 6">
+                    @if ($user->isTsuPending() || $user->isTsuStudent())
+                        <input type="number" name="semester" min="1" max="14" inputmode="numeric"
+                               value="{{ old('semester', $user->semester) }}"
+                               class="input-field"
+                               placeholder="1–14">
+                        <p class="mt-1 text-xs text-ink-soft">Maksimal semester 14.</p>
+                    @else
+                        <input type="text" name="semester" value="{{ old('semester', $user->semester) }}" class="input-field" placeholder="Semester 6">
+                    @endif
                     @error('semester') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>

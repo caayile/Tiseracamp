@@ -67,7 +67,9 @@ class ProfileController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'university' => ['nullable', 'string', 'max:160'],
             'major' => ['nullable', 'string', 'max:120'],
-            'semester' => ['nullable', 'string', 'max:40'],
+            'semester' => $user->isTsuPending() || $user->isTsuStudent()
+                ? ['nullable', 'integer', 'min:1', 'max:14']
+                : ['nullable', 'string', 'max:40'],
             'education_level' => ['nullable', 'in:D3,D4,S1'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'expertise' => ['nullable', 'string', 'max:500'],
@@ -80,7 +82,9 @@ class ProfileController extends Controller
         $user->phone = $data['phone'] ?? null;
         $user->university = $data['university'] ?? null;
         $user->major = $data['major'] ?? null;
-        $user->semester = $data['semester'] ?? null;
+        $user->semester = isset($data['semester']) && $data['semester'] !== ''
+            ? (string) $data['semester']
+            : null;
         $user->education_level = $data['education_level'] ?? null;
         $user->bio = $data['bio'] ?? null;
 
