@@ -21,6 +21,7 @@ class LogbookController extends Controller
             'body' => ['required', 'string', 'max:5000'],
             'obstacles' => ['nullable', 'string', 'max:5000'],
             'hours' => ['required', 'integer', 'min:1', 'max:24'],
+            'progress' => ['required', 'integer', 'min:0', 'max:100'],
             'attachment' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
@@ -45,6 +46,7 @@ class LogbookController extends Controller
             'body' => $data['body'],
             'obstacles' => $data['obstacles'] ?? null,
             'hours' => $data['hours'],
+            'progress' => $data['progress'],
             'attachment_path' => $path,
         ]);
 
@@ -95,6 +97,8 @@ class LogbookController extends Controller
                 'Tanggal',
                 'Judul Kegiatan',
                 'Jam Kerja',
+                'Progress (%)',
+                'Status Pengerjaan',
                 'Aktivitas',
                 'Kendala',
             ]);
@@ -107,6 +111,8 @@ class LogbookController extends Controller
                     $entry->entry_date?->format('Y-m-d') ?? '',
                     $entry->title,
                     $entry->hours,
+                    $entry->progressPercent(),
+                    $entry->workStatusLabel(),
                     $entry->body,
                     $entry->obstacles ?? '',
                 ]);

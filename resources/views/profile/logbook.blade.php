@@ -49,11 +49,16 @@
                     <input type="text" name="title" value="{{ old('title') }}" class="input-field" required>
                     @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
-                <div>
-                    <label class="mb-1.5 block text-sm font-medium">Jam kerja</label>
-                    <input type="number" name="hours" value="{{ old('hours', 4) }}" min="1" max="24" class="input-field" required>
-                    @error('hours') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium">Jam kerja</label>
+                <input type="number" name="hours" value="{{ old('hours', 4) }}" min="1" max="24" class="input-field" required>
+                @error('hours') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium">Progress pengerjaan (%)</label>
+                <input type="number" name="progress" value="{{ old('progress', 100) }}" min="0" max="100" class="input-field" required>
+                @error('progress') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium">Aktivitas</label>
@@ -80,7 +85,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-semibold uppercase tracking-wide text-brand-mid">{{ $entry->program->title }}</p>
                             <p class="mt-1 font-semibold text-ink">{{ $entry->title }}</p>
-                            <p class="mt-1 text-xs text-ink-soft">{{ $entry->entry_date->translatedFormat('d M Y') }} · {{ $entry->hours }} jam · {{ $entry->statusLabel() }}</p>
+                            <p class="mt-1 text-xs text-ink-soft">{{ $entry->entry_date->translatedFormat('d M Y') }} · {{ $entry->hours }} jam · {{ $entry->progressPercent() }}% · {{ $entry->workStatusLabel() }} · {{ $entry->statusLabel() }}</p>
                             <div class="mt-3 space-y-2 text-sm">
                                 <div>
                                     <p class="text-xs font-semibold uppercase tracking-wide text-ink/50">Aktivitas</p>

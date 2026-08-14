@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\AchievementController as AdminAchievementController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
-use App\Http\Controllers\Admin\CareerResourceController as AdminCareerResourceController;
 use App\Http\Controllers\Admin\JobApplicationController as AdminJobApplicationController;
 use App\Http\Controllers\Admin\SitePageController as AdminSitePageController;
 use App\Http\Controllers\Admin\BatchController as AdminBatchController;
@@ -154,8 +153,6 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/career', [CareerController::class, 'index'])->name('career.index');
     Route::get('/career/portfolios', [CareerController::class, 'gallery'])->name('career.gallery');
     Route::get('/career/jobs', [CareerController::class, 'jobs'])->name('career.jobs');
-    Route::get('/career/resources', [CareerController::class, 'resources'])->name('career.resources');
-    Route::get('/career/resources/{careerResource}', [CareerController::class, 'showResource'])->name('career.resources.show');
     Route::post('/career/portfolio', [CareerController::class, 'storePortfolio'])->name('career.portfolio.store');
     Route::delete('/career/portfolio/{portfolio}', [CareerController::class, 'destroyPortfolio'])->name('career.portfolio.destroy');
 
@@ -245,6 +242,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::post('/modules/{module}/lessons', [AdminProgramController::class, 'storeLesson'])->name('lessons.store');
     Route::delete('/lessons/{lesson}', [AdminProgramController::class, 'destroyLesson'])->name('lessons.destroy');
 
+    Route::get('/pendaftar', [AdminApplicationController::class, 'index'])->name('applications.pendaftar');
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::post('/applications/{application}/review', [AdminApplicationController::class, 'review'])->name('applications.review');
 
@@ -256,6 +254,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::get('/grades/{enrollment}/print', [AdminGradeController::class, 'print'])->name('grades.print');
 
     Route::get('/logbooks', [AdminLogbookController::class, 'index'])->name('logbooks.index');
+    Route::get('/logbooks/{user}/export', [AdminLogbookController::class, 'exportExcel'])->name('logbooks.export');
     Route::get('/logbooks/{user}', [AdminLogbookController::class, 'show'])->name('logbooks.show');
     Route::post('/logbooks/{logbook}/review', [AdminLogbookController::class, 'review'])->name('logbooks.review');
 
@@ -297,11 +296,6 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::put('/content/categories/{category}', [AdminContentController::class, 'updateCategory'])->name('content.categories.update');
     Route::delete('/content/categories/{category}', [AdminContentController::class, 'destroyCategory'])->name('content.categories.destroy');
     Route::post('/content/broadcast', [AdminContentController::class, 'broadcast'])->name('content.broadcast');
-
-    Route::get('/career-resources', [AdminCareerResourceController::class, 'index'])->name('career-resources.index');
-    Route::post('/career-resources', [AdminCareerResourceController::class, 'store'])->name('career-resources.store');
-    Route::put('/career-resources/{careerResource}', [AdminCareerResourceController::class, 'update'])->name('career-resources.update');
-    Route::delete('/career-resources/{careerResource}', [AdminCareerResourceController::class, 'destroy'])->name('career-resources.destroy');
 
     Route::get('/achievements', [AdminAchievementController::class, 'index'])->name('achievements.index');
     Route::post('/achievements', [AdminAchievementController::class, 'store'])->name('achievements.store');

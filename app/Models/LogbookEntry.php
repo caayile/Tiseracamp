@@ -9,7 +9,7 @@ class LogbookEntry extends Model
 {
     protected $fillable = [
         'user_id', 'program_id', 'enrollment_id', 'entry_date',
-        'title', 'body', 'obstacles', 'hours', 'attachment_path',
+        'title', 'body', 'obstacles', 'hours', 'progress', 'attachment_path',
         'status', 'reviewer_note', 'reviewed_by', 'reviewed_at',
     ];
 
@@ -33,6 +33,21 @@ class LogbookEntry extends Model
             'revision' => 'Perlu revisi',
             default => 'Menunggu review',
         };
+    }
+
+    public function progressPercent(): int
+    {
+        return max(0, min(100, (int) $this->progress));
+    }
+
+    public function isDone(): bool
+    {
+        return $this->progressPercent() >= 100;
+    }
+
+    public function workStatusLabel(): string
+    {
+        return $this->isDone() ? 'Done' : 'On Progress';
     }
 
     public function user(): BelongsTo

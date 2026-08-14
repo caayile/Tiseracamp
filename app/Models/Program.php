@@ -111,6 +111,11 @@ class Program extends Model
         return $this->hasMany(Announcement::class);
     }
 
+    public function internshipApplications(): HasMany
+    {
+        return $this->hasMany(InternshipApplication::class);
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true)->where('approval_status', 'approved');

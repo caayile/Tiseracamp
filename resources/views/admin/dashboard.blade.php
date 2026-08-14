@@ -46,6 +46,70 @@
     @endforeach
 </div>
 
+@php
+    $chartMax = max(1, (int) $divisionStats->max('total'));
+    $yMax = max(5, (int) ceil($chartMax / 5) * 5);
+    $yStep = max(1, (int) ($yMax / 5));
+    $yTicks = range($yMax, 0, -$yStep);
+    $barMinWidth = $divisionStats->count() > 8 ? 2.75 : 3.5;
+@endphp
+
+<div class="card-soft mt-8 overflow-hidden p-5 sm:p-6">
+    <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <h2 class="font-display text-lg font-semibold text-[#7A1F2B] dark:text-rose-300">Statistik Pendaftar Setiap Divisi</h2>
+        <a href="{{ route('admin.applications.pendaftar') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-soft transition hover:text-ink">
+            Data Terkini
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M7 7h10v10"/>
+            </svg>
+        </a>
+    </div>
+
+    @if ($divisionStats->isEmpty())
+        <p class="py-12 text-center text-sm text-ink-soft">Belum ada divisi lowongan magang.</p>
+    @else
+        <div class="flex gap-3">
+            <div class="flex h-64 shrink-0 flex-col justify-between py-1 pr-1 text-right text-[11px] font-medium text-ink-soft">
+                @foreach ($yTicks as $tick)
+                    <span>{{ $tick }}</span>
+                @endforeach
+            </div>
+            <div class="min-w-0 flex-1 overflow-x-auto">
+                <div class="relative h-64" style="min-width: {{ max(28, $divisionStats->count() * $barMinWidth) }}rem">
+                    <div class="absolute inset-0 flex flex-col justify-between py-1">
+                        @foreach ($yTicks as $tick)
+                            <div class="border-t border-ink/10"></div>
+                        @endforeach
+                    </div>
+                    <div class="absolute inset-0 flex items-end gap-2 px-1 pb-px">
+                        @foreach ($divisionStats as $row)
+                            @php
+                                $height = $yMax > 0 ? max($row['total'] > 0 ? 6 : 0, round(($row['total'] / $yMax) * 100, 2)) : 0;
+                                $href = $row['division']
+                                    ? route('admin.applications.pendaftar', ['division' => $row['division']])
+                                    : route('admin.applications.pendaftar', ['q' => $row['label']]);
+                            @endphp
+                            <a href="{{ $href }}"
+                               class="group relative flex h-full min-w-0 flex-1 flex-col justify-end"
+                               title="{{ $row['label'] }}: {{ $row['total'] }} pendaftar">
+                                <span class="mx-auto block w-3 rounded-t-sm bg-[#A8B89A] transition group-hover:bg-[#8FA37A] sm:w-3.5"
+                                      style="height: {{ $height }}%"></span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="flex gap-2 px-1 pt-2" style="min-width: {{ max(28, $divisionStats->count() * $barMinWidth) }}rem; height: 6.5rem;">
+                    @foreach ($divisionStats as $row)
+                        <div class="relative min-w-0 flex-1">
+                            <span class="absolute left-1/2 top-1 origin-top-left -rotate-45 whitespace-nowrap text-[10px] leading-tight text-ink-soft">{{ $row['label'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
+
 <div class="mt-8 grid gap-6 lg:grid-cols-2">
     <div class="card-soft overflow-hidden">
         <div class="border-b border-brand/10 px-5 py-4">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Models\Enrollment;
 use App\Models\InternshipApplication;
+use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,12 +15,78 @@ class ApplicationController extends Controller
 {
     public function index(): View
     {
-        $applications = InternshipApplication::with(['user', 'program'])
-            ->whereHas('program', fn ($q) => $q->where('type', 'internship'))
-            ->latest()
-            ->paginate(20);
+        $programId = request()->integer('program');
+        $division = trim(request()->string('division')->toString());
+        $search = trim(request()->string('q')->toString());
+        $status = trim(request()->string('status')->toString());
 
-        return view('admin.applications.index', compact('applications'));
+        $baseQuery = InternshipApplication::query()
+            ->whereHas('program', fn ($q) => $q->where('type', 'internship'));
+
+        $query = InternshipApplication::with(['user', 'program'])
+            ->whereHas('program', function ($q) use ($division) {
+                $q->where('type', 'internship');
+                if ($division !== '') {
+                    $q->where('division', $division);
+                }
+            })
+            ->latest();
+
+        $filterProgram = null;
+        if ($programId > 0) {
+            $query->where('program_id', $programId);
+            $baseQuery->where('program_id', $programId);
+            $filterProgram = Program::query()->find($programId);
+        }
+
+        if ($status === 'pending') {
+            $query->whereIn('status', ['submitted', 'under_review']);
+        } elseif (in_array($status, ['accepted', 'rejected', 'under_review'], true)) {
+            $query->where('status', $status);
+        }
+
+        if ($search !== '') {
+            $needle = '%'.mb_strtolower($search).'%';
+            $query->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(full_name) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(university, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(major, \'\')) LIKE ?', [$needle])
+                    ->orWhereHas('user', fn ($u) => $u->whereRaw('LOWER(email) LIKE ?', [$needle]))
+                    ->orWhereHas('program', fn ($p) => $p->whereRaw('LOWER(title) LIKE ?', [$needle]));
+            });
+        }
+
+        $applications = $query->paginate(20)->withQueryString();
+
+        $rawCounts = (clone $baseQuery)
+            ->when($division !== '', fn ($q) => $q->whereHas('program', fn ($p) => $p->where('division', $division)))
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $statusCounts = collect([
+            'pending' => (int) $rawCounts->get('submitted', 0) + (int) $rawCounts->get('under_review', 0),
+            'accepted' => (int) $rawCounts->get('accepted', 0),
+            'rejected' => (int) $rawCounts->get('rejected', 0),
+        ]);
+
+        $divisions = Program::query()
+            ->where('type', 'internship')
+            ->whereNotNull('division')
+            ->where('division', '!=', '')
+            ->distinct()
+            ->orderBy('division')
+            ->pluck('division');
+
+        return view('admin.applications.index', compact(
+            'applications',
+            'filterProgram',
+            'divisions',
+            'division',
+            'search',
+            'status',
+            'statusCounts',
+        ));
     }
 
     public function review(Request $request, InternshipApplication $application): RedirectResponse

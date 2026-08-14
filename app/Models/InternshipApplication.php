@@ -42,7 +42,7 @@ class InternshipApplication extends Model
             'submitted' => 'Menunggu seleksi',
             'under_review' => 'Sedang ditinjau',
             'accepted' => 'Diterima',
-            'rejected' => 'Tidak diterima',
+            'rejected' => 'Ditolak',
             default => ucfirst($this->status),
         };
     }
@@ -72,5 +72,47 @@ class InternshipApplication extends Model
     public function isPending(): bool
     {
         return in_array($this->status, ['submitted', 'under_review'], true);
+    }
+
+    public function initials(): string
+    {
+        return strtoupper(
+            collect(explode(' ', trim((string) $this->full_name)))
+                ->filter()
+                ->map(fn ($word) => mb_substr($word, 0, 1))
+                ->take(1)
+                ->implode('')
+        ) ?: '?';
+    }
+
+    public function institutionLabel(): string
+    {
+        return collect([$this->university, $this->major])
+            ->filter()
+            ->implode(', ') ?: '—';
+    }
+
+    /** @return array<int, array{label: string, url: string}> */
+    public function documents(): array
+    {
+        $items = [];
+
+        if ($this->cv_path) {
+            $items[] = ['label' => 'CV', 'url' => media_url($this->cv_path)];
+        }
+        if ($this->transcript_path) {
+            $items[] = ['label' => 'Transkrip', 'url' => media_url($this->transcript_path)];
+        }
+        if ($this->cover_letter_path) {
+            $items[] = ['label' => 'Surat pengantar', 'url' => media_url($this->cover_letter_path)];
+        }
+        if ($this->portfolio_path) {
+            $items[] = ['label' => 'Portfolio', 'url' => media_url($this->portfolio_path)];
+        }
+        if ($this->portfolio_url) {
+            $items[] = ['label' => 'Portfolio (link)', 'url' => $this->portfolio_url];
+        }
+
+        return $items;
     }
 }

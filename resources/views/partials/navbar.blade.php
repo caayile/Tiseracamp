@@ -53,9 +53,6 @@
                             <a href="{{ route('career.jobs') }}" class="mt-0.5 block rounded-xl px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-brand-mist">
                                 Lowongan Kerja
                             </a>
-                            <a href="{{ route('career.resources') }}" class="mt-0.5 block rounded-xl px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-brand-mist">
-                                Materi Karier
-                            </a>
                         </div>
                     </div>
                 @endif
@@ -110,7 +107,6 @@
                         <div id="career-menu-mobile" class="mt-2 hidden flex-col gap-1 rounded-2xl border border-ink/10 bg-panel p-2" data-career-menu="mobile">
                             <a href="{{ route('career.gallery') }}" class="inline-flex w-full items-center rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Galeri Portofolio</a>
                             <a href="{{ route('career.jobs') }}" class="inline-flex w-full items-center rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Lowongan Kerja</a>
-                            <a href="{{ route('career.resources') }}" class="inline-flex w-full items-center rounded-xl px-4 py-2 text-sm font-medium text-ink transition hover:bg-brand-mist">Materi Karier</a>
                         </div>
                     </div>
                 @endif

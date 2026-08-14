@@ -19,13 +19,16 @@ class ProgramController extends Controller
     public function index(): View
     {
         $type = request()->string('type')->toString();
+        if (! in_array($type, ['internship', 'bootcamp', 'job'], true)) {
+            $type = 'internship';
+        }
         $audience = request()->string('audience')->toString();
         $search = trim(request()->string('q')->toString());
 
-        $query = Program::with(['partner', 'mentor', 'category', 'batches'])->latest();
-        if (in_array($type, ['internship', 'bootcamp', 'job'], true)) {
-            $query->where('type', $type);
-        }
+        $query = Program::with(['partner', 'mentor', 'category', 'batches'])
+            ->withCount('internshipApplications')
+            ->latest()
+            ->where('type', $type);
         if (in_array($audience, ['all', 'tsu', 'both', 'none'], true)) {
             $query->where('audience', $audience);
         }
@@ -34,11 +37,13 @@ class ProgramController extends Controller
             $query->where(function ($q) use ($needle) {
                 $q->whereRaw('LOWER(title) LIKE ?', [$needle])
                     ->orWhereHas('partner', fn ($p) => $p->whereRaw('LOWER(name) LIKE ?', [$needle]))
-                    ->orWhereHas('mentor', fn ($m) => $m->whereRaw('LOWER(name) LIKE ?', [$needle]));
+                    ->orWhereHas('mentor', fn ($m) => $m->whereRaw('LOWER(name) LIKE ?', [$needle]))
+                    ->orWhereRaw('LOWER(COALESCE(division, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(location, \'\')) LIKE ?', [$needle]);
             });
         }
 
-        $programs = $query->paginate(10)->withQueryString();
+        $programs = $query->paginate($type === 'internship' ? 9 : 10)->withQueryString();
 
         return view('admin.programs.index', compact('programs', 'type', 'audience'));
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Enrollment;
+use App\Models\InternshipApplication;
 use App\Models\Payment;
 use App\Models\Program;
 use App\Models\User;
@@ -33,6 +34,28 @@ class DashboardController extends Controller
         $totalEnrollments = (int) ($enrollmentStats->total ?? 0);
         $completed = (int) ($enrollmentStats->completed ?? 0);
 
+        $divisionLabels = Program::query()
+            ->where('type', 'internship')
+            ->selectRaw("COALESCE(NULLIF(TRIM(division), ''), title) as label")
+            ->selectRaw("MAX(NULLIF(TRIM(division), '')) as division")
+            ->groupByRaw("COALESCE(NULLIF(TRIM(division), ''), title)")
+            ->orderBy('label')
+            ->get();
+
+        $applicantCounts = InternshipApplication::query()
+            ->join('programs', 'programs.id', '=', 'internship_applications.program_id')
+            ->where('programs.type', 'internship')
+            ->selectRaw("COALESCE(NULLIF(TRIM(programs.division), ''), programs.title) as label")
+            ->selectRaw('COUNT(*) as total')
+            ->groupByRaw("COALESCE(NULLIF(TRIM(programs.division), ''), programs.title)")
+            ->pluck('total', 'label');
+
+        $divisionStats = $divisionLabels->map(fn ($row) => [
+            'label' => $row->label,
+            'division' => $row->division,
+            'total' => (int) ($applicantCounts[$row->label] ?? 0),
+        ])->values();
+
         return view('admin.dashboard', [
             'stats' => [
                 'users' => $totalStudents,
@@ -59,6 +82,7 @@ class DashboardController extends Controller
                 ->latest()
                 ->take(8)
                 ->get(),
+            'divisionStats' => $divisionStats,
         ]);
     }
 }
