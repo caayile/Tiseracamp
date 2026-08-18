@@ -201,6 +201,8 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/discussions', [MentorDiscussionController::class, 'index'])->name('discussions.index');
     Route::get('/discussions/{discussion}', [MentorDiscussionController::class, 'show'])->name('discussions.show');
     Route::get('/logbooks', [MentorLogbookController::class, 'index'])->name('logbooks.index');
+    Route::get('/logbooks/{user}/export', [MentorLogbookController::class, 'exportExcel'])->name('logbooks.export');
+    Route::get('/logbooks/{user}', [MentorLogbookController::class, 'show'])->name('logbooks.show');
     Route::post('/logbooks/{logbook}/review', [MentorLogbookController::class, 'review'])->name('logbooks.review');
     Route::get('/grades', [MentorGradeController::class, 'index'])->name('grades.index');
     Route::put('/grades/{enrollment}', [MentorGradeController::class, 'update'])->name('grades.update');
@@ -244,6 +246,10 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
 
     Route::get('/pendaftar', [AdminApplicationController::class, 'index'])->name('applications.pendaftar');
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/{application}/berkas/{type}', [AdminApplicationController::class, 'document'])
+        ->whereIn('type', ['cv', 'transcript', 'cover-letter', 'portfolio'])
+        ->name('applications.document');
+    Route::get('/applications/{application}', [AdminApplicationController::class, 'show'])->name('applications.show');
     Route::post('/applications/{application}/review', [AdminApplicationController::class, 'review'])->name('applications.review');
 
     Route::get('/job-applications', [AdminJobApplicationController::class, 'index'])->name('job-applications.index');

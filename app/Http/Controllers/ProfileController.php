@@ -49,7 +49,7 @@ class ProfileController extends Controller
             ->latest()
             ->get();
 
-        $internshipEnrollments = $enrollments->filter(fn ($e) => $e->program?->type === 'internship');
+        $internshipEnrollments = $enrollments->filter(fn ($e) => in_array($e->program?->type, ['internship', 'bootcamp'], true));
 
         $logbooks = LogbookEntry::with('program')
             ->where('user_id', $user->id)

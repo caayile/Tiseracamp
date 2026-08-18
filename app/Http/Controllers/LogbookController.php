@@ -30,7 +30,7 @@ class LogbookController extends Controller
             ->firstOrFail();
 
         $program = Program::findOrFail($data['program_id']);
-        abort_unless($program->type === 'internship', 403);
+        abort_unless(in_array($program->type, ['internship', 'bootcamp'], true), 403);
 
         $path = null;
         if ($request->hasFile('attachment')) {
@@ -143,7 +143,7 @@ class LogbookController extends Controller
         $programFilter = null;
         if (! empty($data['program_id'])) {
             $programFilter = Program::findOrFail($data['program_id']);
-            abort_unless($programFilter->type === 'internship', 403);
+            abort_unless(in_array($programFilter->type, ['internship', 'bootcamp'], true), 403);
             $query->where('program_id', $programFilter->id);
         }
 

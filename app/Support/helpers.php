@@ -30,6 +30,70 @@ if (! function_exists('media_url')) {
     }
 }
 
+if (! function_exists('store_public_upload')) {
+    /**
+     * Simpan file upload ke public/uploads/{directory} dan kembalikan path relatif.
+     */
+    function store_public_upload(\Illuminate\Http\UploadedFile $file, string $directory): string
+    {
+        $directory = trim(str_replace('\\', '/', $directory), '/');
+        $name = $file->hashName();
+        $folder = public_path('uploads/'.$directory);
+
+        if (! is_dir($folder) && ! mkdir($folder, 0755, true) && ! is_dir($folder)) {
+            throw new RuntimeException('Tidak bisa membuat folder unggahan.');
+        }
+
+        $file->move($folder, $name);
+        $relative = $directory.'/'.$name;
+
+        if (! is_file(public_path('uploads/'.$relative))) {
+            throw new RuntimeException('Berkas gagal disimpan.');
+        }
+
+        return $relative;
+    }
+}
+
+if (! function_exists('resolve_public_upload')) {
+    /**
+     * Absolute path untuk file unggahan, atau null jika tidak ada.
+     */
+    function resolve_public_upload(?string $path): ?string
+    {
+        if (! filled($path)) {
+            return null;
+        }
+
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+        if (str_starts_with($path, 'uploads/')) {
+            $path = substr($path, strlen('uploads/'));
+        }
+
+        $candidates = [
+            public_path('uploads/'.$path),
+            storage_path('app/public/'.$path),
+            storage_path('app/private/'.$path),
+            storage_path('app/'.$path),
+        ];
+
+        if (function_exists('media_disk')) {
+            try {
+                $candidates[] = Storage::disk(media_disk())->path($path);
+            } catch (\Throwable) {
+            }
+        }
+
+        foreach (array_unique($candidates) as $full) {
+            if (is_string($full) && is_file($full)) {
+                return $full;
+            }
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('youtube_embed_url')) {
     /**
      * Convert YouTube watch/share/shorts URLs to an embeddable /embed/{id} URL.

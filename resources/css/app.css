@@ -53,7 +53,24 @@
 
     ::selection {
         background: color-mix(in srgb, var(--color-brand) 35%, white);
-        color: var(--color-ink);
+        color: #0b1f2a;
+    }
+
+    ::-moz-selection {
+        background: color-mix(in srgb, var(--color-brand) 35%, white);
+        color: #0b1f2a;
+    }
+
+    html.dark ::selection,
+    html.dark a::selection {
+        background: color-mix(in srgb, var(--color-brand) 45%, #0b1f2a);
+        color: #ffffff;
+    }
+
+    html.dark ::-moz-selection,
+    html.dark a::-moz-selection {
+        background: color-mix(in srgb, var(--color-brand) 45%, #0b1f2a);
+        color: #ffffff;
     }
 
     /* Search/input: jangan biru solid saat ketik, focus, atau autofill browser */
@@ -61,6 +78,14 @@
     input[type="text"]::selection,
     textarea::selection {
         background: color-mix(in srgb, var(--color-brand) 18%, transparent);
+        color: #0b1f2a;
+    }
+
+    html.dark input[type="search"]::selection,
+    html.dark input[type="text"]::selection,
+    html.dark textarea::selection {
+        background: color-mix(in srgb, var(--color-brand) 32%, var(--color-panel));
+        color: #ffffff;
     }
 
     input[type="search"],

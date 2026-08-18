@@ -2,6 +2,10 @@
 <style id="ts-theme-critical">
     html { color-scheme: light; }
     html.dark { color-scheme: dark; }
+    html.dark ::selection {
+        background: color-mix(in srgb, #3ad4f8 45%, #0b1f2a);
+        color: #ffffff;
+    }
     html.dark body {
         background-color: #0a1520 !important;
         color: #e8f4f8 !important;

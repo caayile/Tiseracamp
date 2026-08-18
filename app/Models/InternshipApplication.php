@@ -77,12 +77,25 @@ class InternshipApplication extends Model
     public function initials(): string
     {
         return strtoupper(
-            collect(explode(' ', trim((string) $this->full_name)))
+            collect(explode(' ', $this->displayName()))
                 ->filter()
                 ->map(fn ($word) => mb_substr($word, 0, 1))
                 ->take(1)
                 ->implode('')
         ) ?: '?';
+    }
+
+    public function displayName(): string
+    {
+        $name = trim((string) $this->full_name);
+        $stripped = trim((string) preg_replace('/^\d+[\s.\-_:]*/u', '', $name));
+        $name = $stripped !== '' ? $stripped : $name;
+
+        if ($name !== '' && mb_strtolower($name) === $name) {
+            return mb_convert_case($name, MB_CASE_TITLE, 'UTF-8');
+        }
+
+        return $name !== '' ? $name : '—';
     }
 
     public function institutionLabel(): string
@@ -97,18 +110,24 @@ class InternshipApplication extends Model
     {
         $items = [];
 
-        if ($this->cv_path) {
-            $items[] = ['label' => 'CV', 'url' => media_url($this->cv_path)];
+        $files = [
+            'cv' => ['label' => 'CV', 'path' => $this->cv_path],
+            'transcript' => ['label' => 'Transkrip', 'path' => $this->transcript_path],
+            'cover-letter' => ['label' => 'Surat pengantar', 'path' => $this->cover_letter_path],
+            'portfolio' => ['label' => 'Portfolio', 'path' => $this->portfolio_path],
+        ];
+
+        foreach ($files as $type => $file) {
+            if (! filled($file['path'])) {
+                continue;
+            }
+
+            $items[] = [
+                'label' => $file['label'],
+                'url' => route('admin.applications.document', [$this, $type], false),
+            ];
         }
-        if ($this->transcript_path) {
-            $items[] = ['label' => 'Transkrip', 'url' => media_url($this->transcript_path)];
-        }
-        if ($this->cover_letter_path) {
-            $items[] = ['label' => 'Surat pengantar', 'url' => media_url($this->cover_letter_path)];
-        }
-        if ($this->portfolio_path) {
-            $items[] = ['label' => 'Portfolio', 'url' => media_url($this->portfolio_path)];
-        }
+
         if ($this->portfolio_url) {
             $items[] = ['label' => 'Portfolio (link)', 'url' => $this->portfolio_url];
         }

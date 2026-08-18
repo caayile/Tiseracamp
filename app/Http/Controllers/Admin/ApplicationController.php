@@ -10,6 +10,7 @@ use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ApplicationController extends Controller
 {
@@ -89,18 +90,31 @@ class ApplicationController extends Controller
         ));
     }
 
+    public function show(InternshipApplication $application): View
+    {
+        abort_unless($application->program?->type === 'internship', 404);
+
+        $application->load(['user', 'program', 'reviewer']);
+
+        return view('admin.applications.show', compact('application'));
+    }
+
     public function review(Request $request, InternshipApplication $application): RedirectResponse
     {
         abort_unless($application->program?->type === 'internship', 404);
 
         $data = $request->validate([
-            'status' => ['required', 'in:accepted,rejected,under_review'],
+            'status' => ['required', 'in:submitted,accepted,rejected,under_review'],
             'reviewer_note' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        if ($application->status === $data['status']) {
+            return back();
+        }
+
         $application->update([
             'status' => $data['status'],
-            'reviewer_note' => $data['reviewer_note'] ?? null,
+            'reviewer_note' => $data['reviewer_note'] ?? $application->reviewer_note,
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);
@@ -153,5 +167,49 @@ class ApplicationController extends Controller
         }
 
         return back()->with('success', 'Status pendaftaran diperbarui.');
+    }
+
+    public function document(InternshipApplication $application, string $type): BinaryFileResponse|RedirectResponse
+    {
+        abort_unless($application->program?->type === 'internship', 404);
+
+        $path = match ($type) {
+            'cv' => $application->cv_path,
+            'transcript' => $application->transcript_path,
+            'cover-letter' => $application->cover_letter_path,
+            'portfolio' => $application->portfolio_path,
+            default => null,
+        };
+
+        abort_unless(filled($path), 404);
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return redirect()->away($path);
+        }
+
+        $absolute = resolve_public_upload($path);
+        abort_if($absolute === null, 404, 'Berkas tidak ditemukan di server.');
+
+        $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION) ?: 'pdf');
+        $label = match ($type) {
+            'cv' => 'CV',
+            'transcript' => 'Transkrip',
+            'cover-letter' => 'Surat-pengantar',
+            default => 'Portfolio',
+        };
+        $filename = $label.'-'.$application->id.'.'.$extension;
+        $inline = in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'], true);
+
+        return response()->file($absolute, [
+            'Content-Type' => match ($extension) {
+                'pdf' => 'application/pdf',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                'gif' => 'image/gif',
+                default => 'application/octet-stream',
+            },
+            'Content-Disposition' => ($inline ? 'inline' : 'attachment').'; filename="'.$filename.'"',
+        ]);
     }
 }

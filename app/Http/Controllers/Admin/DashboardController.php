@@ -34,6 +34,12 @@ class DashboardController extends Controller
         $totalEnrollments = (int) ($enrollmentStats->total ?? 0);
         $completed = (int) ($enrollmentStats->completed ?? 0);
 
+        $activeInterns = (int) Enrollment::query()
+            ->where('status', 'active')
+            ->whereHas('program', fn ($q) => $q->where('type', 'internship'))
+            ->selectRaw('count(distinct user_id) as total')
+            ->value('total');
+
         $divisionLabels = Program::query()
             ->where('type', 'internship')
             ->selectRaw("COALESCE(NULLIF(TRIM(division), ''), title) as label")
@@ -61,6 +67,7 @@ class DashboardController extends Controller
                 'users' => $totalStudents,
                 'mentors' => (int) ($roleCounts['mentor'] ?? 0),
                 'programs' => Program::count(),
+                'active_interns' => $activeInterns,
                 'active_enrollments' => (int) ($enrollmentStats->active ?? 0),
                 'revenue' => (float) Payment::where('status', 'paid')->sum('amount'),
                 'completion_rate' => $totalEnrollments ? round(($completed / $totalEnrollments) * 100) : 0,

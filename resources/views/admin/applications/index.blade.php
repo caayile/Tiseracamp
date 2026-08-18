@@ -8,8 +8,13 @@
         : (filled($division)
             ? 'Pendaftar divisi '.$division
             : 'Daftar lengkap semua pendaftar magang');
-    $avatarColors = ['bg-emerald-500', 'bg-teal-500', 'bg-sky-500', 'bg-indigo-500', 'bg-amber-500'];
     $indexRoute = 'admin.applications.pendaftar';
+    $statusOptions = [
+        'submitted' => 'Menunggu seleksi',
+        'under_review' => 'Sedang ditinjau',
+        'accepted' => 'Diterima',
+        'rejected' => 'Ditolak',
+    ];
 @endphp
 
 @section('title', 'Data Pendaftar')
@@ -67,71 +72,59 @@
             <table class="min-w-full text-left text-sm">
                 <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft dark:bg-white/5">
                     <tr>
+                        <th class="w-14 px-5 py-3.5">No.</th>
                         <th class="px-5 py-3.5">Nama Pendaftar</th>
                         <th class="px-5 py-3.5">Email</th>
                         <th class="px-5 py-3.5">Instansi</th>
+                        <th class="px-5 py-3.5">Prodi</th>
                         <th class="px-5 py-3.5">Lowongan</th>
                         <th class="px-5 py-3.5">Status</th>
-                        <th class="px-5 py-3.5">Berkas</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($applications as $application)
-                        @php
-                            $initial = $application->initials();
-                            $avatarClass = $avatarColors[$application->id % count($avatarColors)];
-                        @endphp
                         <tr class="border-t border-ink/8 align-top">
-                            <td class="px-5 py-4">
-                                <div class="flex items-center gap-3">
-                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white {{ $avatarClass }}">{{ $initial }}</span>
-                                    <p class="font-semibold text-ink">{{ $application->full_name }}</p>
-                                </div>
+                            <td class="px-5 pt-4 pb-2 text-ink-soft">{{ $applications->firstItem() + $loop->index }}</td>
+                            <td class="px-5 pt-4 pb-2">
+                                <p class="font-semibold text-ink">{{ $application->displayName() }}</p>
                             </td>
-                            <td class="px-5 py-4 text-ink-soft">{{ $application->user?->email ?? '—' }}</td>
-                            <td class="px-5 py-4 text-ink-soft">{{ $application->institutionLabel() }}</td>
-                            <td class="px-5 py-4">
+                            <td class="px-5 pt-4 pb-2 text-ink-soft">{{ $application->user?->email ?? '—' }}</td>
+                            <td class="px-5 pt-4 pb-2 text-ink-soft">{{ $application->university ?: '—' }}</td>
+                            <td class="px-5 pt-4 pb-2 text-ink-soft">{{ $application->major ?: '—' }}</td>
+                            <td class="px-5 pt-4 pb-2">
                                 <p class="font-semibold text-[#7A1F2B] dark:text-rose-300">{{ $application->program?->title ?? '—' }}</p>
                                 @if ($application->program?->division)
                                     <p class="mt-0.5 text-xs text-ink-soft">{{ $application->program->division }}</p>
                                 @endif
                             </td>
-                            <td class="px-5 py-4">
-                                <span class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $application->statusColor() }}">{{ $application->statusLabel() }}</span>
-                                @if ($application->isPending())
-                                    <form method="POST" action="{{ route('admin.applications.review', $application) }}" class="mt-2 flex flex-wrap gap-1.5">
-                                        @csrf
-                                        <button name="status" value="accepted" type="submit" class="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700">Terima</button>
-                                        <button name="status" value="rejected" type="submit" class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100">Tolak</button>
-                                    </form>
-                                @endif
+                            <td class="px-5 pt-4 pb-2">
+                                <form method="POST" action="{{ route('admin.applications.review', $application) }}">
+                                    @csrf
+                                    <select name="status" class="input-field min-w-[11.5rem] text-xs font-semibold {{ $application->statusColor() }}"
+                                            onchange="if (this.value === '{{ $application->status }}') return; this.form.submit();">
+                                        @foreach ($statusOptions as $value => $label)
+                                            <option value="{{ $value }}" @selected($application->status === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </form>
                             </td>
-                            <td class="px-5 py-4">
-                                <div class="flex flex-wrap gap-1.5">
+                        </tr>
+                        <tr>
+                            <td colspan="7" class="px-5 pb-4">
+                                <div class="flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap">
                                     @forelse ($application->documents() as $doc)
                                         <a href="{{ $doc['url'] }}" target="_blank" rel="noopener"
-                                           class="inline-flex rounded-lg border border-ink/10 bg-panel px-2 py-1 text-[11px] font-semibold text-brand-mid transition hover:border-brand/40 hover:bg-brand-mist">
+                                           class="inline-flex shrink-0 rounded-lg border border-ink/10 bg-panel px-2.5 py-1 text-[11px] font-semibold text-brand-mid transition hover:border-brand/40 hover:bg-brand-mist">
                                             {{ $doc['label'] }}
                                         </a>
                                     @empty
                                         <span class="text-xs text-ink-soft">Tidak ada berkas</span>
                                     @endforelse
+                                    <a href="{{ route('admin.applications.show', $application) }}"
+                                       class="inline-flex shrink-0 rounded-lg border border-ink/10 bg-panel px-2.5 py-1 text-[11px] font-semibold text-ink transition hover:border-brand/40 hover:bg-brand-mist">
+                                        Detail
+                                    </a>
                                 </div>
-                                <details class="mt-2">
-                                    <summary class="cursor-pointer text-[11px] font-semibold text-brand-mid hover:underline [&::-webkit-details-marker]:hidden">Detail</summary>
-                                    <div class="mt-2 max-w-sm space-y-2 rounded-xl border border-ink/10 bg-panel p-3 text-xs text-ink-soft">
-                                        <p>{{ $application->phone ?: '—' }} · {{ $application->education_level ?: 'Jenjang —' }} · {{ $application->semester ?: 'Semester —' }}</p>
-                                        @if ($application->motivation)
-                                            <p><span class="font-semibold text-ink">Motivasi:</span> {{ $application->motivation }}</p>
-                                        @endif
-                                        @if ($application->experience)
-                                            <p><span class="font-semibold text-ink">Pengalaman:</span> {{ $application->experience }}</p>
-                                        @endif
-                                        @if ($application->reviewer_note)
-                                            <p><span class="font-semibold text-ink">Catatan:</span> {{ $application->reviewer_note }}</p>
-                                        @endif
-                                    </div>
-                                </details>
                             </td>
                         </tr>
                     @endforeach

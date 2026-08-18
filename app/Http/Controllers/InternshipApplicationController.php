@@ -109,25 +109,25 @@ class InternshipApplicationController extends Controller
 
         $cvPath = $existing?->cv_path;
         if ($request->hasFile('cv')) {
-            $cvPath = $request->file('cv')->store('internship-docs/cv', media_disk());
+            $cvPath = store_public_upload($request->file('cv'), 'internship-docs/cv');
         } elseif ($useSavedCv) {
             $cvPath = $savedCv->portfolio_file_url;
         }
 
         $transcriptPath = $existing?->transcript_path;
         if ($request->hasFile('transcript')) {
-            $transcriptPath = $request->file('transcript')->store('internship-docs/transcripts', media_disk());
+            $transcriptPath = store_public_upload($request->file('transcript'), 'internship-docs/transcripts');
         }
 
         $coverLetterPath = $existing?->cover_letter_path;
         if ($request->hasFile('cover_letter')) {
-            $coverLetterPath = $request->file('cover_letter')->store('internship-docs/cover-letters', media_disk());
+            $coverLetterPath = store_public_upload($request->file('cover_letter'), 'internship-docs/cover-letters');
         }
 
         $portfolioPath = $existing?->portfolio_path;
         $portfolioUrl = $data['portfolio_url'] ?? null;
         if ($request->hasFile('portfolio_file')) {
-            $portfolioPath = $request->file('portfolio_file')->store('internship-docs/portfolios', media_disk());
+            $portfolioPath = store_public_upload($request->file('portfolio_file'), 'internship-docs/portfolios');
         } elseif ($useSavedPortfolio) {
             if ($savedPortfolio->portfolio_file_url) {
                 $portfolioPath = $savedPortfolio->portfolio_file_url;

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Logbook Magang')
+@section('title', 'Logbook')
 
 @section('content')
 <section class="mesh-bg border-b border-brand/10">
@@ -8,8 +8,8 @@
         <x-back-nav :fallback="route('dashboard')" force class="mb-4" />
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="section-title">Logbook magang</h1>
-                <p class="mt-2 text-sm text-ink-soft">Catat aktivitas harian setelah kamu diterima di program magang.</p>
+                <h1 class="section-title">Logbook</h1>
+                <p class="mt-2 text-sm text-ink-soft">Catat aktivitas harian magang atau bootcamp yang sedang kamu ikuti.</p>
             </div>
             @if ($logbooks->isNotEmpty())
                 <div class="flex flex-wrap gap-2">
@@ -25,7 +25,7 @@
     @if ($internshipEnrollments->isEmpty())
         <div class="card-soft p-8 text-center">
             <p class="font-display text-lg font-semibold">Belum bisa isi logbook</p>
-            <p class="mt-2 text-sm text-ink-soft">Logbook tersedia setelah pendaftaran magang diterima.</p>
+            <p class="mt-2 text-sm text-ink-soft">Logbook tersedia setelah kamu diterima magang atau terdaftar di bootcamp.</p>
             <a href="{{ route('profile.applications') }}" class="btn-secondary mt-4 inline-flex">Cek riwayat</a>
         </div>
     @else
@@ -33,10 +33,10 @@
             @csrf
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium">Program magang</label>
+                    <label class="mb-1.5 block text-sm font-medium">Program</label>
                     <select name="program_id" class="input-field" required>
                         @foreach ($internshipEnrollments as $enrollment)
-                            <option value="{{ $enrollment->program_id }}">{{ $enrollment->program->title }}</option>
+                            <option value="{{ $enrollment->program_id }}">{{ $enrollment->program->title }} ({{ $enrollment->program->typeLabel() }})</option>
                         @endforeach
                     </select>
                 </div>
