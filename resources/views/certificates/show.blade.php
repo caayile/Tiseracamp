@@ -7,15 +7,35 @@
     @include('partials.theme-init')
     @vite(['resources/css/app.css'])
     <style>
+        .certificate-sheet { aspect-ratio: 297 / 210; }
+        @page { size: 297mm 210mm; margin: 0; }
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; }
-            .certificate-sheet {
-                box-shadow: none !important;
-                border: 2px solid #0B1F2A !important;
+            html, body {
+                width: 297mm;
+                height: 210mm;
+                margin: 0;
+                padding: 0;
+                background: white !important;
             }
+            .certificate-print-wrap {
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .certificate-sheet {
+                width: 297mm !important;
+                height: 210mm !important;
+                max-width: none !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                border: 4px solid #0B1F2A !important;
+                box-shadow: none !important;
+                padding: 16mm 16mm 20mm !important;
+                overflow: hidden;
+            }
+            .certificate-sheet > div.pointer-events-none.absolute.rounded-full { display: none !important; }
         }
-        @page { size: A4 landscape; margin: 12mm; }
     </style>
 </head>
 <body class="min-h-screen bg-surface text-ink antialiased">
@@ -24,7 +44,7 @@
         <button type="button" onclick="window.print()" class="btn-primary">Cetak sertifikat</button>
     </div>
 
-    <div class="mx-auto max-w-5xl px-4 pb-10">
+    <div class="certificate-print-wrap mx-auto max-w-5xl px-4 pb-10">
         <div class="certificate-sheet relative overflow-hidden rounded-3xl border-4 border-brand bg-white p-8 shadow-xl sm:p-12">
             <div class="pointer-events-none absolute inset-4 rounded-2xl border border-brand/30"></div>
             <div class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand/15 blur-2xl"></div>
