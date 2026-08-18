@@ -121,6 +121,13 @@ class Program extends Model
         return $query->where('is_published', true)->where('approval_status', 'approved');
     }
 
+    public function scopeOrderOpenFirst(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw('CASE WHEN is_open AND (deadline IS NULL OR deadline >= CURRENT_DATE) THEN 0 ELSE 1 END')
+            ->latest();
+    }
+
     public function formattedPrice(): string
     {
         return $this->price === 0

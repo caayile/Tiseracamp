@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\RedirectResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LogbookEntry extends Model
 {
@@ -63,5 +65,33 @@ class LogbookEntry extends Model
     public function enrollment(): BelongsTo
     {
         return $this->belongsTo(Enrollment::class);
+    }
+
+    public function serveAttachment(): BinaryFileResponse|RedirectResponse
+    {
+        abort_unless(filled($this->attachment_path), 404);
+
+        $path = (string) $this->attachment_path;
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return redirect()->away($path);
+        }
+
+        $absolute = resolve_public_upload($path);
+        abort_if($absolute === null, 404, 'Dokumentasi tidak ditemukan di server.');
+
+        $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION) ?: 'jpg');
+        $filename = 'dokumentasi-logbook-'.$this->id.'.'.$extension;
+
+        return response()->file($absolute, [
+            'Content-Type' => match ($extension) {
+                'pdf' => 'application/pdf',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                'gif' => 'image/gif',
+                default => 'application/octet-stream',
+            },
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 }

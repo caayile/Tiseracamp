@@ -14,7 +14,7 @@
         'Jenjang' => $application->education_level,
         'Semester / tingkat' => $application->semester,
         'Universitas / sekolah' => $application->university,
-        'Jurusan' => $application->major,
+        'Jurusan / prodi' => $application->major,
         'Link portfolio' => $application->portfolio_url,
     ];
     if (filled(trim((string) $application->motivation))) {
@@ -73,6 +73,8 @@
                 <p class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">{{ $label }}</p>
                 @if ($label === 'Link portfolio' && filled($application->portfolio_url))
                     <a href="{{ $application->portfolio_url }}" target="_blank" rel="noopener" class="mt-1 break-all text-sm font-medium text-brand-mid hover:underline">{{ $application->portfolio_url }}</a>
+                @elseif ($label === 'No. telepon / WhatsApp' && $application->whatsappUrl())
+                    <a href="{{ $application->whatsappUrl() }}" target="_blank" rel="noopener" class="mt-1 text-sm font-semibold text-emerald-700 hover:underline">{{ $application->phone }} · Chat WA</a>
                 @elseif ($isEmpty)
                     <p class="mt-1 text-sm text-ink-soft">—</p>
                 @else
@@ -83,6 +85,21 @@
         <div>
             <p class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Tanggal kirim</p>
             <p class="mt-1 text-sm text-ink">{{ $application->submitted_at?->translatedFormat('d M Y, H:i') ?? $application->created_at?->translatedFormat('d M Y, H:i') ?? '—' }}</p>
+        </div>
+        <div class="sm:col-span-2">
+            <p class="mb-2 text-[11px] font-bold uppercase tracking-wide text-ink-soft">Periode magang</p>
+            <form method="POST" action="{{ route('admin.applications.dates', $application) }}" class="flex flex-wrap items-end gap-3">
+                @csrf
+                <label class="text-sm">
+                    <span class="mb-1 block text-xs text-ink-soft">Mulai</span>
+                    <input type="date" name="internship_start_date" value="{{ $application->internship_start_date?->format('Y-m-d') }}" class="input-field">
+                </label>
+                <label class="text-sm">
+                    <span class="mb-1 block text-xs text-ink-soft">Selesai</span>
+                    <input type="date" name="internship_end_date" value="{{ $application->internship_end_date?->format('Y-m-d') }}" class="input-field">
+                </label>
+                <button type="submit" class="btn-secondary text-sm">Simpan tanggal</button>
+            </form>
         </div>
         <div>
             <p class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Berkas diunggah</p>
@@ -101,11 +118,15 @@
     <div class="mt-6 border-t border-ink/8 pt-5">
         <p class="mb-3 text-[11px] font-bold uppercase tracking-wide text-ink-soft">Berkas persyaratan</p>
         <div class="flex flex-wrap gap-2">
-            @forelse ($application->documents() as $doc)
-                <a href="{{ $doc['url'] }}" target="_blank" rel="noopener"
-                   class="inline-flex rounded-lg border border-ink/10 bg-panel px-3 py-1.5 text-xs font-semibold text-brand-mid transition hover:border-brand/40 hover:bg-brand-mist">
-                    {{ $doc['label'] }}
-                </a>
+            @forelse ($application->documentSlots() as $doc)
+                @if ($doc['missing'])
+                    <span class="inline-flex rounded-lg border border-dashed border-ink/15 px-3 py-1.5 text-xs font-semibold text-ink-soft">{{ $doc['label'] }} belum ada</span>
+                @else
+                    <a href="{{ $doc['url'] }}" target="_blank" rel="noopener"
+                       class="inline-flex rounded-lg border border-ink/10 bg-panel px-3 py-1.5 text-xs font-semibold text-brand-mid transition hover:border-brand/40 hover:bg-brand-mist">
+                        Lihat {{ $doc['label'] }}
+                    </a>
+                @endif
             @empty
                 <span class="text-sm text-ink-soft">Tidak ada berkas</span>
             @endforelse

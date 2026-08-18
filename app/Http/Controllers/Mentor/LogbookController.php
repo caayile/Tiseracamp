@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LogbookController extends Controller
@@ -199,6 +200,13 @@ class LogbookController extends Controller
         );
 
         return back()->with('success', 'Review logbook disimpan.');
+    }
+
+    public function attachment(LogbookEntry $logbook): BinaryFileResponse|RedirectResponse
+    {
+        abort_unless($this->accessibleProgramIds()->contains($logbook->program_id), 403);
+
+        return $logbook->serveAttachment();
     }
 
     /** @return Collection<int, int> */

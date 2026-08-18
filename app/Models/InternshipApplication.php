@@ -11,6 +11,7 @@ class InternshipApplication extends Model
         'user_id', 'program_id', 'full_name', 'phone', 'university', 'major', 'semester', 'education_level',
         'motivation', 'experience', 'cv_path', 'transcript_path', 'cover_letter_path', 'portfolio_url', 'portfolio_path',
         'status', 'reviewer_note', 'reviewed_by', 'submitted_at', 'reviewed_at',
+        'internship_start_date', 'internship_end_date',
     ];
 
     protected function casts(): array
@@ -18,6 +19,8 @@ class InternshipApplication extends Model
         return [
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
+            'internship_start_date' => 'date',
+            'internship_end_date' => 'date',
         ];
     }
 
@@ -98,6 +101,39 @@ class InternshipApplication extends Model
         return $name !== '' ? $name : '—';
     }
 
+    public function fileSlug(): string
+    {
+        $name = $this->displayName();
+        $slug = trim((string) preg_replace('/[^\pL\pN]+/u', '-', $name), '-');
+
+        return $slug !== '' ? $slug : 'pendaftar-'.$this->id;
+    }
+
+    public function whatsappNumber(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $this->phone) ?: '';
+        if ($digits === '') {
+            return null;
+        }
+
+        if (str_starts_with($digits, '0')) {
+            $digits = '62'.substr($digits, 1);
+        } elseif (str_starts_with($digits, '8')) {
+            $digits = '62'.$digits;
+        } elseif (str_starts_with($digits, '620')) {
+            $digits = '62'.ltrim(substr($digits, 2), '0');
+        }
+
+        return $digits !== '' ? $digits : null;
+    }
+
+    public function whatsappUrl(): ?string
+    {
+        $number = $this->whatsappNumber();
+
+        return $number ? 'https://wa.me/'.$number : null;
+    }
+
     public function institutionLabel(): string
     {
         return collect([$this->university, $this->major])
@@ -105,33 +141,86 @@ class InternshipApplication extends Model
             ->implode(', ') ?: '—';
     }
 
-    /** @return array<int, array{label: string, url: string}> */
-    public function documents(): array
+    public function documentFilename(string $type, string $extension = 'pdf'): string
     {
-        $items = [];
+        $label = match ($type) {
+            'cv' => 'CV',
+            'transcript' => 'Transkrip',
+            'cover-letter' => 'Surat-pengantar',
+            default => 'Portfolio',
+        };
 
-        $files = [
+        $ext = strtolower(ltrim($extension, '.')) ?: 'pdf';
+
+        return $label.'-'.$this->fileSlug().'.'.$ext;
+    }
+
+    /**
+     * @return array<string, array{label: string, path: ?string}>
+     */
+    public function documentFiles(): array
+    {
+        return [
             'cv' => ['label' => 'CV', 'path' => $this->cv_path],
             'transcript' => ['label' => 'Transkrip', 'path' => $this->transcript_path],
             'cover-letter' => ['label' => 'Surat pengantar', 'path' => $this->cover_letter_path],
             'portfolio' => ['label' => 'Portfolio', 'path' => $this->portfolio_path],
         ];
+    }
 
-        foreach ($files as $type => $file) {
-            if (! filled($file['path'])) {
-                continue;
-            }
+    public function documentUrl(string $type, bool $download = false, bool $absolute = false): ?string
+    {
+        $path = $this->documentFiles()[$type]['path'] ?? null;
+        if (! filled($path)) {
+            return null;
+        }
 
+        $url = route('admin.applications.document', [$this, $type], $absolute);
+
+        return $download ? $url.(str_contains($url, '?') ? '&' : '?').'download=1' : $url;
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string, url: ?string, download_url: ?string, missing: bool}>
+     */
+    public function documentSlots(): array
+    {
+        $items = [];
+
+        foreach ($this->documentFiles() as $type => $file) {
+            $url = $this->documentUrl($type);
             $items[] = [
+                'key' => $type,
                 'label' => $file['label'],
-                'url' => route('admin.applications.document', [$this, $type], false),
+                'url' => $url,
+                'download_url' => $this->documentUrl($type, true),
+                'missing' => $url === null,
             ];
         }
 
         if ($this->portfolio_url) {
-            $items[] = ['label' => 'Portfolio (link)', 'url' => $this->portfolio_url];
+            $items[] = [
+                'key' => 'portfolio-link',
+                'label' => 'Link portfolio',
+                'url' => $this->portfolio_url,
+                'download_url' => $this->portfolio_url,
+                'missing' => false,
+            ];
         }
 
         return $items;
+    }
+
+    /** @return array<int, array{label: string, url: string}> */
+    public function documents(): array
+    {
+        return collect($this->documentSlots())
+            ->reject(fn (array $doc) => $doc['missing'] || ! filled($doc['url']))
+            ->map(fn (array $doc) => [
+                'label' => $doc['label'],
+                'url' => $doc['url'],
+            ])
+            ->values()
+            ->all();
     }
 }

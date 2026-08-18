@@ -27,8 +27,13 @@ class ProgramController extends Controller
 
         $query = Program::with(['partner', 'mentor', 'category', 'batches'])
             ->withCount('internshipApplications')
-            ->latest()
             ->where('type', $type);
+
+        if (in_array($type, ['internship', 'job'], true)) {
+            $query->orderOpenFirst();
+        } else {
+            $query->latest();
+        }
         if (in_array($audience, ['all', 'tsu', 'both', 'none'], true)) {
             $query->where('audience', $audience);
         }

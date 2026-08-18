@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LogbookController extends Controller
@@ -160,5 +161,10 @@ class LogbookController extends Controller
         );
 
         return back()->with('success', 'Review logbook disimpan.');
+    }
+
+    public function attachment(LogbookEntry $logbook): BinaryFileResponse|RedirectResponse
+    {
+        return $logbook->serveAttachment();
     }
 }

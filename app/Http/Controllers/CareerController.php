@@ -60,7 +60,7 @@ class CareerController extends Controller
                     ->orWhereRaw('LOWER(COALESCE(division, \'\')) LIKE ?', [$needle])
                     ->orWhereRaw('LOWER(COALESCE(location, \'\')) LIKE ?', [$needle]);
             }))
-            ->latest()
+            ->orderOpenFirst()
             ->paginate(9)
             ->withQueryString();
 

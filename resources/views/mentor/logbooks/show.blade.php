@@ -59,6 +59,7 @@
                     <tr>
                         <th class="px-5 py-3.5">Tanggal</th>
                         <th class="px-5 py-3.5">Aktivitas</th>
+                        <th class="px-5 py-3.5">Dokumentasi</th>
                         <th class="px-5 py-3.5">Kendala</th>
                         <th class="px-5 py-3.5">Progress</th>
                         <th class="px-5 py-3.5">Status</th>
@@ -77,8 +78,16 @@
                                 @if ($entry->program)
                                     <p class="mt-1 text-[11px] font-semibold text-brand-mid">{{ $entry->program->title }} · {{ $entry->program->typeLabel() }}</p>
                                 @endif
+                            </td>
+                            <td class="px-5 py-4">
                                 @if ($entry->attachment_path)
-                                    <a href="{{ media_url($entry->attachment_path) }}" target="_blank" class="mt-1 inline-block text-[11px] font-semibold text-brand-mid hover:underline">Lihat dokumentasi</a>
+                                    <a href="{{ route('mentor.logbooks.attachment', $entry) }}" target="_blank" rel="noopener" class="block w-24">
+                                        <img src="{{ route('mentor.logbooks.attachment', $entry) }}" alt="Dokumentasi logbook"
+                                             class="h-20 w-24 rounded-lg border border-ink/10 object-cover">
+                                        <span class="mt-1 inline-block text-[11px] font-semibold text-brand-mid hover:underline">Lihat</span>
+                                    </a>
+                                @else
+                                    <span class="text-xs text-ink-soft">—</span>
                                 @endif
                             </td>
                             <td class="px-5 py-4 text-ink-soft">{{ $entry->obstacles ?: '—' }}</td>

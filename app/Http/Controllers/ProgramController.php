@@ -46,7 +46,10 @@ class ProgramController extends Controller
             });
         }
 
-        $programs = $query->latest()->paginate(9)->withQueryString();
+        $programs = ($catalogType === 'internship'
+            ? $query->orderOpenFirst()
+            : $query->latest()
+        )->paginate(9)->withQueryString();
         $categories = Category::query()->orderBy('name')->get();
         $activeCategory = $request->string('category')->toString();
 

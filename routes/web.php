@@ -203,6 +203,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/logbooks', [MentorLogbookController::class, 'index'])->name('logbooks.index');
     Route::get('/logbooks/{user}/export', [MentorLogbookController::class, 'exportExcel'])->name('logbooks.export');
     Route::get('/logbooks/{user}', [MentorLogbookController::class, 'show'])->name('logbooks.show');
+    Route::get('/logbooks/{logbook}/dokumentasi', [MentorLogbookController::class, 'attachment'])->name('logbooks.attachment');
     Route::post('/logbooks/{logbook}/review', [MentorLogbookController::class, 'review'])->name('logbooks.review');
     Route::get('/grades', [MentorGradeController::class, 'index'])->name('grades.index');
     Route::put('/grades/{enrollment}', [MentorGradeController::class, 'update'])->name('grades.update');
@@ -245,10 +246,13 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::delete('/lessons/{lesson}', [AdminProgramController::class, 'destroyLesson'])->name('lessons.destroy');
 
     Route::get('/pendaftar', [AdminApplicationController::class, 'index'])->name('applications.pendaftar');
+    Route::get('/pendaftar/export', [AdminApplicationController::class, 'exportSpreadsheet'])->name('applications.export');
+    Route::get('/pendaftar/berkas.zip', [AdminApplicationController::class, 'exportZip'])->name('applications.zip');
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}/berkas/{type}', [AdminApplicationController::class, 'document'])
         ->whereIn('type', ['cv', 'transcript', 'cover-letter', 'portfolio'])
         ->name('applications.document');
+    Route::post('/applications/{application}/dates', [AdminApplicationController::class, 'updateDates'])->name('applications.dates');
     Route::get('/applications/{application}', [AdminApplicationController::class, 'show'])->name('applications.show');
     Route::post('/applications/{application}/review', [AdminApplicationController::class, 'review'])->name('applications.review');
 
@@ -262,6 +266,7 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::get('/logbooks', [AdminLogbookController::class, 'index'])->name('logbooks.index');
     Route::get('/logbooks/{user}/export', [AdminLogbookController::class, 'exportExcel'])->name('logbooks.export');
     Route::get('/logbooks/{user}', [AdminLogbookController::class, 'show'])->name('logbooks.show');
+    Route::get('/logbooks/{logbook}/dokumentasi', [AdminLogbookController::class, 'attachment'])->name('logbooks.attachment');
     Route::post('/logbooks/{logbook}/review', [AdminLogbookController::class, 'review'])->name('logbooks.review');
 
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');

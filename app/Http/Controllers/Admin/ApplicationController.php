@@ -7,60 +7,25 @@ use App\Models\AppNotification;
 use App\Models\Enrollment;
 use App\Models\InternshipApplication;
 use App\Models\Program;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use ZipArchive;
 
 class ApplicationController extends Controller
 {
     public function index(): View
     {
-        $programId = request()->integer('program');
-        $division = trim(request()->string('division')->toString());
-        $search = trim(request()->string('q')->toString());
-        $status = trim(request()->string('status')->toString());
+        $filters = $this->filters();
+        $query = $this->filteredQuery($filters);
 
-        $baseQuery = InternshipApplication::query()
-            ->whereHas('program', fn ($q) => $q->where('type', 'internship'));
+        $applications = $query->paginate(10)->withQueryString();
 
-        $query = InternshipApplication::with(['user', 'program'])
-            ->whereHas('program', function ($q) use ($division) {
-                $q->where('type', 'internship');
-                if ($division !== '') {
-                    $q->where('division', $division);
-                }
-            })
-            ->latest();
-
-        $filterProgram = null;
-        if ($programId > 0) {
-            $query->where('program_id', $programId);
-            $baseQuery->where('program_id', $programId);
-            $filterProgram = Program::query()->find($programId);
-        }
-
-        if ($status === 'pending') {
-            $query->whereIn('status', ['submitted', 'under_review']);
-        } elseif (in_array($status, ['accepted', 'rejected', 'under_review'], true)) {
-            $query->where('status', $status);
-        }
-
-        if ($search !== '') {
-            $needle = '%'.mb_strtolower($search).'%';
-            $query->where(function ($q) use ($needle) {
-                $q->whereRaw('LOWER(full_name) LIKE ?', [$needle])
-                    ->orWhereRaw('LOWER(COALESCE(university, \'\')) LIKE ?', [$needle])
-                    ->orWhereRaw('LOWER(COALESCE(major, \'\')) LIKE ?', [$needle])
-                    ->orWhereHas('user', fn ($u) => $u->whereRaw('LOWER(email) LIKE ?', [$needle]))
-                    ->orWhereHas('program', fn ($p) => $p->whereRaw('LOWER(title) LIKE ?', [$needle]));
-            });
-        }
-
-        $applications = $query->paginate(20)->withQueryString();
-
-        $rawCounts = (clone $baseQuery)
-            ->when($division !== '', fn ($q) => $q->whereHas('program', fn ($p) => $p->where('division', $division)))
+        $rawCounts = $this->baseQuery($filters)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -79,15 +44,126 @@ class ApplicationController extends Controller
             ->orderBy('division')
             ->pluck('division');
 
-        return view('admin.applications.index', compact(
-            'applications',
-            'filterProgram',
-            'divisions',
-            'division',
-            'search',
-            'status',
-            'statusCounts',
-        ));
+        $filterProgram = $filters['program_id'] > 0
+            ? Program::query()->find($filters['program_id'])
+            : null;
+
+        return view('admin.applications.index', [
+            'applications' => $applications,
+            'filterProgram' => $filterProgram,
+            'divisions' => $divisions,
+            'division' => $filters['division'],
+            'search' => $filters['search'],
+            'status' => $filters['status'],
+            'statusCounts' => $statusCounts,
+            'exportQuery' => request()->query(),
+        ]);
+    }
+
+    public function exportSpreadsheet(): View|RedirectResponse
+    {
+        $applications = $this->filteredQuery($this->filters())->get();
+
+        if ($applications->isEmpty()) {
+            return back()->with('error', 'Tidak ada pendaftar untuk dibuka di spreadsheet.');
+        }
+
+        return view('admin.applications.spreadsheet', [
+            'applications' => $applications,
+            'exportQuery' => request()->query(),
+        ]);
+    }
+
+    public function exportZip(): BinaryFileResponse|RedirectResponse
+    {
+        if (! class_exists(ZipArchive::class)) {
+            return back()->with('error', 'Ekstensi ZIP belum aktif di server.');
+        }
+
+        $applications = $this->filteredQuery($this->filters())->get();
+
+        if ($applications->isEmpty()) {
+            return back()->with('error', 'Tidak ada pendaftar untuk diunduh.');
+        }
+
+        $tmp = tempnam(sys_get_temp_dir(), 'rekap-');
+        if ($tmp === false) {
+            return back()->with('error', 'Gagal membuat berkas ZIP sementara.');
+        }
+
+        @unlink($tmp);
+        $zipPath = $tmp.'.zip';
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Gagal membuat arsip ZIP.');
+        }
+
+        $added = 0;
+        foreach ($applications as $index => $application) {
+            $folder = sprintf('%02d_%s', $index + 1, $application->fileSlug());
+
+            foreach ($application->documentFiles() as $type => $file) {
+                if (! filled($file['path'])) {
+                    continue;
+                }
+
+                if (str_starts_with((string) $file['path'], 'http://') || str_starts_with((string) $file['path'], 'https://')) {
+                    continue;
+                }
+
+                $absolute = resolve_public_upload($file['path']);
+                if ($absolute === null) {
+                    continue;
+                }
+
+                $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION) ?: 'pdf');
+                $zip->addFile($absolute, $folder.'/'.$application->documentFilename($type, $extension));
+                $added++;
+            }
+        }
+
+        $zip->close();
+
+        if ($added === 0) {
+            @unlink($zipPath);
+
+            return back()->with('error', 'Berkas pendaftar tidak ditemukan di server.');
+        }
+
+        return response()->download($zipPath, 'berkas-pendaftar-magang-'.now()->format('Ymd').'.zip', [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
+
+    public function updateDates(Request $request, InternshipApplication $application): RedirectResponse|JsonResponse
+    {
+        abort_unless($application->program?->type === 'internship', 404);
+
+        $data = $request->validate([
+            'internship_start_date' => ['nullable', 'date'],
+            'internship_end_date' => [
+                'nullable',
+                'date',
+                Rule::when($request->filled('internship_start_date'), ['after_or_equal:internship_start_date']),
+            ],
+        ], [
+            'internship_end_date.after_or_equal' => 'Tanggal selesai magang tidak boleh sebelum tanggal mulai.',
+        ]);
+
+        $application->update([
+            'internship_start_date' => $data['internship_start_date'] ?: null,
+            'internship_end_date' => $data['internship_end_date'] ?: null,
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Tanggal magang '.$application->displayName().' disimpan.',
+            ]);
+        }
+
+        return back()->with('success', 'Tanggal magang '.$application->displayName().' disimpan.');
     }
 
     public function show(InternshipApplication $application): View
@@ -169,17 +245,11 @@ class ApplicationController extends Controller
         return back()->with('success', 'Status pendaftaran diperbarui.');
     }
 
-    public function document(InternshipApplication $application, string $type): BinaryFileResponse|RedirectResponse
+    public function document(Request $request, InternshipApplication $application, string $type): BinaryFileResponse|RedirectResponse
     {
         abort_unless($application->program?->type === 'internship', 404);
 
-        $path = match ($type) {
-            'cv' => $application->cv_path,
-            'transcript' => $application->transcript_path,
-            'cover-letter' => $application->cover_letter_path,
-            'portfolio' => $application->portfolio_path,
-            default => null,
-        };
+        $path = $application->documentFiles()[$type]['path'] ?? null;
 
         abort_unless(filled($path), 404);
 
@@ -191,14 +261,9 @@ class ApplicationController extends Controller
         abort_if($absolute === null, 404, 'Berkas tidak ditemukan di server.');
 
         $extension = strtolower(pathinfo($absolute, PATHINFO_EXTENSION) ?: 'pdf');
-        $label = match ($type) {
-            'cv' => 'CV',
-            'transcript' => 'Transkrip',
-            'cover-letter' => 'Surat-pengantar',
-            default => 'Portfolio',
-        };
-        $filename = $label.'-'.$application->id.'.'.$extension;
-        $inline = in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'], true);
+        $filename = $application->documentFilename($type, $extension);
+        $forceDownload = $request->boolean('download');
+        $inline = ! $forceDownload && in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'], true);
 
         return response()->file($absolute, [
             'Content-Type' => match ($extension) {
@@ -211,5 +276,77 @@ class ApplicationController extends Controller
             },
             'Content-Disposition' => ($inline ? 'inline' : 'attachment').'; filename="'.$filename.'"',
         ]);
+    }
+
+    /**
+     * @return array{program_id: int, division: string, search: string, status: string}
+     */
+    private function filters(): array
+    {
+        return [
+            'program_id' => request()->integer('program'),
+            'division' => trim(request()->string('division')->toString()),
+            'search' => trim(request()->string('q')->toString()),
+            'status' => trim(request()->string('status')->toString()),
+        ];
+    }
+
+    /**
+     * @param  array{program_id: int, division: string, search: string, status: string}  $filters
+     */
+    private function filteredQuery(array $filters): Builder
+    {
+        $query = InternshipApplication::with(['user', 'program'])
+            ->whereHas('program', function ($q) use ($filters) {
+                $q->where('type', 'internship');
+                if ($filters['division'] !== '') {
+                    $q->where('division', $filters['division']);
+                }
+            })
+            ->latest();
+
+        if ($filters['program_id'] > 0) {
+            $query->where('program_id', $filters['program_id']);
+        }
+
+        if ($filters['status'] === 'pending') {
+            $query->whereIn('status', ['submitted', 'under_review']);
+        } elseif (in_array($filters['status'], ['accepted', 'rejected', 'under_review'], true)) {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($filters['search'] !== '') {
+            $needle = '%'.mb_strtolower($filters['search']).'%';
+            $query->where(function ($q) use ($needle) {
+                $q->whereRaw('LOWER(full_name) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(university, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(major, \'\')) LIKE ?', [$needle])
+                    ->orWhereRaw('LOWER(COALESCE(phone, \'\')) LIKE ?', [$needle])
+                    ->orWhereHas('user', fn ($u) => $u->whereRaw('LOWER(email) LIKE ?', [$needle]))
+                    ->orWhereHas('program', fn ($p) => $p->whereRaw('LOWER(title) LIKE ?', [$needle]));
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param  array{program_id: int, division: string, search: string, status: string}  $filters
+     */
+    private function baseQuery(array $filters): Builder
+    {
+        $query = InternshipApplication::query()
+            ->whereHas('program', function ($q) use ($filters) {
+                $q->where('type', 'internship');
+                if ($filters['division'] !== '') {
+                    $q->where('division', $filters['division']);
+                }
+            });
+
+        if ($filters['program_id'] > 0) {
+            $query->where('program_id', $filters['program_id']);
+        }
+
+        return $query;
     }
 }
