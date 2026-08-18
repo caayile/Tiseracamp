@@ -43,7 +43,7 @@ class ChatController extends Controller
         }
 
         abort_unless(in_array($user->id, [$conversation->student_id, $conversation->mentor_id]) || $user->isAdmin(), 403);
-        $conversation->load(['messages' => fn ($q) => $q->oldest(), 'messages.user', 'student', 'mentor', 'program']);
+        $conversation->load(['messages' => fn ($q) => $q->orderBy('id'), 'messages.user', 'student', 'mentor', 'program']);
 
         return view('chat.show', compact('conversation'));
     }

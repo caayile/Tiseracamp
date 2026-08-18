@@ -23,4 +23,27 @@ class Message extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function timeLabel(): string
+    {
+        return $this->created_at?->format('H:i') ?? '';
+    }
+
+    public function dateLabel(): string
+    {
+        $date = $this->created_at;
+        if (! $date) {
+            return '';
+        }
+
+        if ($date->isToday()) {
+            return 'Hari ini';
+        }
+
+        if ($date->isYesterday()) {
+            return 'Kemarin';
+        }
+
+        return $date->translatedFormat('d M Y');
+    }
 }

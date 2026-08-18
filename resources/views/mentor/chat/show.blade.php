@@ -23,16 +23,26 @@
             Balasanmu akan muncul sebagai <strong class="text-brand-deeper">Mentor</strong> di sisi siswa.
         </div>
 
-        <div class="flex-1 space-y-3 overflow-y-auto bg-[#F4FBFE] p-5" style="max-height: 55vh;" data-chat-thread data-poll-url="{{ route('chat.poll', $conversation) }}" data-last-id="{{ $conversation->messages->last()?->id ?? 0 }}">
-            @forelse ($conversation->messages as $message)
-                @php $mine = $message->user_id === auth()->id(); @endphp
+        <div class="flex-1 space-y-2 overflow-y-auto bg-[#F4FBFE] p-5" style="max-height: 55vh;" data-chat-thread data-poll-url="{{ route('chat.poll', $conversation) }}" data-last-id="{{ $conversation->messages->sortBy('id')->last()?->id ?? 0 }}">
+            @php $prevDate = null; @endphp
+            @forelse ($conversation->messages->sortBy('id') as $message)
+                @php
+                    $mine = $message->user_id === auth()->id();
+                    $dateKey = $message->created_at?->toDateString();
+                @endphp
+                @if ($dateKey !== $prevDate)
+                    <div class="flex justify-center py-1">
+                        <span class="rounded-full bg-ink/10 px-3 py-0.5 text-[10px] font-semibold text-ink-soft">{{ $message->dateLabel() }}</span>
+                    </div>
+                    @php $prevDate = $dateKey; @endphp
+                @endif
                 <div class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
-                    <div class="max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm {{ $mine ? 'rounded-br-md bg-gradient-to-br from-brand-dark to-brand text-white' : 'rounded-bl-md border border-brand/10 bg-white text-ink' }}">
-                        <p class="text-[10px] font-bold uppercase tracking-wide {{ $mine ? 'text-white/70' : 'text-brand-deeper' }}">
-                            {{ $mine ? 'Kamu (Mentor)' : 'Siswa · '.$message->user->name }}
-                        </p>
-                        <p class="mt-1 whitespace-pre-line leading-relaxed">{{ $message->body }}</p>
-                        <p class="mt-1 text-[10px] {{ $mine ? 'text-white/60' : 'text-ink-soft' }}">{{ $message->created_at->format('d M, H:i') }}</p>
+                    <div class="max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm {{ $mine ? 'rounded-br-md bg-gradient-to-br from-brand-dark to-brand text-white' : 'rounded-bl-md border border-brand/10 bg-white text-ink' }}">
+                        @unless ($mine)
+                            <p class="text-[10px] font-bold uppercase tracking-wide text-brand-deeper">{{ $message->user->name }}</p>
+                        @endunless
+                        <p class="whitespace-pre-line leading-relaxed">{{ $message->body }}</p>
+                        <p class="mt-1 text-right text-[10px] {{ $mine ? 'text-white/70' : 'text-ink-soft' }}">{{ $message->timeLabel() }}</p>
                     </div>
                 </div>
             @empty

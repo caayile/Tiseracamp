@@ -16,16 +16,26 @@
     </div>
 
     <div class="card-soft flex flex-1 flex-col overflow-hidden">
-        <div class="flex-1 space-y-4 overflow-y-auto bg-[#F8FCFD] p-4" data-chat-thread data-poll-url="{{ route('chat.poll', $conversation) }}" data-last-id="{{ $conversation->messages->last()?->id ?? 0 }}">
-            @forelse ($conversation->messages as $message)
-                @php $mine = $message->user_id === auth()->id(); @endphp
+        <div class="flex-1 space-y-2 overflow-y-auto bg-[#F8FCFD] p-4" data-chat-thread data-poll-url="{{ route('chat.poll', $conversation) }}" data-last-id="{{ $conversation->messages->sortBy('id')->last()?->id ?? 0 }}">
+            @php $prevDate = null; @endphp
+            @forelse ($conversation->messages->sortBy('id') as $message)
+                @php
+                    $mine = $message->user_id === auth()->id();
+                    $dateKey = $message->created_at?->toDateString();
+                @endphp
+                @if ($dateKey !== $prevDate)
+                    <div class="flex justify-center py-1">
+                        <span class="rounded-full bg-ink/10 px-3 py-0.5 text-[10px] font-semibold text-ink-soft">{{ $message->dateLabel() }}</span>
+                    </div>
+                    @php $prevDate = $dateKey; @endphp
+                @endif
                 <div class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
-                    <div class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm {{ $mine ? 'rounded-br-md bg-ink text-white' : 'rounded-bl-md border border-brand/15 bg-white text-ink shadow-sm' }}">
-                        <p class="text-[11px] font-semibold {{ $mine ? 'text-white/60' : 'text-brand-deeper' }}">
-                            {{ $mine ? 'Kamu' : $message->user->name }}
-                        </p>
-                        <p class="mt-0.5 whitespace-pre-line">{{ $message->body }}</p>
-                        <p class="mt-1 text-[10px] opacity-60">{{ $message->created_at->format('H:i') }}</p>
+                    <div class="max-w-[80%] rounded-2xl px-3 py-2 text-sm {{ $mine ? 'rounded-br-md bg-ink text-white' : 'rounded-bl-md border border-brand/15 bg-white text-ink shadow-sm' }}">
+                        @unless ($mine)
+                            <p class="text-[11px] font-semibold text-brand-deeper">{{ $message->user->name }}</p>
+                        @endunless
+                        <p class="whitespace-pre-line">{{ $message->body }}</p>
+                        <p class="mt-1 text-right text-[10px] {{ $mine ? 'text-white/70' : 'text-ink-soft' }}">{{ $message->timeLabel() }}</p>
                     </div>
                 </div>
             @empty

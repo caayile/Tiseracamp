@@ -40,7 +40,7 @@ class ChatController extends Controller
         );
 
         $conversation->load([
-            'messages' => fn ($q) => $q->oldest(),
+            'messages' => fn ($q) => $q->orderBy('id'),
             'messages.user',
             'student',
             'program',

@@ -31,7 +31,7 @@ class ChatController extends Controller
     {
         abort_unless($conversation->mentor_id === auth()->id(), 403);
         $conversation->load([
-            'messages' => fn ($q) => $q->oldest(),
+            'messages' => fn ($q) => $q->orderBy('id'),
             'messages.user',
             'student',
             'program',
