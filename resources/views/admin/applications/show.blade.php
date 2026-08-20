@@ -104,7 +104,7 @@
         <div>
             <p class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Berkas diunggah</p>
             <p class="mt-1 text-sm text-ink">
-                {{ collect(['CV' => $application->cv_path, 'Transkrip' => $application->transcript_path, 'Surat pengantar' => $application->cover_letter_path, 'Portfolio PDF' => $application->portfolio_path])->filter()->keys()->implode(', ') ?: '—' }}
+                {{ collect(['CV' => $application->cv_path, 'Portfolio PDF' => $application->portfolio_path])->filter()->keys()->implode(', ') ?: '—' }}
             </p>
         </div>
         @if ($application->reviewer_note)

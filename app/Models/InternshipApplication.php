@@ -145,8 +145,6 @@ class InternshipApplication extends Model
     {
         $label = match ($type) {
             'cv' => 'CV',
-            'transcript' => 'Transkrip',
-            'cover-letter' => 'Surat-pengantar',
             default => 'Portfolio',
         };
 
@@ -162,8 +160,6 @@ class InternshipApplication extends Model
     {
         return [
             'cv' => ['label' => 'CV', 'path' => $this->cv_path],
-            'transcript' => ['label' => 'Transkrip', 'path' => $this->transcript_path],
-            'cover-letter' => ['label' => 'Surat pengantar', 'path' => $this->cover_letter_path],
             'portfolio' => ['label' => 'Portfolio', 'path' => $this->portfolio_path],
         ];
     }

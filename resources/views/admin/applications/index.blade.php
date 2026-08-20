@@ -41,7 +41,7 @@
             Unduh semua berkas
         </a>
         <p class="basis-full text-right text-[11px] text-ink-soft">
-            Spreadsheet terbuka di Chrome. ZIP berisi CV, transkrip, dan surat pengantar per pendaftar.
+            Spreadsheet terbuka di Chrome. ZIP berisi CV dan portofolio per pendaftar.
         </p>
     </div>
 </div>

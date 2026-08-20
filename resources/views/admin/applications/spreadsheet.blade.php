@@ -34,8 +34,6 @@
                     <th class="whitespace-nowrap border-b border-ink/10 px-3 py-3">Selesai magang</th>
                     <th class="whitespace-nowrap border-b border-ink/10 px-3 py-3">Tanggal daftar</th>
                     <th class="whitespace-nowrap border-b border-ink/10 px-3 py-3">CV</th>
-                    <th class="whitespace-nowrap border-b border-ink/10 px-3 py-3">Transkrip</th>
-                    <th class="whitespace-nowrap border-b border-ink/10 px-3 py-3">Surat pengantar</th>
                     <th class="whitespace-nowrap border-b border-ink/10 px-3 py-3">Portfolio</th>
                 </tr>
             </thead>
@@ -79,20 +77,6 @@
                         <td class="whitespace-nowrap px-3 py-2.5">
                             @if ($application->documentUrl('cv'))
                                 <a href="{{ $application->documentUrl('cv') }}" target="_blank" rel="noopener" class="font-semibold text-brand-mid hover:underline">Lihat</a>
-                            @else
-                                <span class="text-ink-soft">—</span>
-                            @endif
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-2.5">
-                            @if ($application->documentUrl('transcript'))
-                                <a href="{{ $application->documentUrl('transcript') }}" target="_blank" rel="noopener" class="font-semibold text-brand-mid hover:underline">Lihat</a>
-                            @else
-                                <span class="text-ink-soft">—</span>
-                            @endif
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-2.5">
-                            @if ($application->documentUrl('cover-letter'))
-                                <a href="{{ $application->documentUrl('cover-letter') }}" target="_blank" rel="noopener" class="font-semibold text-brand-mid hover:underline">Lihat</a>
                             @else
                                 <span class="text-ink-soft">—</span>
                             @endif

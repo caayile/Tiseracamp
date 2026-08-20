@@ -103,8 +103,6 @@ class InternshipApplicationController extends Controller
                 'mimes:pdf,doc,docx',
                 'max:5120',
             ],
-            'transcript' => [$existing?->transcript_path ? 'nullable' : 'required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'cover_letter' => [$existing?->cover_letter_path ? 'nullable' : 'required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'],
         ]);
 
         $cvPath = $existing?->cv_path;
@@ -112,16 +110,6 @@ class InternshipApplicationController extends Controller
             $cvPath = store_public_upload($request->file('cv'), 'internship-docs/cv');
         } elseif ($useSavedCv) {
             $cvPath = $savedCv->portfolio_file_url;
-        }
-
-        $transcriptPath = $existing?->transcript_path;
-        if ($request->hasFile('transcript')) {
-            $transcriptPath = store_public_upload($request->file('transcript'), 'internship-docs/transcripts');
-        }
-
-        $coverLetterPath = $existing?->cover_letter_path;
-        if ($request->hasFile('cover_letter')) {
-            $coverLetterPath = store_public_upload($request->file('cover_letter'), 'internship-docs/cover-letters');
         }
 
         $portfolioPath = $existing?->portfolio_path;
@@ -151,8 +139,6 @@ class InternshipApplicationController extends Controller
                 'portfolio_url' => $portfolioUrl,
                 'portfolio_path' => $portfolioPath,
                 'cv_path' => $cvPath,
-                'transcript_path' => $transcriptPath,
-                'cover_letter_path' => $coverLetterPath,
                 'status' => 'submitted',
                 'submitted_at' => now(),
                 'reviewer_note' => null,

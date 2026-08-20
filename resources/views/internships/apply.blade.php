@@ -113,22 +113,6 @@
                     @error('cv') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium">Transkrip nilai</label>
-                    <input type="file" name="transcript" accept=".pdf,.jpg,.jpeg,.png" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold" @required(! ($application?->transcript_path))>
-                    @if ($application?->transcript_path)
-                        <p class="mt-1 text-xs text-ink-soft">Sudah ada transkrip tersimpan. Upload ulang untuk mengganti.</p>
-                    @endif
-                    @error('transcript') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="mb-1.5 block text-sm font-medium">Surat pengantar magang *</label>
-                    <input type="file" name="cover_letter" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold" @required(! ($application?->cover_letter_path))>
-                    @if ($application?->cover_letter_path)
-                        <p class="mt-1 text-xs text-ink-soft">Sudah ada surat tersimpan. Upload ulang untuk mengganti.</p>
-                    @endif
-                    @error('cover_letter') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
-                <div>
                     <label class="mb-1.5 block text-sm font-medium">Link portfolio <span class="font-normal text-ink-soft">(opsional)</span></label>
                     <input type="url" name="portfolio_url" value="{{ $prefillPortfolioUrl }}" class="input-field" placeholder="https://...">
                     @error('portfolio_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
