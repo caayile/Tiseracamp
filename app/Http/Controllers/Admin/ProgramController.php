@@ -182,7 +182,7 @@ class ProgramController extends Controller
                 'responsibilities' => $this->parseBenefits($request->input('responsibilities_text')),
                 'price' => 0,
                 'level' => 'Beginner',
-                'audience' => $data['audience'] ?? 'all',
+                'audience' => 'all',
             ]);
 
             return redirect()->route('admin.programs.index', ['type' => 'internship'])->with('success', 'Detail lowongan magang diperbarui.');
@@ -467,7 +467,7 @@ class ProgramController extends Controller
         }
 
         $data['price'] = $data['price'] ?? 0;
-        $data['audience'] = $data['audience'] ?? 'all';
+        $data['audience'] = 'all';
 
         return $data;
     }

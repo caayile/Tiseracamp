@@ -18,18 +18,9 @@ class ProgramController extends Controller
         // Halaman katalog dipisah: default bootcamp, ?type=internship untuk magang
         $catalogType = $type === 'internship' ? 'internship' : 'bootcamp';
 
-        $isTsuStudent = auth()->user()?->isTsuStudent() ?? false;
-        $scope = $isTsuStudent && $catalogType === 'internship' && $request->string('scope')->toString() === 'tsu'
-            ? 'tsu'
-            : 'all';
-
         $query = Program::published()
             ->with(['partner', 'mentor', 'category'])
             ->where('type', $catalogType);
-
-        if ($catalogType === 'internship') {
-            $query->forAudience($scope === 'tsu');
-        }
 
         if ($category = $request->string('category')->toString()) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $category));
@@ -53,7 +44,7 @@ class ProgramController extends Controller
         $categories = Category::query()->orderBy('name')->get();
         $activeCategory = $request->string('category')->toString();
 
-        return view('programs.index', compact('programs', 'catalogType', 'isTsuStudent', 'scope', 'categories', 'activeCategory'));
+        return view('programs.index', compact('programs', 'catalogType', 'categories', 'activeCategory'));
     }
 
     public function show(string $slug): View|RedirectResponse
@@ -64,11 +55,6 @@ class ProgramController extends Controller
             ->firstOrFail();
 
         if (! $program->isVisibleTo(auth()->user())) {
-            if (auth()->user()?->isTsuPending() && $program->isTsuOnly()) {
-                return redirect()->route('dashboard')
-                    ->with('error', 'Lowongan khusus TSU aktif setelah admin menyetujui KTM.');
-            }
-
             abort(404);
         }
 

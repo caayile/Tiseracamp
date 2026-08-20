@@ -207,10 +207,8 @@ class InternshipApplicationController extends Controller
         }
 
         return redirect()
-            ->route(auth()->user()?->isTsuPending() ? 'dashboard' : 'programs.index', ['type' => 'internship'])
-            ->with('error', auth()->user()?->isTsuPending()
-                ? 'Lowongan khusus TSU aktif setelah admin menyetujui KTM.'
-                : 'Lowongan ini tidak tersedia untuk akunmu.');
+            ->route('programs.index', ['type' => 'internship'])
+            ->with('error', 'Lowongan ini tidak tersedia untuk akunmu.');
     }
 
     public function status(Program $program): View|RedirectResponse

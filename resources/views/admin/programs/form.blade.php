@@ -352,31 +352,6 @@
             </div>
 
             <div class="rounded-2xl border border-brand/15 bg-gradient-to-br from-brand-mist/50 to-panel p-4">
-                <p class="text-sm font-semibold text-ink">Sasaran pelamar</p>
-                <p class="mt-0.5 text-xs text-ink-soft">Nyalakan toggle untuk Umum dan/atau TS Group. Jika keduanya menyala, lowongan tampil di kedua tempat tanpa diisi dua kali — dan jika keduanya dimatikan, lowongan tidak tampil di mana pun.</p>
-                <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                    <label class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-brand/15 bg-panel px-4 py-3">
-                        <span>
-                            <span class="block text-sm font-semibold text-ink">Terbuka umum</span>
-                            <span class="block text-xs text-ink-soft">Terlihat oleh semua pengguna.</span>
-                        </span>
-                        <input type="checkbox" data-audience-umum class="peer sr-only" @checked(in_array(old('audience', $program->audience ?? 'all'), ['all', 'both'], true))>
-                        <span class="pointer-events-none relative inline-flex h-7 w-12 shrink-0 items-center rounded-full bg-ink/25 transition after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-brand peer-checked:after:translate-x-5"></span>
-                    </label>
-                    <label class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-brand/15 bg-panel px-4 py-3">
-                        <span>
-                            <span class="block text-sm font-semibold text-ink">TS Group</span>
-                            <span class="block text-xs text-ink-soft">Terlihat oleh mahasiswa TSU.</span>
-                        </span>
-                        <input type="checkbox" data-audience-tsu class="peer sr-only" @checked(old('audience', $program->audience ?? 'all') === 'tsu' || old('audience', $program->audience ?? 'all') === 'both')>
-                        <span class="pointer-events-none relative inline-flex h-7 w-12 shrink-0 items-center rounded-full bg-ink/25 transition after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-brand peer-checked:after:translate-x-5"></span>
-                    </label>
-                </div>
-                <input type="hidden" name="audience" value="{{ old('audience', $program->audience ?? 'all') }}">
-                @error('audience') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            <div class="rounded-2xl border border-brand/15 bg-gradient-to-br from-brand-mist/50 to-panel p-4">
                 <div class="mb-3 flex items-start gap-3">
                     <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/25 text-brand-mid">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>

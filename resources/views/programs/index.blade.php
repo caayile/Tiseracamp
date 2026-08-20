@@ -18,9 +18,6 @@
         <form method="GET" class="mt-8">
             @if ($catalogType === 'internship')
                 <input type="hidden" name="type" value="internship">
-                @if ($isTsuStudent)
-                    <input type="hidden" name="scope" value="{{ $scope }}">
-                @endif
             @endif
             @if (! empty($activeCategory))
                 <input type="hidden" name="category" value="{{ $activeCategory }}">
@@ -58,28 +55,11 @@
             @endforeach
         </div>
     @endif
-    @if ($catalogType === 'internship' && auth()->user()?->isTsuPending())
-        <div class="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Filter <strong>TS Group</strong> aktif setelah admin menyetujui KTM. Sementara ini kamu melihat lowongan umum.
-        </div>
-    @endif
-    @if ($catalogType === 'internship' && $isTsuStudent)
-        <div class="mb-8 flex flex-wrap gap-2">
-            <a href="{{ route('programs.index', ['type' => 'internship', 'scope' => 'all']) }}"
-               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'all' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
-                Semua Lowongan
-            </a>
-            <a href="{{ route('programs.index', ['type' => 'internship', 'scope' => 'tsu']) }}"
-               class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $scope === 'tsu' ? 'bg-brand text-ink' : 'border border-brand/25 text-ink-soft hover:border-brand/60 hover:text-ink' }}">
-                TS Group
-            </a>
-        </div>
-    @endif
 
     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @forelse ($programs as $program)
             <div class="reveal">
-                <x-program-card :program="$program" :scope="$scope" />
+                <x-program-card :program="$program" />
             </div>
         @empty
             <div class="card-soft col-span-full p-10 text-center text-ink-soft">

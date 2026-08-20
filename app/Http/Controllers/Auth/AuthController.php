@@ -66,7 +66,9 @@ class AuthController extends Controller
 
     public function register(Request $request): RedirectResponse
     {
-        $data = $request->validate([
+        $googleData = $request->session()->pull('google_oauth_data');
+
+        $rules = [
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
@@ -74,7 +76,9 @@ class AuthController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'expertise' => ['nullable', 'string', 'max:500'],
             'terms' => ['accepted'],
-        ]);
+        ];
+
+        $data = $request->validate($rules);
 
         $user = User::create([
             'name' => $data['name'],
@@ -85,11 +89,19 @@ class AuthController extends Controller
             'expertise' => $data['role'] === 'mentor'
                 ? array_values(array_filter(array_map('trim', explode(',', $data['expertise'] ?? ''))))
                 : null,
+            'google_id' => $googleData['google_id'] ?? null,
+            'avatar' => $googleData['avatar'] ?? null,
             'status' => 'active',
+            'email_verified_at' => $googleData ? now() : null,
         ]);
 
         Auth::login($user);
-        ActivityLog::record($user, 'register');
+        ActivityLog::record($user, $googleData ? 'register_google' : 'register');
+
+        if ($googleData) {
+            return redirect()->route($user->postAuthRoute())
+                ->with('success', 'Akun berhasil dibuat dan terhubung dengan Google. Selamat datang!');
+        }
 
         $mailSent = $this->sendVerificationMail($user);
 

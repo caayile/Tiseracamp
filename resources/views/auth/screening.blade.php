@@ -67,8 +67,8 @@
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink/10 bg-surface p-4 transition has-[:checked]:border-brand has-[:checked]:bg-brand-mist has-[:checked]:ring-1 has-[:checked]:ring-brand/40">
                     <input type="radio" name="is_tsu" value="1" class="mt-0.5 h-5 w-5 shrink-0 accent-brand" data-tsu-trigger @checked(old('is_tsu') === '1')>
                     <span>
-                        <span class="block font-semibold text-ink">Mahasiswa TSU</span>
-                        <span class="mt-0.5 block text-xs text-ink-soft">Mahasiswa / alumni Tiga Serangkai — fitur khusus aktif setelah admin menyetujui KTM. Wajib unggah KTM.</span>
+                        <span class="block font-semibold text-ink">Mahasiswa/Alumni Tiga Serangkai</span>
+                        <span class="mt-0.5 block text-xs text-ink-soft">Mahasiswa/Alumni Tiga Serangkai</span>
                     </span>
                 </label>
 
@@ -83,18 +83,18 @@
                             <input type="radio" name="tsu_status" value="active" class="mt-0.5 h-4 w-4 shrink-0 accent-brand" data-tsu-status @checked(old('tsu_status') === 'active')>
                             <span>
                                 <span class="block text-sm font-semibold text-ink">Mahasiswa Aktif</span>
-                                <span class="mt-0.5 block text-xs text-ink-soft">Masih kuliah di TSU — isi semester saat ini, lalu unggah KTM.</span>
+                                <span class="mt-0.5 block text-xs text-ink-soft">Masih kuliah di TSU</span>
                             </span>
                         </label>
                         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-ink/10 bg-panel p-3.5 transition has-[:checked]:border-brand has-[:checked]:ring-1 has-[:checked]:ring-brand/40">
                             <input type="radio" name="tsu_status" value="fresh_graduate" class="mt-0.5 h-4 w-4 shrink-0 accent-brand" data-tsu-status @checked(old('tsu_status') === 'fresh_graduate')>
                             <span>
                                 <span class="block text-sm font-semibold text-ink">Fresh Graduate</span>
-                                <span class="mt-0.5 block text-xs text-ink-soft">Baru lulus TSU — lanjut unggah KTM tanpa isi semester.</span>
+                                <span class="mt-0.5 block text-xs text-ink-soft">Lulusan TSU</span>
                             </span>
                         </label>
                     </div>
-                    <p class="hidden text-xs text-red-600" data-tsu-status-error>Pilih Mahasiswa Aktif atau Fresh Graduate.</p>
+                    <p class="hidden text-xs text-red-600" data-tsu-status-error>Pilih salah satu status.</p>
                     @error('tsu_status') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
 
                     <div class="{{ old('tsu_status') === 'active' ? '' : 'hidden' }} space-y-1.5" data-semester-wrap>
@@ -113,8 +113,8 @@
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink/10 bg-surface p-4 transition has-[:checked]:border-brand has-[:checked]:bg-brand-mist has-[:checked]:ring-1 has-[:checked]:ring-brand/40">
                     <input type="radio" name="is_tsu" value="0" class="mt-0.5 h-5 w-5 shrink-0 accent-brand" data-tsu-trigger @checked(old('is_tsu') === '0')>
                     <span>
-                        <span class="block font-semibold text-ink">Bukan dari TSU</span>
-                        <span class="mt-0.5 block text-xs text-ink-soft">Mahasiswa universitas lain / umum — tidak perlu KTM.</span>
+                        <span class="block font-semibold text-ink">Mahasiswa Universitas lain / umum</span>
+                        <span class="mt-0.5 block text-xs text-ink-soft">Mahasiswa Universitas lain / umum</span>
                     </span>
                 </label>
             </div>

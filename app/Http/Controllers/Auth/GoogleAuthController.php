@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
@@ -83,16 +82,17 @@ class GoogleAuthController extends Controller
                 'avatar' => $user->avatar ?: $googleUser->getAvatar(),
             ])->save();
         } else {
-            $user = User::create([
+            $request->session()->put('google_oauth_data', [
+                'google_id' => $googleUser->getId(),
                 'name' => $googleUser->getName() ?: Str::before($email, '@'),
                 'email' => $email,
-                'google_id' => $googleUser->getId(),
-                'password' => Hash::make(Str::random(40)),
-                'role' => $role,
                 'avatar' => $googleUser->getAvatar(),
-                'status' => 'active',
-                'email_verified_at' => now(),
+                'role' => $role,
             ]);
+
+            return redirect()
+                ->route('register')
+                ->with('info', 'Akun belum terdaftar. Silakan lengkapi data berikut untuk membuat akun baru.');
         }
 
         Auth::login($user, true);
