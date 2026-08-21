@@ -16,82 +16,8 @@
         </p>
 
         @if ($catalogType === 'internship')
-            <div class="mt-10 max-w-5xl mx-auto">
-                <!-- Judul Utama -->
-                <h2 class="text-2xl font-bold text-ink text-center mb-10">1 Bulan Durasi Program</h2>
-
-                <!-- Timeline Wrapper -->
-                <div class="relative">
-                    
-                    <!-- Garis Timeline Background -->
-                    <div class="absolute top-[2.25rem] left-[12.5%] right-[12.5%] h-1.5 bg-brand/15 -translate-y-1/2 z-0 rounded-full" aria-hidden="true"></div>
-                    
-                    <!-- Garis Aktif (Teal) - untuk step 1-2 (50%) -->
-                    <div class="absolute top-[2.25rem] left-[12.5%] w-[50%] h-1.5 bg-teal-500 -translate-y-1/2 z-10"></div>
-                    
-                    <!-- Garis Aktif (Amber dengan glow) - untuk step 3 (25%) -->
-                    <div class="absolute top-[2.25rem] left-[62.5%] w-[25%] h-1.5 bg-amber-400 -translate-y-1/2 z-10 shadow-[0_0_12px_rgba(251,191,36,0.6)]"></div>
-
-                    <!-- Grid Langkah / Steps - HORIZONTAL (4 kolom), scroll horizontal di mobile -->
-                    <div class="grid grid-cols-4 gap-4 relative z-20 overflow-x-auto pb-4 scrollbar-hide">
-                        @php
-                            $steps = [
-                                [
-                                    'week' => 1,
-                                    'duration' => 'Est. 1 Minggu',
-                                    'title' => 'Onboarding & Learning Path',
-                                    'desc' => 'Pengenalan program, mentor, dan lingkungan kerja. Mulai mempelajari learning path sesuai divisi masing-masing.',
-                                    'borderColor' => 'border-teal-500',
-                                    'textColor' => 'text-teal-600',
-                                ],
-                                [
-                                    'week' => 2,
-                                    'duration' => 'Est. 1 Minggu',
-                                    'title' => 'Learning & Project Development',
-                                    'desc' => 'Melanjutkan learning path dan mulai mengerjakan project dengan bimbingan mentor.',
-                                    'borderColor' => 'border-teal-500',
-                                    'textColor' => 'text-teal-600',
-                                ],
-                                [
-                                    'week' => 3,
-                                    'duration' => 'Est. 1 Minggu',
-                                    'title' => 'Project Development & Review',
-                                    'desc' => 'Melanjutkan pengerjaan project dan melakukan review bersama mentor untuk mendapatkan feedback dan arahan.',
-                                    'borderColor' => 'border-amber-400',
-                                    'textColor' => 'text-amber-600',
-                                    'glow' => true,
-                                ],
-                                [
-                                    'week' => 4,
-                                    'duration' => 'Est. 1 Minggu',
-                                    'title' => 'Final Project & Presentation',
-                                    'desc' => 'Menyelesaikan project, melakukan presentasi, dan mendapatkan sertifikat setelah menyelesaikan program.',
-                                    'borderColor' => 'border-brand/30',
-                                    'textColor' => 'text-ink',
-                                ],
-                            ];
-                        @endphp
-                        @foreach ($steps as $step)
-                            <div class="flex flex-col items-center text-center min-w-0">
-                                <!-- Step number on timeline line -->
-                                <div class="relative mb-4 flex justify-center">
-                                    <div class="relative flex h-8 w-8 items-center justify-center rounded-full bg-panel border-2 {{ $step['borderColor'] }} {{ $step['textColor'] }} font-semibold z-10 shadow-sm{{ ($step['glow'] ?? false) ? ' shadow-[0_0_8px_rgba(251,191,36,0.5)]' : '' }}">
-                                        <span class="text-base">{{ $step['week'] }}</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Duration label -->
-                                <p class="mb-1 text-[11px] font-medium text-ink-soft">{{ $step['duration'] }}</p>
-                                
-                                <!-- Phase title -->
-                                <h3 class="mb-1.5 font-semibold text-sm text-ink">{{ $step['title'] }}</h3>
-                                
-                                <!-- Description -->
-                                <p class="text-[11px] text-ink-soft leading-relaxed">{{ $step['desc'] }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+            <div class="mt-6">
+                <x-program-flow title="1 Bulan Durasi Program" />
             </div>
         @endif
 
