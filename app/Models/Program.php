@@ -17,6 +17,7 @@ class Program extends Model
         'preferred_skills', 'responsibilities', 'partner_id',
         'category_id', 'mentor_id', 'is_published', 'is_open', 'is_featured', 'approval_status',
         'audience',
+        'timeline',
     ];
 
     protected function casts(): array
@@ -31,6 +32,7 @@ class Program extends Model
             'is_published' => 'boolean',
             'is_open' => 'boolean',
             'is_featured' => 'boolean',
+            'timeline' => 'array',
         ];
     }
 
@@ -246,5 +248,45 @@ class Program extends Model
     public function jobStatusLabel(): string
     {
         return $this->isJobOpen() ? 'Terbuka' : 'Tertutup';
+    }
+
+    public function timelineWeeks(): array
+    {
+        if (! empty($this->timeline)) {
+            return $this->timeline;
+        }
+        return $this->defaultTimeline();
+    }
+
+    public function defaultTimeline(): array
+    {
+        return [
+            [
+                'week' => 1,
+                'title' => 'Onboarding & Learning Path',
+                'description' => 'Perkenalan program, mentor, dan lingkungan kerja. Mulai mempelajari learning path sesuai divisi masing-masing.',
+            ],
+            [
+                'week' => 2,
+                'title' => 'Learning & Project Development',
+                'description' => 'Melanjutkan learning path dan mulai mengerjakan project dengan bimbingan mentor.',
+            ],
+            [
+                'week' => 3,
+                'title' => 'Project Development & Review',
+                'description' => 'Melanjutkan pengerjaan project dan melakukan review bersama mentor untuk mendapatkan feedback dan arahan.',
+            ],
+            [
+                'week' => 4,
+                'title' => 'Final Project & Presentation',
+                'description' => 'Menyelesaikan project, melakukan presentasi, dan mendapatkan sertifikat setelah menyelesaikan program.',
+            ],
+        ];
+    }
+
+    public function timelineWeeksTitle(): string
+    {
+        $weeks = count($this->timelineWeeks());
+        return "Timeline Magang ({$weeks} Minggu)";
     }
 }

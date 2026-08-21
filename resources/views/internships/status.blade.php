@@ -46,6 +46,22 @@
             </div>
         @endif
 
+        @if ($application->status === 'accepted')
+            <div class="mt-8">
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-soft">{{ $program->timelineWeeksTitle() }}</p>
+                <ol class="mt-4 space-y-4">
+                    @foreach ($program->timelineWeeks() as $week)
+                        <li class="relative pl-10 pb-4 before:absolute before:left-2 before:top-0 before:h-full before:w-0.5 before:bg-brand/20 last:before:hidden">
+                            <div class="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-brand text-ink text-xs font-bold">{{ $week['week'] }}</div>
+                            <p class="font-semibold text-ink">{{ $week['title'] }}</p>
+                            <p class="mt-1 text-sm text-ink-soft">{{ $week['description'] }}</p>
+                            <span class="inline-block mt-2 text-xs font-medium text-brand-dark bg-brand/10 px-2 py-0.5 rounded">Est. 1 Minggu</span>
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        @endif
+
         <div class="mt-6 flex flex-wrap gap-3">
             @if ($application->status === 'accepted')
                 <a href="{{ route('learn.show', $program) }}" class="btn-primary">Mulai magang</a>
