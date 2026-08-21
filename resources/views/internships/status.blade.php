@@ -49,13 +49,10 @@
         @elseif ($activeStep === 2)
             {{-- Step 2: Seleksi Administrasi --}}
             <div class="card-soft space-y-6 p-6 lg:col-span-2">
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <span class="rounded-full bg-brand/15 px-3 py-1 text-xs font-bold text-brand-dark">Tahap 2 dari 4</span>
-                        <h2 class="mt-3 font-display text-xl font-semibold text-ink">Seleksi Administrasi</h2>
-                        <p class="mt-1 text-sm leading-relaxed text-ink-soft">{{ $application->seleksiPanelIntro() }}</p>
-                    </div>
-                    <a href="{{ $statusUrl }}" class="btn-ghost">Kembali ke ringkasan</a>
+                <div>
+                    <span class="rounded-full bg-brand/15 px-3 py-1 text-xs font-bold text-brand-dark">Tahap 2 dari 4</span>
+                    <h2 class="mt-3 font-display text-xl font-semibold text-ink">Seleksi Administrasi</h2>
+                    <p class="mt-1 text-sm leading-relaxed text-ink-soft">{{ $application->seleksiPanelIntro() }}</p>
                 </div>
 
                 <div class="border-t border-brand/10 pt-6">
