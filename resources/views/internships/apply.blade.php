@@ -3,14 +3,20 @@
 @section('title', 'Daftar Magang — '.$program->title)
 
 @section('content')
-<section class="mx-auto max-w-3xl px-4 py-10">
+<section class="mx-auto max-w-5xl px-4 py-10">
     <div class="mb-6">
         <x-back-nav :fallback="route('programs.show', $program->slug)" />
         <h2 class="mt-2 font-display text-2xl font-semibold text-ink">Daftar Magang</h2>
         <p class="mt-1 text-sm text-ink-soft">Lengkapi data diri dan unggah berkas persyaratan. Setelah dikirim, status menjadi menunggu seleksi.</p>
     </div>
 
-    <form method="POST" action="{{ route('internships.store', $program) }}" enctype="multipart/form-data" class="card-soft space-y-5 p-6">
+    <div class="grid gap-6 lg:grid-cols-3 lg:items-start">
+        <aside class="card-soft p-6 lg:sticky lg:top-6">
+            <p class="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Alur pendaftaran magang</p>
+            <x-vertical-stepper :steps="\App\Models\InternshipApplication::previewSteps()" />
+        </aside>
+
+        <form method="POST" action="{{ route('internships.store', $program) }}" enctype="multipart/form-data" class="card-soft space-y-5 p-6 lg:col-span-2">
         @csrf
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -132,6 +138,7 @@
 
         <button type="submit" class="btn-primary w-full">Kirim pendaftaran</button>
     </form>
+    </div>
 
     @if ($hasSavedCv)
     <script>

@@ -17,8 +17,8 @@ class InternshipApplication extends Model
     protected function casts(): array
     {
         return [
-            'submitted_at' => 'datetime',
-            'reviewed_at' => 'datetime',
+            'submitted_at' => 'datetime:Asia/Jakarta',
+            'reviewed_at' => 'datetime:Asia/Jakarta',
             'internship_start_date' => 'date',
             'internship_end_date' => 'date',
         ];
@@ -60,16 +60,178 @@ class InternshipApplication extends Model
         };
     }
 
-    /** Current step 1–5 matching proses pendaftaran magang UI */
+    /** Current step 1–4 matching proses pendaftaran magang UI */
     public function processStep(): int
     {
         return match ($this->status) {
-            'submitted' => 3,
-            'under_review' => 3,
-            'accepted' => 5,
-            'rejected' => 4,
+            'submitted' => 2,
+            'under_review' => 2,
+            'accepted' => 4,
+            'rejected' => 3,
             default => 1,
         };
+    }
+
+    /**
+     * Stepper steps shown before the user submits a registration.
+     *
+     * @return array<int, array{label: string, description: string, state: 'completed'|'active'|'pending'|'rejected'}>
+     */
+    public static function previewSteps(): array
+    {
+        return [
+            1 => [
+                'label' => 'Pendaftaran',
+                'description' => 'Isi formulir & upload CV + portfolio',
+                'detail' => 'Isi formulir data diri, lalu unggah CV dan portfolio kamu. Bisa juga memakai dokumen yang sudah tersimpan di Galeri Karier supaya lebih cepat.',
+                'state' => 'active',
+            ],
+            2 => [
+                'label' => 'Seleksi Administrasi',
+                'description' => 'Tim kami memeriksa berkas & kualifikasi',
+                'detail' => 'Tim admin memeriksa kelengkapan berkas dan kesesuaian kualifikasi program — jenjang pendidikan, jurusan, dan semester. Tidak ada tes khusus di tahap ini.',
+                'state' => 'pending',
+            ],
+            3 => [
+                'label' => 'Pengumuman Hasil Seleksi',
+                'description' => 'Hasil dikabarkan lewat notifikasi',
+                'detail' => 'Hasil seleksi dikabarkan lewat notifikasi akun dan halaman status pendaftaran. Pastikan notifikasi aktif supaya tidak terlewat.',
+                'state' => 'pending',
+            ],
+            4 => [
+                'label' => 'Mulai Program Magang',
+                'description' => 'Onboarding & mulai magang bareng mentor',
+                'detail' => 'Jika diterima, kamu langsung masuk ke program: onboarding, berkenalan dengan mentor pembimbing, lalu memulai aktivitas magang sesuai divisi.',
+                'state' => 'pending',
+            ],
+        ];
+    }
+
+    public function submittedAtLabel(): ?string
+    {
+        return $this->submitted_at
+            ? $this->submitted_at->locale('id')->translatedFormat('d M Y, H.i').' WIB'
+            : null;
+    }
+
+    public function reviewedAtLabel(): ?string
+    {
+        return $this->reviewed_at
+            ? $this->reviewed_at->locale('id')->translatedFormat('d M Y, H.i').' WIB'
+            : null;
+    }
+
+    public function statusHeadline(): string
+    {
+        return match ($this->status) {
+            'submitted' => 'Berkas kamu sudah masuk!',
+            'under_review' => 'Pemeriksaan sedang berlangsung',
+            'accepted' => 'Selamat, kamu diterima!',
+            'rejected' => 'Belum lolos di kesempatan ini',
+            default => $this->statusLabel(),
+        };
+    }
+
+    public function statusMessage(): string
+    {
+        $program = $this->program?->title ?? 'program ini';
+
+        return match ($this->status) {
+            'submitted' => 'Terima kasih sudah mendaftar di '.$program.'. Tim admin akan memeriksa kelengkapan CV, portfolio, dan kualifikasimu. Begitu ada perkembangan, kami kabarin lewat notifikasi — pantau terus ya.',
+            'under_review' => 'Berkasmu sedang ditinjau oleh tim kami. Proses ini butuh waktu sebentar — kamu akan menerima notifikasi begitu hasilnya keluar.',
+            'accepted' => 'Kamu resmi menjadi bagian dari '.$program.'. Klik tombol "Mulai magang" di bawah untuk masuk ke program dan berkenalan dengan mentor pembimbingmu.',
+            'rejected' => 'Sayangnya berkasmu belum memenuhi kualifikasi '.$program.' kali ini. Jangan berkecil hati — setiap program punya kebutuhan yang berbeda. Yuk intip program magang lain yang mungkin lebih cocok untukmu.',
+            default => '',
+        };
+    }
+
+    /**
+     * Return stepper steps with their state for the vertical stepper UI.
+     *
+     * @return array<int, array{label: string, description: string, state: 'completed'|'active'|'pending'|'rejected'}>
+     */
+    public function stepperSteps(): array
+    {
+        $current = $this->processStep();
+        $isRejected = $this->status === 'rejected';
+
+        $steps = [
+            1 => [
+                'label' => 'Pendaftaran',
+                'description' => 'Formulir & berkas terkirim',
+                'state' => 'completed',
+            ],
+            2 => [
+                'label' => 'Seleksi Administrasi',
+                'description' => match ($this->status) {
+                    'submitted' => 'Berkas sedang diperiksa tim admin',
+                    'under_review' => 'Berkas sedang ditinjau',
+                    'accepted' => 'Berkas lolos verifikasi',
+                    'rejected' => 'Berkas belum memenuhi kualifikasi',
+                    default => 'Tim admin memeriksa berkas & kualifikasi',
+                },
+                'state' => $isRejected ? 'rejected' : ($current > 2 ? 'completed' : ($current === 2 ? 'active' : 'pending')),
+            ],
+            3 => [
+                'label' => 'Pengumuman Hasil Seleksi',
+                'description' => match ($this->status) {
+                    'accepted' => 'Kamu diterima di program ini',
+                    'rejected' => 'Belum lolos seleksi kali ini',
+                    default => 'Hasil dikabarkan lewat notifikasi',
+                },
+                'state' => $isRejected ? 'rejected' : ($current >= 3 ? ($this->status === 'accepted' ? 'completed' : 'active') : 'pending'),
+            ],
+            4 => [
+                'label' => 'Mulai Program Magang',
+                'description' => match ($this->status) {
+                    'accepted' => 'Siap dimulai kapan saja',
+                    default => 'Onboarding bareng mentor pembimbing',
+                },
+                'state' => $this->status === 'accepted' ? 'active' : 'pending',
+            ],
+        ];
+
+        return $steps;
+    }
+
+    /** Teks pengantar panel tahap Seleksi Administrasi, menyesuaikan status. */
+    public function seleksiPanelIntro(): string
+    {
+        return match ($this->status) {
+            'submitted' => 'Berkas kamu sedang antre untuk diperiksa tim admin: kelengkapan CV, portfolio, dan kesesuaian kualifikasi program.',
+            'under_review' => 'Tim sedang meninjau berkasmu lebih detail. Proses ini biasanya tidak lama — ditunggu kabarnya ya.',
+            'accepted' => 'Berkasmu dinyatakan lengkap dan memenuhi kualifikasi program. Kamu bisa melanjutkan ke tahap pengumuman.',
+            'rejected' => 'Setelah ditinjau, berkasmu belum memenuhi kualifikasi program ini. Kamu tetap bisa mendaftar lagi di periode berikutnya atau mencoba program lain.',
+            default => 'Di tahap ini tim admin memeriksa berkas yang kamu kirim.',
+        };
+    }
+
+    public function internshipPeriodLabel(): ?string
+    {
+        if (! $this->internship_start_date || ! $this->internship_end_date) {
+            return null;
+        }
+
+        return $this->internship_start_date->locale('id')->translatedFormat('d M Y')
+            .' – '.$this->internship_end_date->locale('id')->translatedFormat('d M Y');
+    }
+
+    /** @return array<int, array{label: string, state: 'done'|'pending'|'failed'|'missing'}> */
+    public function seleksiChecklist(): array
+    {
+        return [
+            ['label' => 'Data diri & kontak', 'state' => 'done'],
+            ['label' => 'Kelengkapan CV', 'state' => filled($this->cv_path) ? 'done' : 'missing'],
+            ['label' => 'Kelengkapan portfolio', 'state' => (filled($this->portfolio_path) || filled($this->portfolio_url)) ? 'done' : 'missing'],
+            [
+                'label' => 'Kesesuaian kualifikasi program',
+                'state' => match ($this->status) {
+                    'accepted' => 'done',
+                    'rejected' => 'failed',
+                    default => 'pending',
+                },
+            ],
+        ];
     }
 
     public function isPending(): bool
@@ -174,6 +336,21 @@ class InternshipApplication extends Model
         $url = route('admin.applications.document', [$this, $type], $absolute);
 
         return $download ? $url.(str_contains($url, '?') ? '&' : '?').'download=1' : $url;
+    }
+
+    /** Public URL for the applicant to view their own uploaded document. */
+    public function publicDocumentUrl(string $type): ?string
+    {
+        $path = $this->documentFiles()[$type]['path'] ?? null;
+        if (! filled($path)) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return asset('uploads/'.$path);
     }
 
     /**
