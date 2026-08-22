@@ -27,6 +27,26 @@ class ProgramController extends Controller
         return view('mentor.programs.index', compact('programs'));
     }
 
+    public function internships(): View
+    {
+        $programs = Program::where('mentor_id', auth()->id())
+            ->where('type', 'internship')
+            ->with(['category', 'mentor', 'partner'])
+            ->latest()
+            ->get();
+
+        return view('mentor.internships.index', compact('programs'));
+    }
+
+    public function internshipCurriculum(Program $program): View
+    {
+        abort_unless($program->type === 'internship', 404);
+        abort_unless($program->mentor_id === auth()->id(), 403);
+        $program->load(['modules.lessons.assignment.questions']);
+
+        return view('mentor.internships.curriculum', compact('program'));
+    }
+
     public function create(): View
     {
         return view('mentor.programs.form', [

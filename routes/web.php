@@ -177,6 +177,8 @@ Route::middleware(['auth', 'active'])->group(function () {
 Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('/', [MentorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/programs', [MentorProgramController::class, 'index'])->name('programs.index');
+    Route::get('/internships', [MentorProgramController::class, 'internships'])->name('internships.index');
+    Route::get('/internships/{program}/curriculum', [MentorProgramController::class, 'internshipCurriculum'])->name('internships.curriculum');
     Route::get('/programs/create', [MentorProgramController::class, 'create'])->name('programs.create');
     Route::post('/programs', [MentorProgramController::class, 'store'])->name('programs.store');
     Route::get('/programs/{program}/edit', [MentorProgramController::class, 'edit'])->name('programs.edit');

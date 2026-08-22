@@ -26,9 +26,8 @@
                     'Overview' => [
                         ['label' => 'Dashboard', 'route' => 'mentor.dashboard', 'match' => 'mentor.dashboard', 'icon' => 'M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z'],
                     ],
-                    'Program' => [
+                    'Bootcamp' => [
                         ['label' => 'Bootcamp Saya', 'route' => 'mentor.programs.index', 'match' => 'mentor.programs.*', 'icon' => 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14zM12 14v5'],
-                        ['label' => 'Tambah Bootcamp', 'route' => 'mentor.programs.create', 'match' => 'mentor.programs.create', 'icon' => 'M12 4v16m8-8H4'],
                     ],
                     'Mentoring' => [
                         ['label' => 'Logbook Peserta', 'route' => 'mentor.logbooks.index', 'match' => 'mentor.logbooks.*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
@@ -54,9 +53,6 @@
                 @foreach ($items as $item)
                     @php
                         $isActive = request()->routeIs($item['match']);
-                        if (($item['route'] ?? '') === 'mentor.programs.index') {
-                            $isActive = request()->routeIs('mentor.programs.*') && ! request()->routeIs('mentor.programs.create');
-                        }
                     @endphp
                     <a href="{{ route($item['route']) }}" class="panel-sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition {{ $isActive ? 'is-active' : '' }}">
                         <svg class="panel-sidebar-icon h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -92,12 +88,6 @@
                 <div class="flex items-center gap-2 sm:gap-4">
                     @include('partials.theme-toggle')
                     @include('partials.notification-bell')
-
-                    <a href="{{ route('mentor.programs.create') }}"
-                       class="inline-flex items-center gap-2 rounded-xl bg-[#0B1F2A] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#065A7A] sm:px-5">
-                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#27CCF5] text-base font-bold leading-none text-[#0B1F2A]">+</span>
-                        <span class="hidden sm:inline">Tambah Bootcamp</span>
-                    </a>
 
                     <div class="relative z-50" data-profile-menu>
                         <button type="button" data-profile-toggle

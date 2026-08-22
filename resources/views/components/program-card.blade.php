@@ -1,4 +1,4 @@
-@props(['program', 'cta' => null, 'href' => null, 'actions' => false, 'scope' => null])
+@props(['program', 'cta' => null, 'href' => null, 'actions' => false, 'scope' => null, 'variant' => null])
 
 @php
     $mentor = $program->mentor;
@@ -16,7 +16,7 @@
     }
 @endphp
 
-@if ($isInternship || $isJob)
+@if (($isInternship || $isJob) && $variant !== 'catalog')
     @php
         $metaItems = $isJob
             ? [
@@ -116,12 +116,19 @@
             </div>
 
             <div class="mt-auto pt-5">
-                <a href="{{ $link }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-ink shadow-[0_10px_24px_-12px_rgba(39,204,245,0.9)] transition hover:bg-brand-light">
-                    Lihat Detail
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
-                </a>
+                @if (! $actions)
+                    <a href="{{ $link }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-ink shadow-[0_10px_24px_-12px_rgba(39,204,245,0.9)] transition hover:bg-brand-light">
+                        Lihat Detail
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                @elseif ($isInternship)
+                    <a href="{{ route('mentor.programs.curriculum', $program) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-ink shadow-[0_10px_24px_-12px_rgba(39,204,245,0.9)] transition hover:bg-brand-light">
+                        Kelola Kurikulum
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                @endif
 
-                @if ($actions)
+                @if ($actions && ! $isInternship)
                     <div class="mt-2 flex gap-2">
                         <a href="{{ route('mentor.programs.curriculum', $program) }}" class="flex-1 rounded-lg bg-brand py-2 text-center text-[11px] font-semibold text-ink hover:bg-brand-light">Kurikulum</a>
                         <a href="{{ route('mentor.programs.students', $program) }}" class="flex-1 rounded-lg border border-ink/15 py-2 text-center text-[11px] font-semibold text-ink hover:border-brand hover:bg-brand-mist">Siswa</a>
@@ -205,8 +212,12 @@
 
             @if ($actions)
                 <div class="flex gap-2 pt-1">
-                    <a href="{{ route('mentor.programs.curriculum', $program) }}" class="flex-1 rounded-lg bg-brand py-2 text-center text-[11px] font-semibold text-ink hover:bg-brand-light">Kurikulum</a>
-                    <a href="{{ route('mentor.programs.students', $program) }}" class="flex-1 rounded-lg border border-ink/15 py-2 text-center text-[11px] font-semibold text-ink hover:border-brand hover:bg-brand-mist">Siswa</a>
+                    @if ($isInternship)
+                        <a href="{{ $href ?? route('mentor.internships.curriculum', $program) }}" class="w-full rounded-lg bg-brand py-2 text-center text-[11px] font-semibold text-ink hover:bg-brand-light">Kelola Kurikulum</a>
+                    @else
+                        <a href="{{ route('mentor.programs.curriculum', $program) }}" class="flex-1 rounded-lg bg-brand py-2 text-center text-[11px] font-semibold text-ink hover:bg-brand-light">Kurikulum</a>
+                        <a href="{{ route('mentor.programs.students', $program) }}" class="flex-1 rounded-lg border border-ink/15 py-2 text-center text-[11px] font-semibold text-ink hover:border-brand hover:bg-brand-mist">Siswa</a>
+                    @endif
                 </div>
             @endif
         </div>

@@ -16,9 +16,11 @@
 @endphp
 
 <div class="mb-6 flex flex-wrap gap-3">
-    <a href="{{ route('mentor.programs.index') }}" class="btn-secondary">← Kembali</a>
-    <a href="{{ route('mentor.programs.edit', $program) }}" class="btn-ghost">Edit bootcamp</a>
-    <a href="{{ route('mentor.programs.students', $program) }}" class="btn-ghost">Lihat siswa</a>
+    <a href="{{ route($program->type === 'internship' ? 'mentor.internships.index' : 'mentor.programs.index') }}" class="btn-secondary">← Kembali</a>
+    @if ($program->type === 'bootcamp')
+        <a href="{{ route('mentor.programs.edit', $program) }}" class="btn-ghost">Edit bootcamp</a>
+        <a href="{{ route('mentor.programs.students', $program) }}" class="btn-ghost">Lihat siswa</a>
+    @endif
 </div>
 
 <div class="card-soft mb-6 border-brand/20 bg-brand-mist/40 p-4 text-sm text-ink-soft">

@@ -214,8 +214,8 @@
                         </td>
                         <td class="px-5 py-3">
                             <div class="flex flex-wrap justify-end gap-2">
-                                @if ($program->type === 'bootcamp')
-                                    <a href="{{ route('admin.programs.curriculum', $program) }}" class="btn-ghost">Kurikulum</a>
+                                @if ($program->type === 'bootcamp' || ($program->type === 'internship' && ! $program->mentor_id))
+                                    <a href="{{ route('admin.programs.curriculum', $program) }}" class="btn-ghost" @if ($program->type === 'internship') title="Belum ada mentor ditugaskan - admin sementara menyiapkan materi" @endif>Kurikulum</a>
                                 @endif
                                 <a href="{{ route('admin.programs.edit', $program) }}" class="btn-secondary">Edit</a>
                                 <a href="{{ route('admin.programs.publikasi', $program) }}" class="btn-ghost">Publikasi</a>
