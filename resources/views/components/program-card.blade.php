@@ -122,7 +122,7 @@
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
                     </a>
                 @elseif ($isInternship)
-                    <a href="{{ route('mentor.programs.curriculum', $program) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-ink shadow-[0_10px_24px_-12px_rgba(39,204,245,0.9)] transition hover:bg-brand-light">
+                    <a href="{{ $href ?? route('mentor.internships.curriculum', $program) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-ink shadow-[0_10px_24px_-12px_rgba(39,204,245,0.9)] transition hover:bg-brand-light">
                         Kelola Kurikulum
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
                     </a>

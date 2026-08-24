@@ -58,4 +58,23 @@ class Lesson extends Model
 
         return $url !== '' && (str_contains($url, '.pdf') || str_ends_with($url, 'pdf'));
     }
+
+    public function isWeeklyAssignment(): bool
+    {
+        return $this->type === 'assignment';
+    }
+
+    public function typeLabel(): string
+    {
+        return match ($this->type) {
+            'text' => 'Pengenalan',
+            'video' => 'Video',
+            'article' => 'Artikel',
+            'pdf' => 'PDF',
+            'recording' => 'Rekaman',
+            'quiz' => 'Quiz',
+            'assignment' => 'Upload tugas',
+            default => $this->type,
+        };
+    }
 }

@@ -346,6 +346,23 @@
                 </div>
             </div>
 
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Mentor magang</label>
+                    <select name="mentor_id" class="input-field">
+                        <option value="">— Belum ditugaskan —</option>
+                        @foreach ($mentors as $mentor)
+                            <option value="{{ $mentor->id }}" @selected(old('mentor_id', $program->mentor_id) == $mentor->id)>{{ $mentor->name }} ({{ $mentor->email }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-ink">Atau email mentor baru</label>
+                    <input type="email" name="mentor_email" value="{{ old('mentor_email') }}" class="input-field" placeholder="mentor@email.com">
+                    <p class="mt-1 text-xs text-ink-soft">Email ini bisa dipakai login ke panel mentor.</p>
+                </div>
+            </div>
+
             <div>
                 <label class="mb-1.5 block text-sm font-semibold text-ink">Deadline pendaftaran</label>
                 <input type="date" name="deadline" value="{{ old('deadline', optional($program->deadline)->format('Y-m-d')) }}" class="input-field max-w-xs">

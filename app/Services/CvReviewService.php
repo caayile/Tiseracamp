@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -25,45 +26,52 @@ class CvReviewService
      */
     public function review(UploadedFile $file, array $context = []): array
     {
+        $lastError = null;
+
         if (filled(config('services.gemini.key'))) {
-            return $this->reviewWithGemini($file, $context);
+            try {
+                return $this->reviewWithGemini($file, $context);
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+                Log::warning('Gemini CV review fallback', ['error' => $e->getMessage()]);
+            }
         }
 
         if (filled(config('services.groq.key'))) {
-            return $this->reviewWithOpenAiCompatible(
-                $file,
-                $context,
-                (string) config('services.groq.key'),
-                (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
-                rtrim((string) config('services.groq.base_url'), '/').'/chat/completions',
-                'groq',
-            );
+            try {
+                return $this->reviewWithOpenAiCompatible(
+                    $file,
+                    $context,
+                    (string) config('services.groq.key'),
+                    (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
+                    rtrim((string) config('services.groq.base_url'), '/').'/chat/completions',
+                    'groq',
+                );
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+            }
         }
 
         if (filled(config('services.openai.key'))) {
-            return $this->reviewWithOpenAiCompatible(
-                $file,
-                $context,
-                (string) config('services.openai.key'),
-                (string) config('services.openai.model', 'gpt-4o-mini'),
-                'https://api.openai.com/v1/chat/completions',
-                'openai',
-            );
+            try {
+                return $this->reviewWithOpenAiCompatible(
+                    $file,
+                    $context,
+                    (string) config('services.openai.key'),
+                    (string) config('services.openai.model', 'gpt-4o-mini'),
+                    'https://api.openai.com/v1/chat/completions',
+                    'openai',
+                );
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+            }
         }
 
-        throw new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY, GROQ_API_KEY, atau OPENAI_API_KEY di .env.');
+        throw $lastError ?? new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY, GROQ_API_KEY, atau OPENAI_API_KEY di .env.');
     }
 
     private function reviewWithGemini(UploadedFile $file, array $context = []): array
     {
-        $key = config('services.gemini.key');
-        $models = array_values(array_unique(array_filter([
-            config('services.gemini.model'),
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-flash-latest',
-        ])));
-
         $payload = [
             'contents' => [[
                 'parts' => [
@@ -82,52 +90,112 @@ class CvReviewService
             ],
         ];
 
+        $text = $this->generateGeminiContent($payload, 'Gemini CV review');
+        $parsed = $this->parseJsonPayload($text);
+        $parsed['provider'] = 'gemini';
+
+        return $parsed;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function geminiModels(): array
+    {
+        $legacy = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+        $preferred = [
+            'gemini-3.6-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-flash-latest',
+        ];
+        $configured = config('services.gemini.model');
+        $head = (is_string($configured) && $configured !== '' && ! in_array($configured, $legacy, true))
+            ? [$configured]
+            : [];
+
+        return array_values(array_unique(array_filter(array_merge($head, $preferred, $legacy))));
+    }
+
+    private function generateGeminiContent(array $payload, string $logContext = 'Gemini request'): string
+    {
+        $key = (string) config('services.gemini.key');
         $lastStatus = null;
-        $lastBody = null;
 
-        foreach ($models as $model) {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$key}";
+        foreach ($this->geminiModels() as $model) {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
-            $response = Http::timeout(90)
-                ->acceptJson()
-                ->post($url, $payload);
-
-            if ($response->successful()) {
-                $text = data_get($response->json(), 'candidates.0.content.parts.0.text', '');
-                $parsed = $this->parseJsonPayload($text);
-                $parsed['provider'] = 'gemini';
-
-                return $parsed;
-            }
-
-            $lastStatus = $response->status();
-            $lastBody = $response->body();
-            Log::warning('Gemini CV review failed', [
-                'model' => $model,
-                'status' => $lastStatus,
-                'body' => $lastBody,
-            ]);
-
-            // Coba model lain kalau model tidak ada / deprecated.
-            if (in_array($lastStatus, [404, 400], true)) {
+            try {
+                $response = Http::timeout(50)
+                    ->connectTimeout(12)
+                    ->withHeaders(['x-goog-api-key' => $key])
+                    ->acceptJson()
+                    ->post($url, $payload);
+            } catch (ConnectionException $e) {
+                Log::warning($logContext.' timeout', ['model' => $model]);
+                $lastStatus = 0;
                 continue;
             }
 
-            // Kuota habis: jangan spam model lain yang sama project-nya.
-            if ($lastStatus === 429) {
-                break;
+            if ($response->successful()) {
+                $text = $this->geminiResponseText($response->json());
+                if ($text !== '') {
+                    return $text;
+                }
+
+                Log::warning($logContext.' empty response', [
+                    'model' => $model,
+                    'finish' => data_get($response->json(), 'candidates.0.finishReason'),
+                ]);
+                continue;
+            }
+
+            $lastStatus = $response->status();
+            Log::warning($logContext.' failed', [
+                'model' => $model,
+                'status' => $lastStatus,
+                'body' => mb_substr((string) $response->body(), 0, 500),
+            ]);
+
+            if (in_array($lastStatus, [401, 403], true)) {
+                throw new RuntimeException('API key Gemini tidak valid. Buat ulang key di https://aistudio.google.com/apikey');
+            }
+
+            // Model deprecated, overloaded, atau kuota — coba kandidat berikutnya.
+            if (in_array($lastStatus, [400, 404, 429, 503], true)) {
+                continue;
             }
         }
 
         if ($lastStatus === 429) {
-            throw new RuntimeException('Kuota Gemini habis / model tidak tersedia di free tier. Ganti GEMINI_MODEL=gemini-2.5-flash di .env, atau buat API key project baru di Google AI Studio, lalu jalankan php artisan config:clear.');
+            throw new RuntimeException('Kuota Gemini habis. Coba lagi nanti, atau set GROQ_API_KEY di .env sebagai cadangan.');
         }
 
-        if (in_array($lastStatus, [401, 403], true)) {
-            throw new RuntimeException('API key Gemini tidak valid. Buat ulang key di https://aistudio.google.com/apikey');
+        if ($lastStatus === 0) {
+            throw new RuntimeException('Koneksi ke Gemini timeout. Coba lagi, atau set GROQ_API_KEY di .env sebagai cadangan.');
         }
 
-        throw new RuntimeException('Gagal menghubungi Gemini. Coba lagi nanti.');
+        throw new RuntimeException('Gagal menghubungi Gemini. Coba lagi beberapa menit lagi.');
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $body
+     */
+    private function geminiResponseText(?array $body): string
+    {
+        $parts = data_get($body, 'candidates.0.content.parts', []);
+        if (! is_array($parts)) {
+            return '';
+        }
+
+        $text = '';
+        foreach ($parts as $part) {
+            if (! is_array($part) || ! empty($part['thought'])) {
+                continue;
+            }
+            $text .= (string) ($part['text'] ?? '');
+        }
+
+        return trim($text);
     }
 
     private function reviewWithOpenAiCompatible(
@@ -587,45 +655,60 @@ PROMPT;
      */
     private function requestJson(string $prompt, ?string $cvFilePath = null): array
     {
+        $lastError = null;
+
         if (filled(config('services.gemini.key'))) {
-            $pdfBytes = null;
-            if ($cvFilePath && Storage::disk(media_disk())->exists($cvFilePath)) {
-                $pdfBytes = Storage::disk(media_disk())->get($cvFilePath);
+            try {
+                $pdfBytes = null;
+                if ($cvFilePath && Storage::disk(media_disk())->exists($cvFilePath)) {
+                    $pdfBytes = Storage::disk(media_disk())->get($cvFilePath);
+                }
+
+                $data = $this->geminiJson($prompt, $pdfBytes);
+                $data['_provider'] = 'gemini';
+
+                return $data;
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+                Log::warning('Gemini career AI fallback', ['error' => $e->getMessage()]);
             }
-
-            $data = $this->geminiJson($prompt, $pdfBytes);
-            $data['_provider'] = 'gemini';
-
-            return $data;
         }
 
         if (filled(config('services.groq.key'))) {
-            $data = $this->openAiCompatibleJson(
-                $prompt,
-                (string) config('services.groq.key'),
-                (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
-                rtrim((string) config('services.groq.base_url'), '/').'/chat/completions',
-                'groq',
-            );
-            $data['_provider'] = 'groq';
+            try {
+                $data = $this->openAiCompatibleJson(
+                    $prompt,
+                    (string) config('services.groq.key'),
+                    (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
+                    rtrim((string) config('services.groq.base_url'), '/').'/chat/completions',
+                    'groq',
+                );
+                $data['_provider'] = 'groq';
 
-            return $data;
+                return $data;
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+            }
         }
 
         if (filled(config('services.openai.key'))) {
-            $data = $this->openAiCompatibleJson(
-                $prompt,
-                (string) config('services.openai.key'),
-                (string) config('services.openai.model', 'gpt-4o-mini'),
-                'https://api.openai.com/v1/chat/completions',
-                'openai',
-            );
-            $data['_provider'] = 'openai';
+            try {
+                $data = $this->openAiCompatibleJson(
+                    $prompt,
+                    (string) config('services.openai.key'),
+                    (string) config('services.openai.model', 'gpt-4o-mini'),
+                    'https://api.openai.com/v1/chat/completions',
+                    'openai',
+                );
+                $data['_provider'] = 'openai';
 
-            return $data;
+                return $data;
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+            }
         }
 
-        throw new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY, GROQ_API_KEY, atau OPENAI_API_KEY di .env.');
+        throw $lastError ?? new RuntimeException('API AI belum dikonfigurasi. Set GEMINI_API_KEY, GROQ_API_KEY, atau OPENAI_API_KEY di .env.');
     }
 
     /**
@@ -633,14 +716,6 @@ PROMPT;
      */
     private function geminiJson(string $prompt, ?string $pdfBytes = null): array
     {
-        $key = config('services.gemini.key');
-        $models = array_values(array_unique(array_filter([
-            config('services.gemini.model'),
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-flash-latest',
-        ])));
-
         $parts = [['text' => $prompt]];
         if ($pdfBytes !== null && $pdfBytes !== '') {
             $parts[] = [
@@ -659,43 +734,7 @@ PROMPT;
             ],
         ];
 
-        $lastStatus = null;
-
-        foreach ($models as $model) {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$key}";
-            $response = Http::timeout(90)->acceptJson()->post($url, $payload);
-
-            if ($response->successful()) {
-                $text = data_get($response->json(), 'candidates.0.content.parts.0.text', '');
-
-                return $this->decodeJsonObject($text);
-            }
-
-            $lastStatus = $response->status();
-            Log::warning('Gemini career AI failed', [
-                'model' => $model,
-                'status' => $lastStatus,
-                'body' => $response->body(),
-            ]);
-
-            if (in_array($lastStatus, [404, 400], true)) {
-                continue;
-            }
-
-            if ($lastStatus === 429) {
-                break;
-            }
-        }
-
-        if ($lastStatus === 429) {
-            throw new RuntimeException('Kuota Gemini habis. Coba lagi nanti atau ganti API key.');
-        }
-
-        if (in_array($lastStatus, [401, 403], true)) {
-            throw new RuntimeException('API key Gemini tidak valid.');
-        }
-
-        throw new RuntimeException('Gagal menghubungi Gemini. Coba lagi nanti.');
+        return $this->decodeJsonObject($this->generateGeminiContent($payload, 'Gemini career AI'));
     }
 
     /**

@@ -178,6 +178,12 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/', [MentorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/programs', [MentorProgramController::class, 'index'])->name('programs.index');
     Route::get('/internships', [MentorProgramController::class, 'internships'])->name('internships.index');
+    Route::get('/internships/create', [MentorProgramController::class, 'createInternship'])->name('internships.create');
+    Route::post('/internships', [MentorProgramController::class, 'storeInternship'])->name('internships.store');
+    Route::post('/internships/{program}/claim', [MentorProgramController::class, 'claimInternship'])->name('internships.claim');
+    Route::get('/internships/{program}/edit', [MentorProgramController::class, 'editInternship'])->name('internships.edit');
+    Route::put('/internships/{program}', [MentorProgramController::class, 'updateInternship'])->name('internships.update');
+    Route::put('/internships/{program}/quota', [MentorProgramController::class, 'updateInternshipQuota'])->name('internships.quota');
     Route::get('/internships/{program}/curriculum', [MentorProgramController::class, 'internshipCurriculum'])->name('internships.curriculum');
     Route::get('/programs/create', [MentorProgramController::class, 'create'])->name('programs.create');
     Route::post('/programs', [MentorProgramController::class, 'store'])->name('programs.store');
@@ -187,6 +193,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/programs/{program}/students', [MentorProgramController::class, 'students'])->name('programs.students');
     Route::post('/enrollments/{enrollment}/rate', [MentorProgramController::class, 'rateStudent'])->name('enrollments.rate');
     Route::post('/programs/{program}/modules', [MentorProgramController::class, 'storeModule'])->name('modules.store');
+    Route::put('/modules/{module}', [MentorProgramController::class, 'updateModule'])->name('modules.update');
     Route::post('/modules/{module}/lessons', [MentorProgramController::class, 'storeLesson'])->name('lessons.store');
     Route::delete('/modules/{module}', [MentorProgramController::class, 'destroyModule'])->name('modules.destroy');
     Route::delete('/lessons/{lesson}', [MentorProgramController::class, 'destroyLesson'])->name('lessons.destroy');
@@ -241,7 +248,9 @@ Route::middleware(['auth', 'active', 'admin'])->prefix('admin')->name('admin.')-
     Route::post('/programs/{program}/reject', [AdminProgramController::class, 'reject'])->name('programs.reject');
     Route::post('/programs/{program}/toggle-open', [AdminProgramController::class, 'toggleOpen'])->name('programs.toggle-open');
     Route::get('/programs/{program}/curriculum', [AdminProgramController::class, 'curriculum'])->name('programs.curriculum');
+    Route::post('/programs/{program}/mentor', [AdminProgramController::class, 'assignMentor'])->name('programs.mentor');
     Route::post('/programs/{program}/modules', [AdminProgramController::class, 'storeModule'])->name('modules.store');
+    Route::put('/modules/{module}', [AdminProgramController::class, 'updateModule'])->name('modules.update');
     Route::post('/programs/{program}/batches', [AdminBatchController::class, 'store'])->name('batches.store');
     Route::delete('/modules/{module}', [AdminProgramController::class, 'destroyModule'])->name('modules.destroy');
     Route::post('/modules/{module}/lessons', [AdminProgramController::class, 'storeLesson'])->name('lessons.store');

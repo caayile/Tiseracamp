@@ -27,7 +27,10 @@
             @endif
 
             @if ($submission->file_url)
-                <a href="{{ media_url($submission->file_url) }}" target="_blank" class="btn-secondary mt-3 text-sm">Lihat file</a>
+                @php $isHttp = str_starts_with($submission->file_url, 'http'); @endphp
+                <a href="{{ $isHttp ? $submission->file_url : media_url($submission->file_url) }}" target="_blank" rel="noopener noreferrer" class="btn-secondary mt-3 text-sm">
+                    {{ $isHttp ? 'Buka tautan tugas' : 'Lihat file' }}
+                </a>
             @endif
 
             @if ($submission->status !== 'reviewed' || $submission->assignment->kind === 'assignment')

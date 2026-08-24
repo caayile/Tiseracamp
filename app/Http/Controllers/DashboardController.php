@@ -94,6 +94,11 @@ class DashboardController extends Controller
     public function learn(Program $program): View
     {
         $enrollment = $this->requireEnrollmentForLearning($program);
+
+        if ($program->type === 'internship') {
+            $program->ensureInternshipWeeks();
+        }
+
         $program->load(['modules.lessons.assignment', 'mentor']);
 
         $flatLessons = $program->modules->flatMap->lessons->values();
@@ -353,14 +358,26 @@ class DashboardController extends Controller
         }
 
         $data = $request->validate([
-            'file_url' => ['nullable', 'url'],
+            'file_url' => $assignment->collectsViaLink()
+                ? ['required', 'url', 'max:2048']
+                : ['nullable', 'url', 'max:2048'],
             'notes' => ['nullable', 'string'],
-            'proof' => ['nullable', 'file', 'max:5120'],
+            'proof' => $assignment->collectsViaLink()
+                ? ['prohibited']
+                : ['nullable', 'file', 'max:5120'],
+        ], [
+            'file_url.required' => 'Tempel tautan pengumpulan tugas (Drive, GitHub, Figma, dll).',
         ]);
 
         $path = $data['file_url'] ?? null;
-        if ($request->hasFile('proof')) {
+        if (! $assignment->collectsViaLink() && $request->hasFile('proof')) {
             $path = $request->file('proof')->store('submissions', media_disk());
+        }
+
+        if (! $path) {
+            return back()
+                ->withInput()
+                ->withErrors(['file_url' => 'Kirim tautan atau unggah file tugas.']);
         }
 
         Submission::updateOrCreate(

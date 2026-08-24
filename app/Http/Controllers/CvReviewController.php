@@ -121,6 +121,8 @@ class CvReviewController extends Controller
 
     public function store(Request $request, CvReviewService $service): RedirectResponse
     {
+        set_time_limit(180);
+
         $subscription = auth()->user()->activeCvSubscription();
         if (! auth()->user()->isAdmin() && ! $subscription) {
             return redirect()->route('cv-review.plans')
@@ -188,7 +190,7 @@ class CvReviewController extends Controller
         } catch (Throwable $e) {
             report($e);
 
-            return back()->withInput()->with('error', 'Terjadi kesalahan saat mereview CV. Coba lagi.');
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat mereview CV. Kalau loading lama lalu gagal, coba lagi 1–2 menit.');
         }
     }
 
@@ -252,6 +254,7 @@ class CvReviewController extends Controller
 
     public function generateCoverLetter(Request $request, CvReview $cvReview, CvReviewService $service): RedirectResponse
     {
+        set_time_limit(180);
         $this->authorizeReviewOwner($cvReview);
 
         if (! $service->isConfigured()) {
@@ -306,6 +309,7 @@ class CvReviewController extends Controller
 
     public function generateInterview(CvReview $cvReview, CvReviewService $service): RedirectResponse
     {
+        set_time_limit(180);
         $this->authorizeReviewOwner($cvReview);
 
         if (! $service->isConfigured()) {
@@ -359,6 +363,7 @@ class CvReviewController extends Controller
 
     public function submitInterviewAnswer(Request $request, CvReview $cvReview, CvReviewService $service): RedirectResponse
     {
+        set_time_limit(120);
         $this->authorizeReviewOwner($cvReview);
 
         if (! $service->isConfigured()) {

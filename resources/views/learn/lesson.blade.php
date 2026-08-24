@@ -55,7 +55,7 @@
                 @endif
 
                 <div class="mb-4 flex flex-wrap gap-2">
-                    <span class="rounded-md bg-[#27CCF5]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#27CCF5]">{{ $lesson->type }}</span>
+                    <span class="rounded-md bg-[#27CCF5]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#27CCF5]">{{ $lesson->typeLabel() }}</span>
                     <span class="rounded-md bg-brand-mist px-2.5 py-1 text-[11px] font-medium text-ink-soft">{{ $lesson->duration_minutes }} menit</span>
                 </div>
 
@@ -148,6 +148,24 @@
                                 @endforeach
                                 <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink" type="submit">Kirim jawaban quiz</button>
                             </form>
+                        @elseif ($assignment->collectsViaLink())
+                            <form method="POST" action="{{ route('learn.submit', [$program, $lesson]) }}" class="mt-5 space-y-3">
+                                @csrf
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-ink">Tautan pengumpulan</label>
+                                    <input type="url" name="file_url" class="input-field" placeholder="https://drive.google.com/... atau GitHub/Figma" required value="{{ old('file_url', str_starts_with((string) $submission?->file_url, 'http') ? $submission->file_url : '') }}">
+                                    @error('file_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                    <p class="mt-1.5 text-xs text-ink-soft">Upload file ke Drive/GitHub, lalu tempel tautannya di sini. Jangan unggah file langsung.</p>
+                                </div>
+                                <textarea name="notes" rows="2" class="input-field" placeholder="Catatan opsional">{{ old('notes', $submission?->notes) }}</textarea>
+                                <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink" type="submit">{{ $submission ? 'Perbarui tautan' : 'Kirim tautan tugas' }}</button>
+                            </form>
+                            @if ($submission?->file_url)
+                                <p class="mt-3 text-sm text-ink-soft">
+                                    Status: {{ ucfirst($submission->status) }}
+                                    · <a href="{{ $submission->file_url }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-mid hover:underline">Buka tautan terkirim</a>
+                                </p>
+                            @endif
                         @else
                             <form method="POST" action="{{ route('learn.submit', [$program, $lesson]) }}" enctype="multipart/form-data" class="mt-5 space-y-3">
                                 @csrf
@@ -180,7 +198,7 @@
         <aside data-learn-sidebar class="fixed inset-y-0 right-0 z-30 flex w-[min(100%,320px)] translate-x-full flex-col border-l border-brand/15 bg-white pt-[57px] shadow-lg transition lg:static lg:translate-x-0 lg:pt-0 lg:shadow-none">
             <div class="flex items-center justify-between border-b border-brand/15 px-4 py-3">
                 <div class="flex gap-4 text-sm">
-                    <button type="button" data-tab="modules" class="learn-tab border-b-2 border-brand pb-2 font-semibold text-brand">Daftar Modul</button>
+                    <button type="button" data-tab="modules" class="learn-tab border-b-2 border-brand pb-2 font-semibold text-brand">{{ $program->type === 'internship' ? 'Materi Magang' : 'Daftar Modul' }}</button>
                     <button type="button" data-tab="notes" class="learn-tab pb-2 font-semibold text-ink-soft hover:text-brand-mid">Catatan</button>
                 </div>
                 <button type="button" class="rounded-full bg-brand p-1.5 text-ink lg:hidden" data-sidebar-toggle>
@@ -202,9 +220,13 @@
 
                 <div class="flex-1 overflow-y-auto px-2 py-3">
                     @foreach ($program->modules as $module)
-                        <div class="mb-4" data-lesson-module>
-                            <p class="mb-2 px-2 text-[11px] font-bold uppercase tracking-wider text-ink-soft">{{ $module->title }}</p>
-                            <div class="space-y-0.5">
+                        @php $moduleHasCurrent = $module->lessons->contains(fn ($item) => $item->id === $lesson->id); @endphp
+                        <details class="group mb-2" data-lesson-module {{ $moduleHasCurrent || $program->type !== 'internship' ? 'open' : '' }}>
+                            <summary class="flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-2 py-2 text-[11px] font-bold uppercase tracking-wider text-ink-soft hover:bg-brand-mist/60 [&::-webkit-details-marker]:hidden">
+                                <span>{{ $module->title }} · {{ $module->lessons->count() }} tugas</span>
+                                <svg class="h-4 w-4 shrink-0 transition group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="space-y-0.5 pb-2">
                                 @foreach ($module->lessons as $item)
                                     @php
                                         $isDone = in_array($item->id, $completedIds, true);
@@ -235,7 +257,7 @@
                                     @endif
                                 @endforeach
                             </div>
-                        </div>
+                        </details>
                     @endforeach
                 </div>
             </div>

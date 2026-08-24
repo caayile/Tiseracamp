@@ -78,6 +78,9 @@
                     </div>
 
                     <h2 class="mt-3 font-display text-[1.35rem] font-bold leading-snug text-ink">{{ $program->title }}</h2>
+                    @if ($program->mentor)
+                        <p class="mt-1 truncate text-xs text-ink-soft">Mentor: {{ $program->mentor->name }} · {{ $program->mentor->email }}</p>
+                    @endif
 
                     <div class="mt-3 flex items-center justify-between gap-3">
                         <p class="inline-flex items-center gap-1.5 text-sm text-ink-soft">
@@ -91,7 +94,14 @@
                         </span>
                     </div>
 
-                    <div class="mt-5 flex items-center gap-2">
+                    <div class="mt-5 flex flex-wrap items-center gap-2">
+                        <a href="{{ route('admin.programs.curriculum', $program) }}"
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-ink/15 bg-panel px-3 py-2 text-xs font-semibold text-ink-soft transition hover:border-brand/40 hover:bg-brand-mist hover:text-ink">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                            </svg>
+                            Materi Magang
+                        </a>
                         <a href="{{ route('programs.show', $program->slug) }}" target="_blank"
                            class="inline-flex items-center gap-1.5 rounded-lg border border-ink/15 bg-panel px-3 py-2 text-xs font-semibold text-ink-soft transition hover:border-brand/40 hover:bg-brand-mist hover:text-ink">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">

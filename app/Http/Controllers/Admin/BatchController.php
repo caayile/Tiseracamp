@@ -21,6 +21,8 @@ class BatchController extends Controller
         ]);
 
         if (! empty($data['mentor_id'])) {
+            $mentor = \App\Models\User::find($data['mentor_id']);
+            $mentor?->promoteToMentor();
             $program->update(['mentor_id' => $data['mentor_id']]);
         }
 

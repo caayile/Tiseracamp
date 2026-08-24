@@ -31,18 +31,163 @@ class ProgramController extends Controller
     {
         $programs = Program::where('mentor_id', auth()->id())
             ->where('type', 'internship')
-            ->with(['category', 'mentor', 'partner'])
+            ->with(['category', 'mentor', 'partner', 'batches'])
+            ->withCount('enrollments')
             ->latest()
             ->get();
 
-        return view('mentor.internships.index', compact('programs'));
+        $available = Program::query()
+            ->where('type', 'internship')
+            ->whereNull('mentor_id')
+            ->with(['batches'])
+            ->withCount('enrollments')
+            ->latest()
+            ->get();
+
+        return view('mentor.internships.index', compact('programs', 'available'));
+    }
+
+    public function createInternship(): View
+    {
+        return view('mentor.internships.form', [
+            'program' => new Program([
+                'type' => 'internship',
+                'level' => 'Beginner',
+                'duration_months' => 3,
+            ]),
+        ]);
+    }
+
+    public function claimInternship(Program $program): RedirectResponse
+    {
+        abort_unless($program->type === 'internship', 404);
+
+        if ($program->mentor_id && $program->mentor_id !== auth()->id()) {
+            return redirect()
+                ->route('mentor.internships.index')
+                ->with('error', 'Magang ini sudah diambil mentor lain.');
+        }
+
+        $program->update(['mentor_id' => auth()->id()]);
+        $program->ensureInternshipWeeks();
+
+        return redirect()
+            ->route('mentor.internships.curriculum', $program)
+            ->with('success', 'Magang diambil. Langsung isi tugas Minggu 1–4 — peserta melihatnya di ruang belajar.');
+    }
+
+    public function storeInternship(Request $request): RedirectResponse
+    {
+        $data = $this->validatedInternship($request);
+        $quota = (int) $data['quota'];
+
+        $program = Program::create([
+            'title' => $data['title'],
+            'slug' => Str::slug($data['title']).'-'.Str::random(4),
+            'type' => 'internship',
+            'level' => 'Beginner',
+            'education_level' => $data['education_level'],
+            'majors' => $data['majors'] ?? null,
+            'division' => $data['division'] ?? null,
+            'location' => $data['location'] ?? null,
+            'deadline' => $data['deadline'] ?? null,
+            'duration_months' => $data['duration_months'],
+            'price' => 0,
+            'description' => $data['description'] ?? null,
+            'benefits' => $this->parseLines($request->input('benefits_text')),
+            'qualifications' => $this->parseLines($request->input('qualifications_text')),
+            'required_documents' => $this->parseLines($request->input('required_documents_text')),
+            'preferred_skills' => $this->parseLines($request->input('preferred_skills_text')),
+            'responsibilities' => $this->parseLines($request->input('responsibilities_text')),
+            'mentor_id' => auth()->id(),
+            'is_published' => true,
+            'is_open' => true,
+            'approval_status' => 'approved',
+            'audience' => 'all',
+        ]);
+
+        $program->ensureInternshipWeeks();
+        $program->syncInternshipQuota($quota);
+
+        notify_admins(
+            'Magang baru dari mentor',
+            auth()->user()->name.' membuka '.$program->title.'.',
+            'info',
+            route('admin.programs.index', ['type' => 'internship'])
+        );
+
+        return redirect()
+            ->route('mentor.internships.curriculum', $program)
+            ->with('success', 'Magang dibuat. Isi materi Minggu 1–4 dan atur kuota peserta bila perlu.');
+    }
+
+    public function editInternship(Program $program): View
+    {
+        abort_unless($program->type === 'internship', 404);
+        abort_unless($program->mentor_id === auth()->id(), 403);
+        $program->load('batches');
+
+        return view('mentor.internships.form', compact('program'));
+    }
+
+    public function updateInternship(Request $request, Program $program): RedirectResponse
+    {
+        abort_unless($program->type === 'internship', 404);
+        abort_unless($program->mentor_id === auth()->id(), 403);
+
+        $data = $this->validatedInternship($request, $program);
+        $quota = (int) $data['quota'];
+
+        $program->update([
+            'title' => $data['title'],
+            'education_level' => $data['education_level'],
+            'majors' => $data['majors'] ?? null,
+            'division' => $data['division'] ?? null,
+            'location' => $data['location'] ?? null,
+            'deadline' => $data['deadline'] ?? null,
+            'duration_months' => $data['duration_months'],
+            'description' => $data['description'] ?? null,
+            'qualifications' => $this->parseLines($request->input('qualifications_text')),
+            'required_documents' => $this->parseLines($request->input('required_documents_text')),
+            'preferred_skills' => $this->parseLines($request->input('preferred_skills_text')),
+            'benefits' => $this->parseLines($request->input('benefits_text')),
+            'responsibilities' => $this->parseLines($request->input('responsibilities_text')),
+            'price' => 0,
+            'level' => 'Beginner',
+            'audience' => 'all',
+        ]);
+
+        $program->syncInternshipQuota($quota);
+
+        return redirect()
+            ->route('mentor.internships.index')
+            ->with('success', 'Detail magang dan kuota peserta diperbarui.');
+    }
+
+    public function updateInternshipQuota(Request $request, Program $program): RedirectResponse
+    {
+        abort_unless($program->type === 'internship', 404);
+        abort_unless($program->mentor_id === auth()->id(), 403);
+
+        $minQuota = max(1, $program->acceptedInternCount());
+        $data = $request->validate([
+            'quota' => ['required', 'integer', 'min:'.$minQuota, 'max:500'],
+        ], [
+            'quota.min' => 'Kuota tidak boleh lebih kecil dari jumlah peserta yang sudah diterima ('.$minQuota.').',
+        ]);
+
+        $program->syncInternshipQuota((int) $data['quota']);
+
+        return back()->with('success', 'Kuota peserta magang diperbarui.');
     }
 
     public function internshipCurriculum(Program $program): View
     {
         abort_unless($program->type === 'internship', 404);
         abort_unless($program->mentor_id === auth()->id(), 403);
-        $program->load(['modules.lessons.assignment.questions']);
+        $program->ensureInternshipWeeks();
+        $program->load(['modules.lessons.assignment.questions', 'batches']);
+        $program->loadCount('enrollments');
 
         return view('mentor.internships.curriculum', compact('program'));
     }
@@ -157,15 +302,38 @@ class ProgramController extends Controller
     public function destroyModule(Module $module): RedirectResponse
     {
         abort_unless($module->program->mentor_id === auth()->id(), 403);
-        $module->delete();
 
-        return back()->with('success', 'Modul dihapus.');
+        try {
+            $module->load('lessons.assignment');
+            foreach ($module->lessons as $lesson) {
+                $lesson->assignment?->questions()->delete();
+                $lesson->assignment()?->delete();
+                $lesson->delete();
+            }
+            $module->delete();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Gagal menghapus minggu: '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Minggu/modul dihapus.');
     }
 
     public function destroyLesson(\App\Models\Lesson $lesson): RedirectResponse
     {
         abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
-        $lesson->delete();
+
+        try {
+            $lesson->load('assignment');
+            $lesson->assignment?->questions()->delete();
+            $lesson->assignment()?->delete();
+            $lesson->delete();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Gagal menghapus materi: '.$e->getMessage());
+        }
 
         return back()->with('success', 'Materi dihapus.');
     }
@@ -188,7 +356,18 @@ class ProgramController extends Controller
             'sort_order' => $program->modules()->count() + 1,
         ]);
 
-        return back()->with('success', 'Modul ditambahkan.');
+        $label = $program->type === 'internship' ? 'Minggu ditambahkan.' : 'Modul ditambahkan.';
+
+        return back()->with('success', $label);
+    }
+
+    public function updateModule(Request $request, Module $module): RedirectResponse
+    {
+        abort_unless($module->program->mentor_id === auth()->id(), 403);
+        $data = $request->validate(['title' => ['required', 'string', 'max:160']]);
+        $module->update(['title' => $data['title']]);
+
+        return back()->with('success', 'Nama minggu diperbarui.');
     }
 
     public function storeLesson(Request $request, Module $module): RedirectResponse
@@ -196,13 +375,14 @@ class ProgramController extends Controller
         abort_unless($module->program->mentor_id === auth()->id(), 403);
         $data = $request->validate([
             'title' => ['required', 'string', 'max:160'],
-            'type' => ['required', 'in:video,text,quiz,pdf,article,recording'],
+            'type' => ['required', 'in:video,text,quiz,pdf,article,recording,assignment'],
             'content' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url'],
             'file_url' => ['nullable', 'url'],
             'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
             'instructions' => ['nullable', 'string'],
+            'deadline' => ['nullable', 'date'],
             'description' => ['nullable', 'string', 'max:5000'],
             'questions' => ['nullable', 'array', 'max:50'],
             'questions.*.question' => ['nullable', 'string', 'max:500'],
@@ -253,6 +433,24 @@ class ProgramController extends Controller
             'sort_order' => $module->lessons()->count() + 1,
         ]);
 
+        if ($data['type'] === 'assignment') {
+            $lesson->assignment()->create([
+                'title' => $data['title'],
+                'instructions' => $data['instructions'] ?? null,
+                'deadline' => $data['deadline'] ?? null,
+                'kind' => 'assignment',
+            ]);
+
+            $this->notifyInternshipStudents(
+                $module->program,
+                'Tugas magang baru',
+                auth()->user()->name.' menambahkan "'.$lesson->title.'" di '.$module->title.'.',
+                $lesson
+            );
+
+            return back()->with('success', 'Tugas ditambahkan. Peserta magang langsung melihatnya di ruang belajar dan mengumpulkan lewat tautan.');
+        }
+
         if ($data['type'] === 'quiz') {
             $assignment = $lesson->assignment()->create([
                 'title' => $data['title'],
@@ -301,10 +499,48 @@ class ProgramController extends Controller
                     ->withErrors(['questions' => 'Quiz minimal 1 soal dengan pertanyaan dan 2 opsi.']);
             }
 
-            return back()->with('success', "Quiz ditambahkan ({$saved} soal).");
+            $this->notifyInternshipStudents(
+                $module->program,
+                'Quiz magang baru',
+                auth()->user()->name.' menambahkan "'.$lesson->title.'" di '.$module->title.'.',
+                $lesson
+            );
+
+            return back()->with('success', "Quiz ditambahkan ({$saved} soal). Peserta langsung melihatnya di ruang belajar.");
         }
 
-        return back()->with('success', 'Materi ditambahkan.');
+        $this->notifyInternshipStudents(
+            $module->program,
+            'Materi magang baru',
+            auth()->user()->name.' menambahkan "'.$lesson->title.'" di '.$module->title.'.',
+            $lesson
+        );
+
+        return back()->with('success', 'Materi ditambahkan. Peserta magang langsung melihatnya di ruang belajar.');
+    }
+
+    private function notifyInternshipStudents(Program $program, string $title, string $body, ?\App\Models\Lesson $lesson = null): void
+    {
+        if ($program->type !== 'internship') {
+            return;
+        }
+
+        $link = $lesson
+            ? route('learn.lesson', [$program, $lesson])
+            : route('learn.show', $program);
+
+        Enrollment::query()
+            ->where('program_id', $program->id)
+            ->whereIn('status', ['active', 'completed'])
+            ->pluck('user_id')
+            ->unique()
+            ->each(fn ($userId) => AppNotification::create([
+                'user_id' => $userId,
+                'title' => $title,
+                'body' => $body,
+                'type' => 'info',
+                'link' => $link,
+            ]));
     }
 
     private function sanitizeRichText(?string $html): ?string
@@ -387,5 +623,37 @@ class ProgramController extends Controller
         ]);
 
         return back()->with('success', 'Rating siswa disimpan.');
+    }
+
+    private function validatedInternship(Request $request, ?Program $program = null): array
+    {
+        $minQuota = $program ? max(1, $program->acceptedInternCount()) : 1;
+
+        return $request->validate([
+            'title' => ['required', 'string', 'max:160'],
+            'education_level' => ['required', 'string', 'max:40'],
+            'majors' => ['nullable', 'string', 'max:1000'],
+            'division' => ['nullable', 'string', 'max:120'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'deadline' => ['nullable', 'date'],
+            'duration_months' => ['required', 'integer', 'min:1'],
+            'description' => ['nullable', 'string'],
+            'quota' => ['required', 'integer', 'min:'.$minQuota, 'max:500'],
+        ], [
+            'quota.min' => 'Kuota tidak boleh lebih kecil dari jumlah peserta yang sudah diterima ('.$minQuota.').',
+        ]);
+    }
+
+    private function parseLines(?string $text): array
+    {
+        if (! $text) {
+            return [];
+        }
+
+        return collect(preg_split('/\r\n|\r|\n/', $text))
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

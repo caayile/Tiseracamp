@@ -65,7 +65,7 @@ class GoogleAuthController extends Controller
         $user = User::query()
             ->where(function ($query) use ($googleUser, $email) {
                 $query->where('google_id', $googleUser->getId())
-                    ->orWhere('email', $email);
+                    ->orWhereRaw('LOWER(email) = ?', [strtolower($email)]);
             })
             ->first();
 
@@ -81,6 +81,10 @@ class GoogleAuthController extends Controller
                 'email_verified_at' => $user->email_verified_at ?? now(),
                 'avatar' => $user->avatar ?: $googleUser->getAvatar(),
             ])->save();
+
+            if (! $user->isAdmin() && $user->mentoredPrograms()->exists()) {
+                $user->promoteToMentor();
+            }
         } else {
             $request->session()->put('google_oauth_data', [
                 'google_id' => $googleUser->getId(),

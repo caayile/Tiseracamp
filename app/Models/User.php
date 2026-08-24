@@ -37,6 +37,15 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if (is_string($user->email)) {
+                $user->email = strtolower(trim($user->email));
+            }
+        });
+    }
+
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
@@ -114,6 +123,25 @@ class User extends Authenticatable
     public function isMentor(): bool
     {
         return $this->role === 'mentor';
+    }
+
+    public static function findByEmail(string $email): ?self
+    {
+        $email = strtolower(trim($email));
+        if ($email === '') {
+            return null;
+        }
+
+        return static::query()->whereRaw('LOWER(email) = ?', [$email])->first();
+    }
+
+    public function promoteToMentor(): void
+    {
+        if ($this->isAdmin() || $this->role === 'mentor') {
+            return;
+        }
+
+        $this->forceFill(['role' => 'mentor'])->save();
     }
 
     public function isStudent(): bool

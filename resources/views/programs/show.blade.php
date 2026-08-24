@@ -6,6 +6,8 @@
 @if ($program->type === 'internship')
     @php
         $isOpen = $program->isInternshipOpen();
+        $hasSeat = $program->hasAvailableSeat();
+        $remainingSeats = $program->remainingInternshipSeats();
         $prodiTags = collect(preg_split('/\s*,\s*/', (string) $program->majors))
             ->map(fn ($p) => trim($p))->filter()->take(3);
     @endphp
@@ -37,6 +39,7 @@
                             ['label' => 'Lokasi', 'value' => $program->location, 'icon' => 'pin'],
                             ['label' => 'Deadline', 'value' => $program->deadline?->translatedFormat('d F Y'), 'icon' => 'calendar'],
                             ['label' => 'Durasi', 'value' => $program->formattedDuration(), 'icon' => 'clock'],
+                            ['label' => 'Kuota', 'value' => $remainingSeats === null ? 'Tersedia' : ($remainingSeats === 0 ? 'Penuh' : $remainingSeats.' kursi tersisa'), 'icon' => 'users'],
                         ] as $row)
                             <li class="flex items-start gap-3">
                                 <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-mist text-brand-mid">
@@ -46,6 +49,8 @@
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     @elseif ($row['icon'] === 'calendar')
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    @elseif ($row['icon'] === 'users')
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     @else
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     @endif
@@ -81,14 +86,18 @@
                                 <a href="{{ route('learn.show', $program) }}" class="btn-primary w-full justify-center">Mulai magang</a>
                             @elseif ($application)
                                 <a href="{{ route('internships.status', $program) }}" class="btn-primary w-full justify-center">Lihat status seleksi</a>
-                            @elseif ($isOpen)
+                            @elseif ($isOpen && $hasSeat)
                                 <a href="{{ route('internships.apply', $program) }}" class="btn-primary w-full justify-center">Daftar magang</a>
+                            @elseif ($isOpen)
+                                <button type="button" disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-ink/10 px-4 py-3 text-sm font-bold text-ink-soft">Kuota penuh</button>
                             @else
                                 <button type="button" disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-ink/10 px-4 py-3 text-sm font-bold text-ink-soft">Lowongan Ditutup</button>
                             @endif
                         @else
-                            @if ($isOpen)
+                            @if ($isOpen && $hasSeat)
                                 <a href="{{ route('login') }}" class="btn-primary w-full justify-center">Masuk untuk daftar</a>
+                            @elseif ($isOpen)
+                                <button type="button" disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-ink/10 px-4 py-3 text-sm font-bold text-ink-soft">Kuota penuh</button>
                             @else
                                 <button type="button" disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-ink/10 px-4 py-3 text-sm font-bold text-ink-soft">Lowongan Ditutup</button>
                             @endif
@@ -172,6 +181,32 @@
                                     <li class="text-xs text-ink-soft">Belum diisi.</li>
                                 @endforelse
                             </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-10 border-t border-ink/8 pt-8">
+                        <h3 class="font-display text-lg font-semibold text-ink">Materi Magang</h3>
+                        <p class="mt-1 text-sm text-ink-soft">Tugas dibagi per minggu. Buka tiap minggu untuk melihat daftar tugas.</p>
+
+                        @if ($program->mentor)
+                            <div class="mt-4 flex items-center gap-3 rounded-2xl border border-ink/8 bg-surface px-4 py-3">
+                                @if ($program->mentor->avatar)
+                                    <img src="{{ media_url($program->mentor->avatar) }}" alt="{{ $program->mentor->name }}" class="h-11 w-11 rounded-full object-cover">
+                                @else
+                                    <span class="flex h-11 w-11 items-center justify-center rounded-full bg-brand-mist font-display text-sm font-bold text-brand-mid">
+                                        {{ strtoupper(collect(explode(' ', $program->mentor->name))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('')) }}
+                                    </span>
+                                @endif
+                                <div class="min-w-0">
+                                    <p class="text-[11px] font-bold uppercase tracking-wide text-brand-mid">Mentor</p>
+                                    <p class="truncate font-semibold text-ink">{{ $program->mentor->name }}</p>
+                                    <p class="truncate text-xs text-ink-soft">{{ $program->mentor->email }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="mt-4">
+                            <x-internship-weeks :weeks="$program->modules" mode="preview" />
                         </div>
                     </div>
                 </div>

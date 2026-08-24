@@ -38,6 +38,11 @@ class UserController extends Controller
             'role' => ['required', 'in:student,mentor,admin'],
         ]);
 
+        $data['email'] = strtolower(trim($data['email']));
+        if (User::findByEmail($data['email'])) {
+            return back()->withErrors(['email' => 'Email sudah terdaftar.'])->withInput();
+        }
+
         User::create([
             ...$data,
             'status' => 'active',

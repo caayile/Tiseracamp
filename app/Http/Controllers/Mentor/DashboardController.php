@@ -42,6 +42,14 @@ class DashboardController extends Controller
                 ->withCount('enrollments')
                 ->latest()
                 ->get(),
+            'internships' => Program::query()
+                ->where('mentor_id', $mentorId)
+                ->where('type', 'internship')
+                ->with(['batches'])
+                ->withCount('enrollments')
+                ->latest()
+                ->take(5)
+                ->get(),
             'upcoming' => ClassSchedule::query()
                 ->where('mentor_id', $mentorId)
                 ->where('starts_at', '>=', now())

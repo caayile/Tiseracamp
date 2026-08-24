@@ -36,4 +36,16 @@ class Assignment extends Model
     {
         return $this->kind === 'quiz';
     }
+
+    public function collectsViaLink(): bool
+    {
+        if ($this->kind !== 'assignment') {
+            return false;
+        }
+
+        $this->loadMissing('lesson.module.program');
+
+        return $this->lesson?->type === 'assignment'
+            || $this->lesson?->module?->program?->type === 'internship';
+    }
 }

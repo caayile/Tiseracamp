@@ -165,6 +165,72 @@ class Program extends Model
         return $this->duration_months.' bulan';
     }
 
+    public function internshipQuota(): ?int
+    {
+        $batch = $this->relationLoaded('batches')
+            ? $this->batches->sortBy('id')->first()
+            : $this->batches()->orderBy('id')->first();
+
+        return $batch?->quota;
+    }
+
+    public function acceptedInternCount(): int
+    {
+        if (isset($this->enrollments_count)) {
+            return (int) $this->enrollments_count;
+        }
+
+        if ($this->relationLoaded('enrollments')) {
+            return $this->enrollments->count();
+        }
+
+        return $this->enrollments()->count();
+    }
+
+    public function remainingInternshipSeats(): ?int
+    {
+        $quota = $this->internshipQuota();
+        if ($quota === null) {
+            return null;
+        }
+
+        return max(0, $quota - $this->acceptedInternCount());
+    }
+
+    public function internshipQuotaLabel(): string
+    {
+        $quota = $this->internshipQuota();
+        $filled = $this->acceptedInternCount();
+
+        if ($quota === null) {
+            return $filled === 0
+                ? 'Kuota belum diatur'
+                : $filled.' peserta (kuota belum diatur)';
+        }
+
+        return $filled.' / '.$quota.' kursi terisi';
+    }
+
+    public function syncInternshipQuota(int $quota): void
+    {
+        $batch = $this->batches()->orderBy('id')->first();
+        if ($batch) {
+            $batch->update([
+                'quota' => $quota,
+                'status' => 'active',
+            ]);
+
+            return;
+        }
+
+        $this->batches()->create([
+            'name' => 'Batch 1',
+            'quota' => $quota,
+            'status' => 'active',
+            'start_date' => now()->toDateString(),
+        ]);
+    }
+
     public function formattedSalary(): string
     {
         return $this->price === 0
@@ -288,5 +354,24 @@ class Program extends Model
     {
         $weeks = count($this->timelineWeeks());
         return "Timeline Magang ({$weeks} Minggu)";
+    }
+
+    /**
+     * Magang selalu punya 4 slot minggu. Admin/mentor tinggal mengisi tugas di dalamnya.
+     */
+    public function ensureInternshipWeeks(): void
+    {
+        if ($this->type !== 'internship' || $this->modules()->exists()) {
+            return;
+        }
+
+        foreach (range(1, 4) as $week) {
+            $this->modules()->create([
+                'title' => 'Minggu '.$week,
+                'sort_order' => $week,
+            ]);
+        }
+
+        $this->unsetRelation('modules');
     }
 }

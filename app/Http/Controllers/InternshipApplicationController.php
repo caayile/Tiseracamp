@@ -25,6 +25,11 @@ class InternshipApplicationController extends Controller
                 ->with('error', 'Lowongan magang ini sedang ditutup.');
         }
 
+        if (! $program->hasAvailableSeat()) {
+            return redirect()->route('programs.show', $program->slug)
+                ->with('error', 'Kuota peserta magang ini sudah penuh.');
+        }
+
         if (Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->exists()) {
             return redirect()->route('learn.show', $program);
         }
@@ -65,6 +70,11 @@ class InternshipApplicationController extends Controller
         if (! $program->isInternshipOpen()) {
             return redirect()->route('programs.show', $program->slug)
                 ->with('error', 'Lowongan magang ini sedang ditutup.');
+        }
+
+        if (! $program->hasAvailableSeat()) {
+            return redirect()->route('programs.show', $program->slug)
+                ->with('error', 'Kuota peserta magang ini sudah penuh.');
         }
 
         if (Enrollment::where('user_id', auth()->id())->where('program_id', $program->id)->exists()) {

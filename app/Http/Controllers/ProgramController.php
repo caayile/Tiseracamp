@@ -50,12 +50,18 @@ class ProgramController extends Controller
     public function show(string $slug): View|RedirectResponse
     {
         $program = Program::published()
-            ->with(['partner', 'mentor', 'category'])
+            ->with(['partner', 'mentor', 'category', 'modules.lessons'])
             ->where('slug', $slug)
             ->firstOrFail();
 
         if (! $program->isVisibleTo(auth()->user())) {
             abort(404);
+        }
+
+        if ($program->type === 'internship') {
+            $program->ensureInternshipWeeks();
+            $program->load(['modules.lessons', 'batches']);
+            $program->loadCount('enrollments');
         }
 
         // Dipakai navbar untuk highlight Magang vs Bootcamp tanpa query ekstra.

@@ -33,6 +33,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('mentor.programs.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-ink">+ Tambah Program</a>
+            <a href="{{ route('mentor.internships.create') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10">+ Tambah Magang</a>
             <a href="{{ route('profile.edit') }}" class="inline-flex items-center rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10">Edit Profil</a>
         </div>
     </div>
@@ -99,6 +100,29 @@
         <div class="border-t border-brand/10 px-5 py-3">
             <a href="{{ route('mentor.schedules.index') }}" class="btn-secondary text-sm">Kelola jadwal</a>
         </div>
+    </div>
+</div>
+
+<div class="mt-6 card-soft overflow-hidden">
+    <div class="flex items-center justify-between border-b border-brand/10 px-5 py-4">
+        <h2 class="font-display text-lg font-semibold">Magang saya</h2>
+        <a href="{{ route('mentor.internships.index') }}" class="text-sm font-semibold text-brand-deeper hover:underline">Kelola magang →</a>
+    </div>
+    <div class="divide-y divide-brand/10">
+        @forelse ($internships as $internship)
+            <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <div>
+                    <p class="font-medium text-ink">{{ $internship->title }}</p>
+                    <p class="text-xs text-ink-soft">{{ $internship->internshipQuotaLabel() }}</p>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ route('mentor.internships.curriculum', $internship) }}" class="btn-ghost text-xs">Materi</a>
+                    <a href="{{ route('mentor.internships.edit', $internship) }}" class="btn-secondary text-xs">Edit &amp; kuota</a>
+                </div>
+            </div>
+        @empty
+            <p class="px-5 py-8 text-center text-sm text-ink-soft">Belum ada magang. <a href="{{ route('mentor.internships.create') }}" class="font-semibold text-brand-deeper underline">Tambah magang</a> atau <a href="{{ route('mentor.internships.index') }}" class="font-semibold text-brand-deeper underline">ambil yang kosong</a>.</p>
+        @endforelse
     </div>
 </div>
 @endsection

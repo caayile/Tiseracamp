@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -31,17 +32,13 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Terima juga "siswa@tigaserangkai" → siswa@tigaserangkai.test
-        if (preg_match('/^[^@\s]+@tigaserangkai$/i', $credentials['email'])) {
-            $credentials['email'] .= '.test';
+        $user = $this->authenticateByEmail($credentials['email'], $credentials['password']);
+        if (! $user) {
+            return back()->withErrors(['email' => 'Email atau password salah.'])->onlyInput('email');
         }
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['email' => 'Email atau password salah. Coba siswa@tigaserangkai.test / password'])->onlyInput('email');
-        }
-
+        Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
-        $user = Auth::user();
 
         if (! $user->isActive()) {
             Auth::logout();
@@ -54,6 +51,8 @@ class AuthController extends Controller
         if (! $user->email_verified_at) {
             return redirect()->route('verify.show');
         }
+
+        $this->syncMentorAccess($user);
 
         // Selalu ke dashboard sesuai role (hindari intended yang salah role)
         return redirect()->route($user->postAuthRoute());
@@ -80,9 +79,16 @@ class AuthController extends Controller
 
         $data = $request->validate($rules);
 
+        $email = strtolower(trim($data['email']));
+        if (User::findByEmail($email)) {
+            return back()
+                ->withErrors(['email' => 'Email sudah terdaftar. Silakan masuk ke halaman login.'])
+                ->withInput();
+        }
+
         $user = User::create([
             'name' => $data['name'],
-            'email' => $data['email'],
+            'email' => $email,
             'password' => $data['password'],
             'role' => $data['role'],
             'phone' => $data['phone'] ?? null,
@@ -332,6 +338,32 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    private function authenticateByEmail(string $email, string $password): ?User
+    {
+        $email = strtolower(trim($email));
+        if (preg_match('/^[^@\s]+@tigaserangkai$/i', $email)) {
+            $email .= '.test';
+        }
+
+        $user = User::findByEmail($email);
+        if (! $user || ! Hash::check($password, $user->getAuthPassword())) {
+            return null;
+        }
+
+        return $user;
+    }
+
+    private function syncMentorAccess(User $user): void
+    {
+        if ($user->isAdmin() || $user->isMentor()) {
+            return;
+        }
+
+        if ($user->mentoredPrograms()->exists()) {
+            $user->promoteToMentor();
+        }
     }
 
     private function sendPasswordOtp(User $user): bool

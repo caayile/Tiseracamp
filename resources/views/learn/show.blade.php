@@ -47,7 +47,19 @@
         @endif
 
         <aside class="rounded-2xl border border-brand/15 bg-white p-4 shadow-sm">
-            <p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-brand-mid">Kurikulum</p>
+            <p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-brand-mid">
+                {{ $program->type === 'internship' ? 'Materi Magang' : 'Kurikulum' }}
+            </p>
+            @if ($program->type === 'internship')
+                <x-internship-weeks
+                    :weeks="$program->modules"
+                    :program="$program"
+                    mode="learn"
+                    :completed-ids="$completedIds"
+                    :unlocked-ids="$unlockedIds ?? []"
+                    :current-lesson="$currentLesson"
+                />
+            @else
             <div class="space-y-4">
                 @foreach ($program->modules as $module)
                     <div>
@@ -83,6 +95,7 @@
                     </div>
                 @endforeach
             </div>
+            @endif
         </aside>
 
         <div class="space-y-5">
@@ -94,8 +107,12 @@
                     <p class="mt-4 text-sm leading-relaxed text-ink-soft">{{ \Illuminate\Support\Str::limit(strip_tags($currentLesson->content), 220) }}</p>
                     <a href="{{ route('learn.lesson', [$program, $currentLesson]) }}" class="mt-6 inline-flex rounded-xl bg-[#27CCF5] px-5 py-2.5 text-sm font-semibold text-[#0B1F2A] transition hover:bg-[#7DE6FA]">Buka materi</a>
                 @elseif ($program->type === 'internship')
-                    <p class="font-display text-xl font-semibold text-ink">Onboarding magang</p>
-                    <p class="mt-2 text-sm text-ink-soft">Tidak ada modul kelas. Lanjutkan dengan logbook, jadwal, dan chat PIC.</p>
+                    <p class="font-display text-xl font-semibold text-ink">Materi magang</p>
+                    <p class="mt-2 text-sm text-ink-soft">
+                        {{ $program->modules->flatMap->lessons->isEmpty()
+                            ? 'Tugas Minggu 1–4 masih kosong. Mentor sedang menyiapkan materi — cek lagi nanti.'
+                            : 'Semua tugas sudah selesai. Lanjutkan dengan logbook, jadwal, dan chat PIC.' }}
+                    </p>
                     <div class="mt-5 flex flex-wrap gap-2">
                         <a href="{{ route('profile.logbook') }}" class="btn-primary text-sm">Isi logbook</a>
                         <a href="{{ route('schedules.index') }}" class="btn-secondary text-sm">Lihat jadwal</a>

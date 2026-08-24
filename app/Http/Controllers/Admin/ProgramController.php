@@ -104,17 +104,29 @@ class ProgramController extends Controller
         $data['is_open'] = true;
         $data['is_featured'] = false;
         $data['approval_status'] = 'approved';
-        $data['mentor_id'] = null;
+        if ($type === 'internship') {
+            $mentor = $this->resolveMentorFromRequest($request);
+            $data['mentor_id'] = $mentor?->id;
+        } else {
+            $data['mentor_id'] = $data['mentor_id'] ?? null;
+        }
         if ($type === 'job') {
             $data['duration_months'] = (int) ($data['duration_months'] ?? 0);
             $data['location'] = $request->input('location');
         }
         $data = $this->normalizeInternshipFields($data);
 
-        Program::create($data);
+        $program = Program::create($data);
+
+        if ($type === 'internship') {
+            $program->ensureInternshipWeeks();
+
+            return redirect()
+                ->route('admin.programs.curriculum', $program)
+                ->with('success', 'Lowongan magang dibuat. Isi materi Minggu 1–4 di bawah.');
+        }
 
         $message = match ($type) {
-            'internship' => 'Lowongan magang berhasil dibuat. Atur publikasi lewat tombol Publikasi.',
             'job' => 'Lowongan kerja berhasil dibuat dan tampil di Karier → Lowongan Kerja.',
             default => 'Bootcamp berhasil dibuat. Atur publikasi lewat tombol Publikasi.',
         };
@@ -165,6 +177,8 @@ class ProgramController extends Controller
         }
 
         if ($program->type === 'internship') {
+            $mentor = $this->resolveMentorFromRequest($request);
+
             // Hanya update detail lowongan; publikasi di halaman terpisah
             $program->update([
                 'title' => $data['title'],
@@ -183,6 +197,7 @@ class ProgramController extends Controller
                 'price' => 0,
                 'level' => 'Beginner',
                 'audience' => 'all',
+                'mentor_id' => $mentor?->id ?? $program->mentor_id,
             ]);
 
             return redirect()->route('admin.programs.index', ['type' => 'internship'])->with('success', 'Detail lowongan magang diperbarui.');
@@ -249,6 +264,10 @@ class ProgramController extends Controller
             'is_published' => $request->boolean('is_published'),
             'is_featured' => $program->type === 'bootcamp' ? $request->boolean('is_featured') : false,
         ];
+
+        if (! empty($payload['mentor_id'])) {
+            User::find($payload['mentor_id'])?->promoteToMentor();
+        }
 
         if ($program->type === 'bootcamp') {
             $payload['description'] = $data['description'] ?? null;
@@ -318,12 +337,56 @@ class ProgramController extends Controller
 
     public function curriculum(Program $program): View
     {
+        if ($program->type === 'internship') {
+            $program->ensureInternshipWeeks();
+        }
+
         $program->load(['modules.lessons', 'batches', 'mentor']);
 
-        return view('admin.programs.curriculum', [
+        return view($program->type === 'internship' ? 'admin.programs.internship-curriculum' : 'admin.programs.curriculum', [
             'program' => $program,
             'mentors' => User::where('role', 'mentor')->orderBy('name')->get(),
         ]);
+    }
+
+    public function assignMentor(Request $request, Program $program): RedirectResponse
+    {
+        abort_unless($program->type === 'internship', 404);
+
+        $request->validate([
+            'mentor_id' => ['nullable', 'exists:users,id'],
+            'mentor_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        if ($request->boolean('clear_mentor')) {
+            $program->update(['mentor_id' => null]);
+
+            return back()->with('success', 'Mentor dilepas dari magang ini.');
+        }
+
+        $createdPassword = null;
+        $mentor = $this->resolveMentorFromRequest($request, $createdPassword);
+        if (! $mentor) {
+            return back()->withErrors(['mentor_email' => 'Pilih mentor atau isi email mentor.'])->withInput();
+        }
+
+        $program->update(['mentor_id' => $mentor->id]);
+        $program->ensureInternshipWeeks();
+
+        notify_user(
+            $mentor->id,
+            'Kamu ditugaskan sebagai mentor magang',
+            $program->title.' — buka Magang Saya lalu isi tugas Minggu 1–4. Peserta langsung melihatnya di ruang belajar.',
+            'success',
+            route('mentor.internships.curriculum', $program)
+        );
+
+        $message = 'Mentor '.$mentor->name.' ('.$mentor->email.') ditetapkan. Mereka bisa masuk lewat halaman login.';
+        if ($createdPassword) {
+            $message .= ' Password sementara: '.$createdPassword;
+        }
+
+        return back()->with('success', $message);
     }
 
     public function storeModule(Request $request, Program $program): RedirectResponse
@@ -334,20 +397,32 @@ class ProgramController extends Controller
             'sort_order' => $program->modules()->count() + 1,
         ]);
 
-        return back()->with('success', 'Modul ditambahkan.');
+        $label = $program->type === 'internship' ? 'Minggu ditambahkan.' : 'Modul ditambahkan.';
+
+        return back()->with('success', $label);
+    }
+
+    public function updateModule(Request $request, Module $module): RedirectResponse
+    {
+        $data = $request->validate(['title' => ['required', 'string', 'max:160']]);
+        $module->update(['title' => $data['title']]);
+
+        return back()->with('success', 'Nama minggu diperbarui.');
     }
 
     public function storeLesson(Request $request, Module $module): RedirectResponse
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:160'],
-            'type' => ['required', 'in:video,text,quiz,pdf,article,recording'],
+            'type' => ['required', 'in:video,text,quiz,pdf,article,recording,assignment'],
             'content' => ['nullable', 'string'],
             'description' => ['nullable', 'string', 'max:5000'],
             'video_url' => ['nullable', 'url'],
             'file_url' => ['nullable', 'url'],
             'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'instructions' => ['nullable', 'string'],
+            'deadline' => ['nullable', 'date'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
@@ -377,7 +452,7 @@ class ProgramController extends Controller
             $fileType = 'pdf';
         }
 
-        $module->lessons()->create([
+        $lesson = $module->lessons()->create([
             'title' => $data['title'],
             'type' => $data['type'],
             'content' => $content,
@@ -389,21 +464,53 @@ class ProgramController extends Controller
             'sort_order' => $module->lessons()->count() + 1,
         ]);
 
+        if ($data['type'] === 'assignment') {
+            $lesson->assignment()->create([
+                'title' => $data['title'],
+                'instructions' => $data['instructions'] ?? null,
+                'deadline' => $data['deadline'] ?? null,
+                'kind' => 'assignment',
+            ]);
+
+            return back()->with('success', 'Tugas minggu ditambahkan. Peserta mengumpulkan lewat tautan.');
+        }
+
         return back()->with('success', 'Lesson ditambahkan.');
     }
 
     public function destroyModule(Module $module): RedirectResponse
     {
-        $module->delete();
+        try {
+            $module->load('lessons.assignment');
+            foreach ($module->lessons as $lesson) {
+                $lesson->assignment?->questions()->delete();
+                $lesson->assignment()?->delete();
+                $lesson->delete();
+            }
+            $module->delete();
+        } catch (\Throwable $e) {
+            report($e);
 
-        return back()->with('success', 'Modul dihapus.');
+            return back()->with('error', 'Gagal menghapus minggu: '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Minggu/modul dihapus.');
     }
 
     public function destroyLesson(Lesson $lesson): RedirectResponse
     {
-        $lesson->delete();
+        try {
+            $lesson->load('assignment');
+            $lesson->assignment?->questions()->delete();
+            $lesson->assignment()?->delete();
+            $lesson->delete();
+        } catch (\Throwable $e) {
+            report($e);
 
-        return back()->with('success', 'Lesson dihapus.');
+            return back()->with('error', 'Gagal menghapus materi: '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Materi dihapus.');
     }
 
     private function validated(Request $request): array
@@ -428,6 +535,7 @@ class ProgramController extends Controller
             'partner_id' => ['nullable', 'exists:partners,id'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'mentor_id' => ['nullable', 'exists:users,id'],
+            'mentor_email' => ['nullable', 'email', 'max:255'],
             'approval_status' => ['nullable', 'in:draft,pending,approved,rejected'],
             'audience' => ['nullable', 'in:all,tsu,both,none'],
         ]);
@@ -483,5 +591,55 @@ class ProgramController extends Controller
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function resolveMentorFromRequest(Request $request, ?string &$createdPassword = null): ?User
+    {
+        $email = strtolower(trim((string) $request->input('mentor_email')));
+        if ($email !== '') {
+            return $this->findOrCreateMentorByEmail($email, $createdPassword);
+        }
+
+        $mentorId = $request->input('mentor_id');
+        if (! filled($mentorId)) {
+            return null;
+        }
+
+        $mentor = User::find($mentorId);
+        if (! $mentor || $mentor->isAdmin()) {
+            return null;
+        }
+
+        $mentor->promoteToMentor();
+
+        return $mentor->fresh();
+    }
+
+    private function findOrCreateMentorByEmail(string $email, ?string &$createdPassword = null): ?User
+    {
+        $user = User::findByEmail($email);
+        if ($user) {
+            if ($user->isAdmin()) {
+                return null;
+            }
+            $user->promoteToMentor();
+
+            return $user->fresh();
+        }
+
+        $createdPassword = Str::password(12);
+        $name = Str::of(Str::before($email, '@'))
+            ->replace(['.', '_', '-'], ' ')
+            ->title()
+            ->value();
+
+        return User::create([
+            'name' => $name !== '' ? $name : 'Mentor',
+            'email' => $email,
+            'password' => $createdPassword,
+            'role' => 'mentor',
+            'status' => 'active',
+            'email_verified_at' => now(),
+        ]);
     }
 }

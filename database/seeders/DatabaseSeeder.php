@@ -175,6 +175,14 @@ class DatabaseSeeder extends Seeder
                 'status' => 'scheduled',
             ]);
 
+            // Magang: slot Minggu 1–4 kosong (isi tugas di panel admin/mentor).
+            // Bootcamp: modul demo Fondasi → Core Skills → Capstone.
+            if ($item['type'] === 'internship') {
+                $program->ensureInternshipWeeks();
+
+                continue;
+            }
+
             foreach ([
                 'Fondasi & Mindset',
                 'Core Skills',

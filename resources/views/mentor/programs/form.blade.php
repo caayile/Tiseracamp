@@ -75,7 +75,7 @@
             <p class="mt-1 text-xs text-ink-soft">Muncul di samping foto mentor di katalog & halaman detail.</p>
         </div>
 
-        <p class="rounded-xl bg-brand-mist p-3 text-xs text-ink-soft">Lowongan magang dikelola admin. Mentor hanya mengajukan bootcamp — admin akan review sebelum tampil di katalog.</p>
+        <p class="rounded-xl bg-brand-mist p-3 text-xs text-ink-soft">Bootcamp perlu approve admin sebelum tampil di katalog. Magang bisa kamu buat langsung di <a href="{{ route('mentor.internships.create') }}" class="font-semibold text-brand-deeper underline">Magang Saya</a>.</p>
 
         <div class="flex gap-3 pt-2">
             <button class="btn-primary" type="submit">{{ $program->exists ? 'Simpan perubahan' : 'Ajukan Bootcamp' }}</button>
