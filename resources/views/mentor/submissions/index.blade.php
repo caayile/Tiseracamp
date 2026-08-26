@@ -9,10 +9,11 @@
         <div class="card-soft p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
+                    @php $module = $submission->assignment->lesson->module; @endphp
                     <p class="font-display text-lg font-semibold">{{ $submission->assignment->title }}</p>
                     <p class="text-sm text-ink-soft">
                         {{ $submission->user->name }} ·
-                        {{ $submission->assignment->lesson->module->program->title }} ·
+                        {{ $module->program->title }} · {{ $module->title }} ·
                         {{ $submission->created_at->translatedFormat('d M Y, H:i') }}
                     </p>
                     <span class="badge mt-2">{{ $submission->status }}</span>
@@ -28,8 +29,11 @@
 
             @if ($submission->file_url)
                 @php $isHttp = str_starts_with($submission->file_url, 'http'); @endphp
-                <a href="{{ $isHttp ? $submission->file_url : media_url($submission->file_url) }}" target="_blank" rel="noopener noreferrer" class="btn-secondary mt-3 text-sm">
-                    {{ $isHttp ? 'Buka tautan tugas' : 'Lihat file' }}
+                <a href="{{ $isHttp ? $submission->file_url : media_url($submission->file_url) }}"
+                   target="_blank" rel="noopener noreferrer"
+                   @if (! $isHttp) download @endif
+                   class="btn-secondary mt-3 text-sm">
+                    {{ $isHttp ? 'Buka tautan tugas' : 'Unduh file tugas' }}
                 </a>
             @endif
 

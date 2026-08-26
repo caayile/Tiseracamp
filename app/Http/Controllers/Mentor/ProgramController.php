@@ -186,10 +186,20 @@ class ProgramController extends Controller
         abort_unless($program->type === 'internship', 404);
         abort_unless($program->mentor_id === auth()->id(), 403);
         $program->ensureInternshipWeeks();
-        $program->load(['modules.lessons.assignment.questions', 'batches']);
+        $program->load(['modules.lessons.assignment.questions', 'modules.lessons.assignment.submissions', 'batches']);
         $program->loadCount('enrollments');
 
-        return view('mentor.internships.curriculum', compact('program'));
+        $audience = Enrollment::query()
+            ->where('program_id', $program->id)
+            ->whereIn('status', ['active', 'completed'])
+            ->with('user:id,name,email')
+            ->get()
+            ->pluck('user')
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        return view('mentor.internships.curriculum', compact('program', 'audience'));
     }
 
     public function create(): View
@@ -322,7 +332,12 @@ class ProgramController extends Controller
 
     public function destroyLesson(\App\Models\Lesson $lesson): RedirectResponse
     {
-        abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
+        $program = $lesson->module->program;
+        abort_unless($program->mentor_id === auth()->id(), 403);
+
+        if ($program->type === 'internship' && $lesson->type === 'assignment') {
+            return back()->with('error', 'Slot pengumpulan tugas selalu ada di setiap minggu dan tidak bisa dihapus. Kosongkan instruksinya kalau minggu ini tanpa tugas.');
+        }
 
         try {
             $lesson->load('assignment');

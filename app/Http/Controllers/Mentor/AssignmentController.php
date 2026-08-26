@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mentor;
 use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Models\Assignment;
+use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Program;
 use App\Models\QuizQuestion;
@@ -80,6 +81,38 @@ class AssignmentController extends Controller
         }
 
         return back()->with('success', 'Tugas/quiz dibuat.');
+    }
+
+    public function update(Request $request, Assignment $assignment): RedirectResponse
+    {
+        $lesson = $assignment->lesson;
+        $program = $lesson->module->program;
+        abort_unless($program->mentor_id === auth()->id(), 403);
+        abort_if($assignment->isQuiz(), 422);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:160'],
+            'instructions' => ['nullable', 'string', 'max:5000'],
+            'deadline' => ['nullable', 'date'],
+        ]);
+
+        $assignment->update($data);
+        $lesson->update(['title' => $data['title']]);
+
+        Enrollment::query()
+            ->where('program_id', $program->id)
+            ->whereIn('status', ['active', 'completed'])
+            ->pluck('user_id')
+            ->unique()
+            ->each(fn ($userId) => AppNotification::create([
+                'user_id' => $userId,
+                'title' => 'Tugas mingguan diperbarui',
+                'body' => $lesson->module->title.' — '.$data['title'],
+                'type' => 'info',
+                'link' => route('learn.lesson', [$program, $lesson]),
+            ]));
+
+        return back()->with('success', 'Tugas '.$lesson->module->title.' disimpan. Peserta bisa langsung mengumpulkan lewat tautan atau file.');
     }
 
     public function submissions(): View

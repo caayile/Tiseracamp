@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Program;
+use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MentorInternshipPanelTest extends TestCase
@@ -101,6 +104,48 @@ class MentorInternshipPanelTest extends TestCase
             ->assertRedirect(route('programs.show', $program->slug));
     }
 
+    public function test_every_week_gets_an_assignment_slot_automatically(): void
+    {
+        $mentor = $this->mentor();
+        $this->actingAs($mentor)->post(route('mentor.internships.store'), [
+            'title' => 'Magang Otomatis',
+            'education_level' => 'S1',
+            'duration_months' => 3,
+            'quota' => 10,
+        ]);
+
+        $program = Program::query()->where('title', 'Magang Otomatis')->firstOrFail();
+
+        foreach ($program->modules()->orderBy('sort_order')->get() as $module) {
+            $task = $module->lessons()->where('type', 'assignment')->first();
+
+            $this->assertNotNull($task, $module->title.' tidak punya slot pengumpulan tugas');
+            $this->assertSame('Tugas '.$module->title, $task->title);
+            $this->assertTrue($task->assignment->collectsWork());
+        }
+    }
+
+    public function test_weekly_assignment_slot_cannot_be_deleted(): void
+    {
+        $mentor = $this->mentor();
+        $this->actingAs($mentor)->post(route('mentor.internships.store'), [
+            'title' => 'Magang Slot Tetap',
+            'education_level' => 'S1',
+            'duration_months' => 3,
+            'quota' => 10,
+        ]);
+
+        $program = Program::query()->where('title', 'Magang Slot Tetap')->firstOrFail();
+        $week = $program->modules()->orderBy('sort_order')->firstOrFail();
+        $task = $week->lessons()->where('type', 'assignment')->firstOrFail();
+
+        $this->actingAs($mentor)
+            ->delete(route('mentor.lessons.destroy', $task))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('lessons', ['id' => $task->id]);
+    }
+
     public function test_mentor_can_add_weekly_link_assignment(): void
     {
         $mentor = $this->mentor();
@@ -113,24 +158,24 @@ class MentorInternshipPanelTest extends TestCase
 
         $program = Program::query()->where('title', 'Magang Desain')->firstOrFail();
         $week = $program->modules()->orderBy('sort_order')->firstOrFail();
+        $lesson = $week->lessons()->where('type', 'assignment')->firstOrFail();
 
         $this->actingAs($mentor)
             ->get(route('mentor.internships.curriculum', $program))
             ->assertOk()
-            ->assertSee('Upload tugas')
+            ->assertSee('Pengumpulan tugas Minggu 1')
             ->assertSee('Tugas Minggu 1');
 
-        $this->actingAs($mentor)->post(route('mentor.lessons.store', $week), [
+        $this->actingAs($mentor)->put(route('mentor.assignments.update', $lesson->assignment), [
             'title' => 'Tugas Minggu 1',
-            'type' => 'assignment',
             'instructions' => 'Upload ke Google Drive lalu tempel tautannya.',
-            'duration_minutes' => 30,
         ])->assertRedirect();
 
-        $lesson = $week->lessons()->firstOrFail();
+        $lesson->refresh()->load('assignment');
         $this->assertSame('assignment', $lesson->type);
         $this->assertSame('Tugas Minggu 1', $lesson->title);
-        $this->assertTrue($lesson->assignment->collectsViaLink());
+        $this->assertSame('Upload ke Google Drive lalu tempel tautannya.', $lesson->assignment->instructions);
+        $this->assertTrue($lesson->assignment->collectsWork());
 
         $student = User::factory()->create([
             'role' => 'student',
@@ -148,8 +193,9 @@ class MentorInternshipPanelTest extends TestCase
         $this->actingAs($student)
             ->get(route('learn.lesson', [$program, $lesson]))
             ->assertOk()
-            ->assertSee('Tautan pengumpulan')
-            ->assertDontSee('name="proof"', false);
+            ->assertSee('Tautan tugas')
+            ->assertSee('Unggah file')
+            ->assertSee('name="proof"', false);
 
         $this->actingAs($student)
             ->post(route('learn.submit', [$program, $lesson]), [
@@ -162,6 +208,96 @@ class MentorInternshipPanelTest extends TestCase
             'user_id' => $student->id,
             'file_url' => 'https://drive.google.com/file/d/abc123/view',
         ]);
+    }
+
+    public function test_student_can_submit_weekly_assignment_as_file_upload(): void
+    {
+        Storage::fake(media_disk());
+
+        $mentor = $this->mentor();
+        $this->actingAs($mentor)->post(route('mentor.internships.store'), [
+            'title' => 'Magang Unggah File',
+            'education_level' => 'S1',
+            'duration_months' => 3,
+            'quota' => 5,
+        ]);
+
+        $program = Program::query()->where('title', 'Magang Unggah File')->firstOrFail();
+        $week = $program->modules()->orderBy('sort_order')->firstOrFail();
+        $lesson = $week->lessons()->where('type', 'assignment')->firstOrFail();
+
+        $this->actingAs($mentor)->put(route('mentor.assignments.update', $lesson->assignment), [
+            'title' => 'Tugas Minggu 1',
+            'instructions' => 'Kumpulkan laporan mingguan.',
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'status' => 'active',
+            'email_verified_at' => now(),
+            'screening_completed_at' => now(),
+        ]);
+        $program->enrollments()->create([
+            'user_id' => $student->id,
+            'status' => 'active',
+            'batch_id' => $program->enrollableBatchId(),
+            'enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($student)
+            ->post(route('learn.submit', [$program, $lesson]), [
+                'proof' => UploadedFile::fake()->create('laporan-minggu-1.pdf', 200, 'application/pdf'),
+                'notes' => 'Laporan minggu pertama.',
+            ])
+            ->assertRedirect();
+
+        $submission = Submission::where('assignment_id', $lesson->assignment->id)
+            ->where('user_id', $student->id)
+            ->firstOrFail();
+
+        $this->assertStringStartsWith('submissions/', $submission->file_url);
+        Storage::disk(media_disk())->assertExists($submission->file_url);
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.submissions'))
+            ->assertOk()
+            ->assertSee('Tugas Minggu 1')
+            ->assertSee('Minggu 1')
+            ->assertSee('Unduh file tugas');
+    }
+
+    public function test_weekly_assignment_requires_link_or_file(): void
+    {
+        $mentor = $this->mentor();
+        $this->actingAs($mentor)->post(route('mentor.internships.store'), [
+            'title' => 'Magang Validasi',
+            'education_level' => 'S1',
+            'duration_months' => 3,
+            'quota' => 5,
+        ]);
+
+        $program = Program::query()->where('title', 'Magang Validasi')->firstOrFail();
+        $week = $program->modules()->orderBy('sort_order')->firstOrFail();
+        $lesson = $week->lessons()->where('type', 'assignment')->firstOrFail();
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'status' => 'active',
+            'email_verified_at' => now(),
+            'screening_completed_at' => now(),
+        ]);
+        $program->enrollments()->create([
+            'user_id' => $student->id,
+            'status' => 'active',
+            'batch_id' => $program->enrollableBatchId(),
+            'enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($student)
+            ->post(route('learn.submit', [$program, $lesson]), ['notes' => 'lupa lampiran'])
+            ->assertSessionHasErrors('file_url');
+
+        $this->assertDatabaseCount('submissions', 0);
     }
 
     public function test_mentor_can_delete_internship_lesson_and_week(): void
@@ -178,13 +314,13 @@ class MentorInternshipPanelTest extends TestCase
         $week = $program->modules()->orderBy('sort_order')->firstOrFail();
 
         $this->actingAs($mentor)->post(route('mentor.lessons.store', $week), [
-            'title' => 'Tugas Minggu 1',
-            'type' => 'assignment',
-            'instructions' => 'Tempel tautan',
-            'duration_minutes' => 20,
+            'title' => 'Materi pembuka',
+            'type' => 'text',
+            'content' => 'Selamat datang',
+            'duration_minutes' => 10,
         ]);
 
-        $lesson = $week->lessons()->firstOrFail();
+        $lesson = $week->lessons()->where('type', 'text')->firstOrFail();
 
         $this->actingAs($mentor)
             ->delete(route('mentor.lessons.destroy', $lesson))
@@ -218,12 +354,11 @@ class MentorInternshipPanelTest extends TestCase
 
         $program = Program::query()->where('title', 'Magang Mobile Sync')->firstOrFail();
         $week = $program->modules()->orderBy('sort_order')->firstOrFail();
+        $task = $week->lessons()->where('type', 'assignment')->firstOrFail();
 
-        $this->actingAs($mentor)->post(route('mentor.lessons.store', $week), [
+        $this->actingAs($mentor)->put(route('mentor.assignments.update', $task->assignment), [
             'title' => 'Tugas Minggu 1',
-            'type' => 'assignment',
             'instructions' => 'Kumpulkan lewat Drive',
-            'duration_minutes' => 20,
         ]);
 
         $program->enrollments()->create([
@@ -239,6 +374,44 @@ class MentorInternshipPanelTest extends TestCase
             ->assertSee('Minggu 1')
             ->assertSee('Tugas Minggu 1')
             ->assertSee('1 tugas');
+    }
+
+    public function test_curriculum_page_shows_who_receives_the_material(): void
+    {
+        $mentor = $this->mentor();
+        $this->actingAs($mentor)->post(route('mentor.internships.store'), [
+            'title' => 'Magang Audiens',
+            'education_level' => 'S1',
+            'duration_months' => 3,
+            'quota' => 5,
+        ]);
+
+        $program = Program::query()->where('title', 'Magang Audiens')->firstOrFail();
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.internships.curriculum', $program))
+            ->assertOk()
+            ->assertSee('Belum ada peserta diterima di magang ini');
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'status' => 'active',
+            'name' => 'Okky Puspa',
+            'email_verified_at' => now(),
+            'screening_completed_at' => now(),
+        ]);
+        $program->enrollments()->create([
+            'user_id' => $student->id,
+            'status' => 'active',
+            'batch_id' => $program->enrollableBatchId(),
+            'enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.internships.curriculum', $program))
+            ->assertOk()
+            ->assertSee('Materi ini dilihat oleh')
+            ->assertSee('Okky Puspa');
     }
 
     public function test_mentor_can_claim_unassigned_internship_without_admin(): void

@@ -357,21 +357,68 @@ class Program extends Model
     }
 
     /**
+     * Slot pengumpulan tugas selalu diletakkan paling akhir dalam satu minggu,
+     * supaya materi yang ditambahkan mentor tetap tampil lebih dulu.
+     */
+    public const WEEKLY_ASSIGNMENT_SORT_ORDER = 900;
+
+    /**
      * Magang selalu punya 4 slot minggu. Admin/mentor tinggal mengisi tugas di dalamnya.
      */
     public function ensureInternshipWeeks(): void
     {
-        if ($this->type !== 'internship' || $this->modules()->exists()) {
+        if ($this->type !== 'internship') {
             return;
         }
 
-        foreach (range(1, 4) as $week) {
-            $this->modules()->create([
-                'title' => 'Minggu '.$week,
-                'sort_order' => $week,
+        if (! $this->modules()->exists()) {
+            foreach (range(1, 4) as $week) {
+                $this->modules()->create([
+                    'title' => 'Minggu '.$week,
+                    'sort_order' => $week,
+                ]);
+            }
+
+            $this->unsetRelation('modules');
+        }
+
+        $this->ensureWeeklyAssignments();
+    }
+
+    /**
+     * Tiap minggu punya satu slot "Tugas Minggu N" bawaan — mentor cukup mengisi
+     * instruksi dan deadline, peserta mengumpulkan lewat tautan atau unggah file.
+     */
+    public function ensureWeeklyAssignments(): void
+    {
+        $weeks = $this->modules()
+            ->orderBy('sort_order')
+            ->get()
+            ->filter(fn (Module $module) => static::weekNumber($module->title) !== null);
+
+        foreach ($weeks as $module) {
+            $lesson = $module->lessons()->where('type', 'assignment')->first()
+                ?? $module->lessons()->create([
+                    'title' => 'Tugas '.$module->title,
+                    'type' => 'assignment',
+                    'duration_minutes' => 30,
+                    'sort_order' => static::WEEKLY_ASSIGNMENT_SORT_ORDER,
+                ]);
+
+            $lesson->assignment()->firstOrCreate([], [
+                'title' => $lesson->title,
+                'kind' => 'assignment',
             ]);
         }
 
         $this->unsetRelation('modules');
+    }
+
+    /**
+     * Nama minggu boleh diberi keterangan tambahan, misalnya "Minggu 2 - Riset Pasar".
+     */
+    public static function weekNumber(string $title): ?int
+    {
+        return preg_match('/^\s*minggu\s*(\d+)/i', $title, $match) ? (int) $match[1] : null;
     }
 }

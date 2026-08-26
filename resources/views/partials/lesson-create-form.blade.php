@@ -1,24 +1,16 @@
 @php
     $isInternship = $isInternship ?? ($module->program?->type === 'internship');
-    $defaultType = $defaultType ?? ($module->lessons->isEmpty()
-        ? ($isInternship ? 'assignment' : 'text')
-        : 'video');
+    $defaultType = $defaultType ?? ($module->lessons->isEmpty() ? 'text' : 'video');
     $submitLabel = $submitLabel ?? 'Tambah materi';
     $quizHint = $quizHint ?? 'Materi quiz. Detail soal bisa dilengkapi mentor di halaman kurikulum mentor.';
-    $taskNumber = $module->lessons->count() + 1;
-    $weekTaskTitle = $taskNumber === 1
-        ? 'Tugas '.$module->title
-        : 'Tugas '.$module->title.' #'.$taskNumber;
-    $defaultTitle = $isInternship
-        ? ($defaultType === 'assignment' ? $weekTaskTitle : ($defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : ''))
-        : ($defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : '');
+    $weekTaskTitle = 'Tugas '.$module->title;
+    $defaultTitle = $defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : '';
     $typeOptions = $isInternship
         ? [
             'text' => ['Pengenalan', 'Teks pembuka'],
             'video' => ['Video', 'Materi utama'],
             'article' => ['Artikel', 'Bacaan'],
             'pdf' => ['PDF', 'Dokumen'],
-            'assignment' => ['Upload tugas', 'Kumpul via tautan'],
             'quiz' => ['Quiz', 'Biasanya di akhir'],
         ]
         : [
@@ -33,10 +25,11 @@
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form data-week-task-title="{{ $weekTaskTitle }}">
     @csrf
     <div>
-        <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">{{ $isInternship ? 'Tambah tugas '.$module->title : 'Tambah tugas' }}</p>
+        <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">{{ $isInternship ? 'Isi materi '.$module->title : 'Tambah tugas' }}</p>
         <p class="mt-1 text-sm text-ink-soft">
             @if ($isInternship)
-                Nama tugas mengikuti minggu ini, misalnya <strong class="text-ink">{{ $weekTaskTitle }}</strong>. Upload tugas dikumpulkan siswa lewat tautan.
+                Pilih tipe materi, isi, lalu simpan — langsung masuk ke {{ $module->title }} milik peserta.
+                Slot pengumpulan tugas sudah otomatis ada di bawah, jadi tidak perlu dibuat di sini.
             @else
                 Pilih tipe — field menyesuaikan. Quiz biasanya di akhir minggu.
             @endif
@@ -56,7 +49,7 @@
     </div>
 
     <div class="grid gap-3 md:grid-cols-2">
-        <input type="text" name="title" class="input-field" placeholder="{{ $isInternship ? $weekTaskTitle : 'Judul tugas' }}" required value="{{ old('title', $defaultTitle) }}">
+        <input type="text" name="title" class="input-field" placeholder="{{ $isInternship ? $weekTaskTitle : 'Judul tugas' }}" required value="{{ old('title', $defaultTitle) }}" aria-label="Judul materi">
         <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="{{ old('duration_minutes', $defaultType === 'text' ? 10 : 15) }}">
     </div>
 
@@ -95,20 +88,6 @@
             <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
             <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB.</p>
-        </div>
-    </div>
-
-    <div data-lesson-panel="assignment" class="space-y-3 {{ $defaultType === 'assignment' ? '' : 'hidden' }}">
-        <div class="rounded-2xl border border-brand/20 bg-brand-mist/40 p-4 text-sm text-ink-soft">
-            Siswa mengumpulkan hasil kerja lewat <strong class="text-ink">tautan</strong> (Google Drive, GitHub, Figma, dll). Tidak ada upload file.
-        </div>
-        <div>
-            <label class="mb-1.5 block text-sm font-medium text-ink">Instruksi pengumpulan</label>
-            <textarea name="instructions" rows="4" class="input-field" placeholder="Contoh: Upload hasil ke Google Drive, set ke Anyone with the link, lalu tempel tautannya di halaman belajar.">{{ old('instructions') }}</textarea>
-        </div>
-        <div>
-            <label class="mb-1.5 block text-sm font-medium text-ink">Deadline (opsional)</label>
-            <input type="datetime-local" name="deadline" class="input-field max-w-xs" value="{{ old('deadline') }}">
         </div>
     </div>
 

@@ -37,15 +37,11 @@ class Assignment extends Model
         return $this->kind === 'quiz';
     }
 
-    public function collectsViaLink(): bool
+    /**
+     * Tugas dikumpulkan lewat tautan (Drive/GitHub/Figma) atau unggah file — siswa memilih salah satu.
+     */
+    public function collectsWork(): bool
     {
-        if ($this->kind !== 'assignment') {
-            return false;
-        }
-
-        $this->loadMissing('lesson.module.program');
-
-        return $this->lesson?->type === 'assignment'
-            || $this->lesson?->module?->program?->type === 'internship';
+        return $this->kind === 'assignment';
     }
 }

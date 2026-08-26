@@ -358,26 +358,22 @@ class DashboardController extends Controller
         }
 
         $data = $request->validate([
-            'file_url' => $assignment->collectsViaLink()
-                ? ['required', 'url', 'max:2048']
-                : ['nullable', 'url', 'max:2048'],
+            'file_url' => ['nullable', 'url', 'max:2048'],
             'notes' => ['nullable', 'string'],
-            'proof' => $assignment->collectsViaLink()
-                ? ['prohibited']
-                : ['nullable', 'file', 'max:5120'],
+            'proof' => ['nullable', 'file', 'max:5120', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar,jpg,jpeg,png,webp'],
         ], [
-            'file_url.required' => 'Tempel tautan pengumpulan tugas (Drive, GitHub, Figma, dll).',
+            'proof.mimes' => 'Format file tidak didukung. Pakai PDF, Office, ZIP, atau gambar.',
+            'proof.max' => 'Ukuran file maksimal 5MB. Kalau lebih besar, unggah ke Drive lalu kirim tautannya.',
         ]);
 
-        $path = $data['file_url'] ?? null;
-        if (! $assignment->collectsViaLink() && $request->hasFile('proof')) {
-            $path = $request->file('proof')->store('submissions', media_disk());
-        }
+        $path = $request->hasFile('proof')
+            ? $request->file('proof')->store('submissions', media_disk())
+            : ($data['file_url'] ?? null);
 
         if (! $path) {
             return back()
                 ->withInput()
-                ->withErrors(['file_url' => 'Kirim tautan atau unggah file tugas.']);
+                ->withErrors(['file_url' => 'Kirim tautan tugas atau unggah filenya.']);
         }
 
         Submission::updateOrCreate(

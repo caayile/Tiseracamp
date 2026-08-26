@@ -310,12 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const titleInput = form.querySelector('input[name="title"]');
-            const weekTaskTitle = form.dataset.weekTaskTitle || '';
             if (titleInput && !titleInput.dataset.touched) {
-                if (type === 'assignment' && weekTaskTitle) {
-                    titleInput.value = weekTaskTitle;
-                    titleInput.placeholder = weekTaskTitle;
-                } else if (type === 'text' && !titleInput.value) {
+                if (type === 'text' && !titleInput.value) {
                     titleInput.placeholder = 'Judul, mis. Pengenalan modul';
                 } else if (type === 'video') {
                     titleInput.placeholder = 'Judul video materi';

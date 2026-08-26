@@ -198,6 +198,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::delete('/modules/{module}', [MentorProgramController::class, 'destroyModule'])->name('modules.destroy');
     Route::delete('/lessons/{lesson}', [MentorProgramController::class, 'destroyLesson'])->name('lessons.destroy');
     Route::post('/lessons/{lesson}/assignments', [MentorAssignmentController::class, 'store'])->name('assignments.store');
+    Route::put('/assignments/{assignment}', [MentorAssignmentController::class, 'update'])->name('assignments.update');
     Route::post('/assignments/{assignment}/questions', [MentorAssignmentController::class, 'storeQuestion'])->name('assignments.questions');
     Route::get('/submissions', [MentorAssignmentController::class, 'submissions'])->name('submissions');
     Route::post('/submissions/{submission}/review', [MentorAssignmentController::class, 'review'])->name('submissions.review');

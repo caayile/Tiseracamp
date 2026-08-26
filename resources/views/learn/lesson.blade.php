@@ -148,34 +148,49 @@
                                 @endforeach
                                 <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink" type="submit">Kirim jawaban quiz</button>
                             </form>
-                        @elseif ($assignment->collectsViaLink())
-                            <form method="POST" action="{{ route('learn.submit', [$program, $lesson]) }}" class="mt-5 space-y-3">
+                        @else
+                            @php
+                                $sentUrl = (string) $submission?->file_url;
+                                $sentIsLink = str_starts_with($sentUrl, 'http');
+                            @endphp
+                            <form method="POST" action="{{ route('learn.submit', [$program, $lesson]) }}" enctype="multipart/form-data" class="mt-5 space-y-4">
                                 @csrf
+                                <p class="text-sm text-ink-soft">Kumpulkan lewat tautan <strong class="text-ink">atau</strong> unggah filenya — pilih salah satu.</p>
+
                                 <div>
-                                    <label class="mb-1.5 block text-sm font-medium text-ink">Tautan pengumpulan</label>
-                                    <input type="url" name="file_url" class="input-field" placeholder="https://drive.google.com/... atau GitHub/Figma" required value="{{ old('file_url', str_starts_with((string) $submission?->file_url, 'http') ? $submission->file_url : '') }}">
+                                    <label for="file_url" class="mb-1.5 block text-sm font-medium text-ink">Tautan tugas</label>
+                                    <input type="url" id="file_url" name="file_url" class="input-field" placeholder="https://drive.google.com/... atau GitHub/Figma"
+                                           value="{{ old('file_url', $sentIsLink ? $sentUrl : '') }}">
                                     @error('file_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                                    <p class="mt-1.5 text-xs text-ink-soft">Upload file ke Drive/GitHub, lalu tempel tautannya di sini. Jangan unggah file langsung.</p>
+                                    <p class="mt-1.5 text-xs text-ink-soft">Set akses ke "Anyone with the link" supaya mentor bisa membuka.</p>
                                 </div>
-                                <textarea name="notes" rows="2" class="input-field" placeholder="Catatan opsional">{{ old('notes', $submission?->notes) }}</textarea>
-                                <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink" type="submit">{{ $submission ? 'Perbarui tautan' : 'Kirim tautan tugas' }}</button>
+
+                                <div class="relative py-1 text-center text-xs font-semibold uppercase tracking-wider text-ink-soft">
+                                    <span class="relative z-10 bg-white px-2">atau</span>
+                                    <span class="absolute inset-x-0 top-1/2 h-px bg-ink/10"></span>
+                                </div>
+
+                                <div>
+                                    <label for="proof" class="mb-1.5 block text-sm font-medium text-ink">Unggah file</label>
+                                    <input type="file" id="proof" name="proof" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.jpg,.jpeg,.png,.webp"
+                                           class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1 file:text-xs file:font-semibold file:text-ink">
+                                    @error('proof') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                    <p class="mt-1.5 text-xs text-ink-soft">PDF, Office, ZIP, atau gambar. Maks. 5MB.</p>
+                                </div>
+
+                                <textarea name="notes" rows="2" class="input-field" placeholder="Catatan opsional untuk mentor">{{ old('notes', $submission?->notes) }}</textarea>
+                                <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink" type="submit">
+                                    {{ $submission ? 'Perbarui pengumpulan' : 'Kirim tugas' }}
+                                </button>
                             </form>
+
                             @if ($submission?->file_url)
                                 <p class="mt-3 text-sm text-ink-soft">
                                     Status: {{ ucfirst($submission->status) }}
-                                    · <a href="{{ $submission->file_url }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-mid hover:underline">Buka tautan terkirim</a>
+                                    · <a href="{{ $sentIsLink ? $sentUrl : media_url($sentUrl) }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-mid hover:underline">
+                                        {{ $sentIsLink ? 'Buka tautan terkirim' : 'Lihat file terkirim' }}
+                                    </a>
                                 </p>
-                            @endif
-                        @else
-                            <form method="POST" action="{{ route('learn.submit', [$program, $lesson]) }}" enctype="multipart/form-data" class="mt-5 space-y-3">
-                                @csrf
-                                <input type="file" name="proof" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1 file:text-xs file:font-semibold file:text-ink">
-                                <input type="url" name="file_url" class="input-field" placeholder="Atau tempel link (Drive/GitHub)">
-                                <textarea name="notes" rows="2" class="input-field" placeholder="Catatan opsional"></textarea>
-                                <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-ink" type="submit">Kirim tugas</button>
-                            </form>
-                            @if ($submission)
-                                <p class="mt-3 text-sm text-brand">Status: {{ ucfirst($submission->status) }}</p>
                             @endif
                         @endif
                     </div>
