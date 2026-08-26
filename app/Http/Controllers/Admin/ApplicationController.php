@@ -14,6 +14,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use ZipArchive;
 
 class ApplicationController extends Controller
@@ -60,12 +61,81 @@ class ApplicationController extends Controller
         ]);
     }
 
-    public function exportSpreadsheet(): View|RedirectResponse
+    public function exportSpreadsheet(): View|RedirectResponse|StreamedResponse|\Illuminate\Http\Response
     {
         $applications = $this->filteredQuery($this->filters())->get();
 
         if ($applications->isEmpty()) {
             return back()->with('error', 'Tidak ada pendaftar untuk dibuka di spreadsheet.');
+        }
+
+        $format = request()->query('format');
+
+        if ($format === 'excel' || $format === 'xls') {
+            $filename = 'rekap-pendaftar-'.now()->format('Ymd-His').'.xls';
+
+            $html = view('admin.applications.excel', [
+                'applications' => $applications,
+            ])->render();
+
+            return response($html, 200, [
+                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                'Cache-Control' => 'max-age=0',
+            ]);
+        }
+
+        if ($format === 'csv') {
+            $filename = 'rekap-pendaftar-'.now()->format('Ymd-His').'.csv';
+
+            return response()->streamDownload(function () use ($applications) {
+                $handle = fopen('php://output', 'w');
+                fwrite($handle, "\xEF\xBB\xBF");
+
+                fputcsv($handle, [
+                    'No',
+                    'Nama Pendaftar',
+                    'Email',
+                    'No. WhatsApp',
+                    'Instansi / Perguruan Tinggi',
+                    'Prodi / Jurusan',
+                    'Jenjang',
+                    'Semester',
+                    'Lowongan',
+                    'Divisi',
+                    'Status',
+                    'Mulai Magang',
+                    'Selesai Magang',
+                    'Tanggal Daftar',
+                    'URL CV',
+                    'URL Portofolio',
+                ]);
+
+                foreach ($applications as $index => $app) {
+                    fputcsv($handle, [
+                        $index + 1,
+                        $app->displayName(),
+                        $app->user?->email ?? '',
+                        $app->phone ? "'".$app->phone : '',
+                        $app->university ?? '',
+                        $app->major ?? '',
+                        $app->education_level ?? '',
+                        $app->semester ?? '',
+                        $app->program?->title ?? '',
+                        $app->program?->division ?? '',
+                        $app->statusLabel(),
+                        $app->internship_start_date?->format('d/m/Y') ?? '',
+                        $app->internship_end_date?->format('d/m/Y') ?? '',
+                        $app->submitted_at?->format('d/m/Y H:i') ?? $app->created_at?->format('d/m/Y H:i') ?? '',
+                        $app->documentUrl('cv') ?? '',
+                        $app->portfolio_url ?: ($app->documentUrl('portfolio') ?? ''),
+                    ]);
+                }
+
+                fclose($handle);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
         }
 
         return view('admin.applications.spreadsheet', [
@@ -86,13 +156,12 @@ class ApplicationController extends Controller
             return back()->with('error', 'Tidak ada pendaftar untuk diunduh.');
         }
 
-        $tmp = tempnam(sys_get_temp_dir(), 'rekap-');
-        if ($tmp === false) {
-            return back()->with('error', 'Gagal membuat berkas ZIP sementara.');
+        $tempDir = storage_path('app/temp');
+        if (! is_dir($tempDir)) {
+            @mkdir($tempDir, 0755, true);
         }
 
-        @unlink($tmp);
-        $zipPath = $tmp.'.zip';
+        $zipPath = $tempDir.'/rekap-'.now()->format('YmdHis').'-'.bin2hex(random_bytes(4)).'.zip';
 
         $zip = new ZipArchive;
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {

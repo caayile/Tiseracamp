@@ -36,12 +36,20 @@
            class="btn-primary text-sm">
             Buka spreadsheet
         </a>
+        <a href="{{ route('admin.applications.export', array_merge($exportQuery, ['format' => 'excel'])) }}"
+           class="btn-secondary text-sm">
+            Unduh Excel (.xls)
+        </a>
+        <a href="{{ route('admin.applications.export', array_merge($exportQuery, ['format' => 'csv'])) }}"
+           class="btn-secondary text-sm">
+            Unduh CSV
+        </a>
         <a href="{{ route('admin.applications.zip', $exportQuery) }}"
            class="btn-secondary text-sm">
-            Unduh semua berkas
+            Unduh berkas ZIP
         </a>
         <p class="basis-full text-right text-[11px] text-ink-soft">
-            Spreadsheet terbuka di Chrome. ZIP berisi CV dan portofolio per pendaftar.
+            Spreadsheet interaktif web, file Excel (.xls), CSV, dan ZIP berisi dokumen pendaftar.
         </p>
     </div>
 </div>

@@ -9,7 +9,9 @@
         Rekap {{ $applications->count() }} pendaftar. Isi tanggal mulai & selesai magang, lalu tersimpan otomatis. Klik WA atau berkas untuk membuka di tab baru.
     </p>
     <div class="flex flex-wrap items-center gap-2">
-        <a href="{{ route('admin.applications.zip', $exportQuery) }}" class="btn-secondary text-sm">Unduh semua berkas</a>
+        <a href="{{ route('admin.applications.export', array_merge($exportQuery, ['format' => 'excel'])) }}" class="btn-primary text-sm">Unduh Excel (.xls)</a>
+        <a href="{{ route('admin.applications.export', array_merge($exportQuery, ['format' => 'csv'])) }}" class="btn-secondary text-sm">Unduh CSV</a>
+        <a href="{{ route('admin.applications.zip', $exportQuery) }}" class="btn-secondary text-sm">Unduh semua berkas (ZIP)</a>
         <a href="{{ route('admin.applications.pendaftar', $exportQuery) }}" class="btn-ghost text-sm">Kembali</a>
     </div>
 </div>
