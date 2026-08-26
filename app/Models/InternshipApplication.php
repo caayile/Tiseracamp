@@ -89,13 +89,13 @@ class InternshipApplication extends Model
             2 => [
                 'label' => 'Seleksi Administrasi',
                 'description' => 'Tim kami memeriksa berkas & kualifikasi',
-                'detail' => 'Tim admin memeriksa kelengkapan berkas dan kesesuaian kualifikasi program — jenjang pendidikan, jurusan, dan semester. Tidak ada tes khusus di tahap ini.',
+                'detail' => 'Tim admin memeriksa kelengkapan berkas dan kesesuaian kualifikasi.',
                 'state' => 'pending',
             ],
             3 => [
                 'label' => 'Pengumuman Hasil Seleksi',
                 'description' => 'Hasil dikabarkan lewat notifikasi',
-                'detail' => 'Hasil seleksi dikabarkan lewat notifikasi akun dan halaman status pendaftaran. Pastikan notifikasi aktif supaya tidak terlewat.',
+                'detail' => 'Pastikan selalu cek notifikasi secara berkala.',
                 'state' => 'pending',
             ],
             4 => [

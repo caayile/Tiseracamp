@@ -15,7 +15,7 @@
                 <p class="mt-1">Kamu sudah login sebagai calon mahasiswa TSU. Fitur TS Group / magang internal muncul otomatis setelah admin menyetujui KTM.</p>
             </div>
         @elseif (auth()->user()->isTsuStudent())
-            <p class="mt-3 inline-flex rounded-full bg-brand/15 px-3 py-1 text-xs font-semibold text-brand-deeper">TSU · {{ auth()->user()->tsuStatusLabel() }} — fitur khusus aktif</p>
+            <p class="mt-3 inline-flex rounded-full bg-brand/15 px-3 py-1 text-xs font-semibold text-brand-deeper">TSU · {{ auth()->user()->tsuStatusLabel() }}</p>
         @endif
 
         <div class="mt-6 flex flex-wrap gap-2">
