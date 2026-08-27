@@ -44,7 +44,8 @@ class PortfolioController extends Controller
             'title' => ['required', 'string', 'max:160'],
             'description' => ['nullable', 'string'],
             'project_url' => ['nullable', 'url'],
-            'portfolio_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'portfolio_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'project_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
         ]);
 
         if ($request->hasFile('portfolio_file')) {
@@ -54,6 +55,11 @@ class PortfolioController extends Controller
             );
         }
 
+        $imagePath = null;
+        if ($request->hasFile('project_image')) {
+            $imagePath = $request->file('project_image')->store('portfolio-images', media_disk());
+        }
+
         Portfolio::create([
             'user_id' => $data['user_id'],
             'type' => $data['type'],
@@ -61,6 +67,7 @@ class PortfolioController extends Controller
             'description' => $data['description'] ?? null,
             'project_url' => $data['project_url'] ?? null,
             'portfolio_file_url' => $data['portfolio_file_url'] ?? null,
+            'image_path' => $imagePath,
         ]);
 
         $label = $data['type'] === 'cv' ? 'CV' : 'Portofolio';

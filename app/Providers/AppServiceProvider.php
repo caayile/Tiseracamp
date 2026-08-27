@@ -30,5 +30,18 @@ class AppServiceProvider extends ServiceProvider
                 ->numbers()
                 ->symbols();
         });
+
+        // Pastikan direktori sementara & folder upload selalu tersedia
+        $dirs = [
+            storage_path('tmp'),
+            public_path('uploads/portfolio-images'),
+            public_path('uploads/portfolios'),
+            public_path('uploads/cvs'),
+        ];
+        foreach ($dirs as $dir) {
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+        }
     }
 }

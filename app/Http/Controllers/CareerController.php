@@ -69,36 +69,72 @@ class CareerController extends Controller
 
     public function storePortfolio(Request $request): RedirectResponse
     {
+        // Normalisasi URL jika user mengetik domain tanpa protokol
+        if ($request->filled('project_url')) {
+            $rawUrl = trim((string) $request->input('project_url'));
+            if (! preg_match('~^https?://~i', $rawUrl)) {
+                $request->merge(['project_url' => 'https://' . $rawUrl]);
+            }
+        }
+
         $data = $request->validate([
-            'type' => ['required', 'in:portfolio,cv'],
-            'title' => ['required', 'string', 'max:160'],
-            'description' => ['nullable', 'string'],
-            'project_url' => ['nullable', 'url'],
-            'portfolio_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'type'           => ['required', 'in:portfolio,cv'],
+            'title'          => ['required', 'string', 'max:160'],
+            'description'    => ['nullable', 'string', 'max:2000'],
+            'project_url'    => ['nullable', 'url', 'max:255'],
+            'portfolio_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            // Gambar maks 10 MB (10240 KB)
+            'project_image'  => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif,jfif,heic', 'max:10240'],
+        ], [
+            'project_image.mimes'    => 'Format gambar harus JPG, PNG, WebP, GIF, SVG, atau BMP.',
+            'project_image.max'      => 'Ukuran gambar maksimal 10 MB.',
+            'portfolio_file.mimes'   => 'File harus berformat PDF.',
+            'portfolio_file.max'     => 'Ukuran file PDF maksimal 10 MB.',
+            'project_url.url'        => 'Link proyek tidak valid (contoh: https://github.com/...).',
+            'title.required'         => 'Judul wajib diisi.',
+            'title.max'              => 'Judul maksimal 160 karakter.',
         ]);
 
+        // Untuk CV: harus ada file PDF atau link
         if ($data['type'] === 'cv' && ! $request->hasFile('portfolio_file') && blank($data['project_url'] ?? null)) {
             return back()
                 ->withInput()
-                ->withErrors(['portfolio_file' => 'Untuk CV, upload file PDF atau isi link.']);
+                ->withErrors(['portfolio_file' => 'Untuk CV, unggah file PDF atau isi link.']);
         }
 
+        // Untuk Portofolio: gambar proyek WAJIB
+        if ($data['type'] === 'portfolio' && ! $request->hasFile('project_image')) {
+            return back()
+                ->withInput()
+                ->withErrors(['project_image' => 'Gambar proyek wajib diunggah untuk portofolio.']);
+        }
+
+        // Simpan file PDF jika ada
+        $pdfPath = null;
         if ($request->hasFile('portfolio_file')) {
-            $data['portfolio_file_url'] = $request->file('portfolio_file')->store(
+            $pdfPath = $request->file('portfolio_file')->store(
                 $data['type'] === 'cv' ? 'cvs' : 'portfolios',
                 media_disk()
             );
         }
 
+        // Simpan gambar proyek jika ada
+        $imagePath = null;
+        if ($request->hasFile('project_image')) {
+            $imagePath = $request->file('project_image')->store('portfolio-images', media_disk());
+        }
+
         auth()->user()->portfolios()->create([
-            'type' => $data['type'],
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'project_url' => $data['project_url'] ?? null,
-            'portfolio_file_url' => $data['portfolio_file_url'] ?? null,
+            'type'               => $data['type'],
+            'title'              => $data['title'],
+            'description'        => $data['description'] ?? null,
+            'project_url'        => $data['project_url'] ?? null,
+            'portfolio_file_url' => $pdfPath,
+            'image_path'         => $imagePath,
         ]);
 
         award_achievement(auth()->user(), 'first_portfolio');
+        forget_home_cache();
 
         $label = $data['type'] === 'cv' ? 'CV' : 'Portofolio';
 
@@ -111,7 +147,8 @@ class CareerController extends Controller
     {
         abort_unless($portfolio->user_id === auth()->id(), 403);
         $portfolio->delete();
+        forget_home_cache();
 
-        return back()->with('success', 'Portfolio dihapus.');
+        return back()->with('success', 'Portofolio berhasil dihapus.');
     }
 }

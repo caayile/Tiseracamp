@@ -107,7 +107,13 @@
         </div>
 
         <div>
-            <label class="mb-1 block text-sm font-medium">File PDF <span class="font-normal text-ink-soft">(opsional, maks 5 MB)</span></label>
+            <label class="mb-1 block text-sm font-medium">Gambar proyek <span class="font-normal text-ink-soft">(opsional, maks 10 MB)</span></label>
+            <input type="file" name="project_image" accept="image/jpeg,image/png,image/webp,image/gif" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
+            @error('project_image') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+            <label class="mb-1 block text-sm font-medium">File PDF <span class="font-normal text-ink-soft">(opsional, maks 10 MB)</span></label>
             <input type="file" name="portfolio_file" accept="application/pdf,.pdf" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
             @error('portfolio_file') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
