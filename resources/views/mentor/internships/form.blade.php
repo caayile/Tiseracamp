@@ -10,7 +10,7 @@
 @endphp
 
 <div class="mb-6">
-    <a href="{{ route('mentor.internships.index') }}" class="btn-secondary">← Magang saya</a>
+    <a href="{{ route('mentor.internships.curriculum', $program) }}" class="btn-secondary">← Kembali</a>
 </div>
 
 <form method="POST"
@@ -130,7 +130,7 @@
 
     <div class="flex flex-wrap gap-3">
         <button class="btn-primary" type="submit">{{ $program->exists ? 'Simpan perubahan' : 'Simpan magang' }}</button>
-        <a href="{{ route('mentor.internships.index') }}" class="btn-secondary">Batal</a>
+        <a href="{{ route('mentor.internships.curriculum', $program) }}" class="btn-secondary">Batal</a>
     </div>
 </form>
 @endsection

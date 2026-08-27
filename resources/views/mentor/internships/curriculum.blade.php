@@ -29,9 +29,9 @@
     <a href="{{ route('programs.show', $program->slug) }}" class="btn-ghost" target="_blank">Lihat halaman magang</a>
 </div>
 
-<div class="card-soft mb-6 border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950">
+<div class="card-soft mb-6 border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-800 dark:text-emerald-300">
     <p class="font-semibold">Minggu 1–4 sudah siap, lengkap dengan slot pengumpulan tugas</p>
-    <p class="mt-1 text-emerald-900/80">
+    <p class="mt-1 text-emerald-900/80 dark:text-emerald-200/80">
         Tidak perlu membuat folder atau materi tugas lagi. Tiap minggu sudah punya satu slot pengumpulan — kamu tinggal
         mengisi instruksi dan deadline. Peserta mengumpulkan lewat <strong>tautan atau unggah file</strong>, dan hasilnya
         masuk ke <strong>Review Tugas</strong>.
@@ -133,11 +133,14 @@
                                 </span>
                                 <span class="text-ink-soft">· {{ $lesson->duration_minutes }}m</span>
                             </span>
-                            <form method="POST" action="{{ route('mentor.lessons.destroy', $lesson) }}" class="shrink-0" onsubmit="return confirm('Hapus materi ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50" type="submit">Hapus</button>
-                            </form>
+                            <div class="flex items-center gap-1">
+                                <a href="{{ route('mentor.materials.edit', $lesson) }}" class="rounded-lg px-2 py-1 text-xs font-semibold text-brand-dark hover:bg-brand-mist">Edit</a>
+                                <form method="POST" action="{{ route('mentor.lessons.destroy', $lesson) }}" class="shrink-0" onsubmit="return confirm('Hapus materi ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50" type="submit">Hapus</button>
+                                </form>
+                            </div>
                         </li>
                     @empty
                         <li class="rounded-xl border border-dashed border-brand/30 bg-brand-mist/30 px-4 py-6 text-center text-sm text-ink-soft">

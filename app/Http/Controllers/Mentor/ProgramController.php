@@ -202,6 +202,22 @@ class ProgramController extends Controller
         return view('mentor.internships.curriculum', compact('program', 'audience'));
     }
 
+    public function curriculumMaterials(Program $program): View
+    {
+        abort_unless($program->type === 'internship', 404);
+        abort_unless($program->mentor_id === auth()->id(), 403);
+        $program->ensureInternshipWeeks();
+
+        $module = $program->modules->first();
+        if (!$module) {
+            $module = $program->modules()->create(['title' => 'Minggu 1', 'sort_order' => 1])->first();
+        }
+
+        $lessons = $module->lessons()->latest()->get();
+
+        return view('mentor.internships.curriculum_materials', compact('program', 'module', 'lessons'));
+    }
+
     public function create(): View
     {
         return view('mentor.programs.form', [

@@ -38,6 +38,7 @@ use App\Http\Controllers\NewsController;
 use App\Http\Controllers\Mentor\AnnouncementController as MentorAnnouncementController;
 use App\Http\Controllers\Mentor\ApplicationController as MentorApplicationController;
 use App\Http\Controllers\Mentor\AssignmentController as MentorAssignmentController;
+use App\Http\Controllers\Mentor\MateriController as MentorMateriController;
 use App\Http\Controllers\Mentor\ChatController as MentorChatController;
 use App\Http\Controllers\Mentor\DashboardController as MentorDashboardController;
 use App\Http\Controllers\Mentor\DiscussionController as MentorDiscussionController;
@@ -185,6 +186,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::put('/internships/{program}', [MentorProgramController::class, 'updateInternship'])->name('internships.update');
     Route::put('/internships/{program}/quota', [MentorProgramController::class, 'updateInternshipQuota'])->name('internships.quota');
     Route::get('/internships/{program}/curriculum', [MentorProgramController::class, 'internshipCurriculum'])->name('internships.curriculum');
+    Route::get('/internships/{program}/curriculum-materials', [MentorMateriController::class, 'curriculumMaterials'])->name('internships.curriculum-materials');
     Route::get('/programs/create', [MentorProgramController::class, 'create'])->name('programs.create');
     Route::post('/programs', [MentorProgramController::class, 'store'])->name('programs.store');
     Route::get('/programs/{program}/edit', [MentorProgramController::class, 'edit'])->name('programs.edit');
@@ -222,6 +224,13 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::post('/announcements', [MentorAnnouncementController::class, 'store'])->name('announcements.store');
     Route::put('/announcements/{announcement}', [MentorAnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/announcements/{announcement}', [MentorAnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
+    Route::get('/materials', [MentorMateriController::class, 'index'])->name('materials.index');
+    Route::get('/materials/create', [MentorMateriController::class, 'create'])->name('materials.create');
+    Route::post('/materials', [MentorMateriController::class, 'store'])->name('materials.store');
+    Route::get('/materials/{lesson}/edit', [MentorMateriController::class, 'edit'])->name('materials.edit');
+    Route::put('/materials/{lesson}', [MentorMateriController::class, 'update'])->name('materials.update');
+    Route::delete('/materials/{lesson}', [MentorMateriController::class, 'destroy'])->name('materials.destroy');
     Route::get('/chat', [MentorChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [MentorChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{conversation}', [MentorChatController::class, 'send'])->name('chat.send');

@@ -647,7 +647,8 @@ html.dark .bg-emerald-100 {
 
 html.dark .text-emerald-900,
 html.dark .text-emerald-800,
-html.dark .text-emerald-700 {
+html.dark .text-emerald-700,
+html.dark .text-emerald-950 {
     color: #6ee7b7 !important;
 }
 
