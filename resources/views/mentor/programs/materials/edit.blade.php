@@ -13,7 +13,7 @@
     <p class="mt-1">1) Pengenalan modul → 2) Video / materi → 3) Quiz di akhir (opsional). Tidak perlu semua jadi quiz.</p>
 </div>
 
-<form method="POST" action="{{ route('mentor.materials.update', $lesson) }}" enctype="multipart/form-data" class="space-y-4" data-rich-form>
+<form method="POST" action="{{ route('mentor.materials.update', $lesson) }}" enctype="multipart/form-data" class="space-y-4" data-lesson-form data-rich-form>
     @csrf @method('PUT')
 
     <input type="hidden" name="lesson_id" value="{{ $lesson->id }}">
@@ -83,8 +83,8 @@
         </div>
     </div>
 
-@if(in_array($lesson->type ?? 'text', ['text', 'article']))
-    <div data-lesson-panel="content" {{ in_array($lesson->type ?? 'text', ['text', 'article']) ? '' : 'hidden' }}>
+<div data-lesson-panel="content" {{ in_array($lesson->type ?? 'text', ['text', 'article']) ? '' : 'hidden' }}>
+    <div class="space-y-3">
         <div class="overflow-hidden rounded-xl border border-ink/12 bg-white">
             <div class="flex flex-wrap items-center gap-1 border-b border-ink/10 bg-slate-50 p-2" data-rich-toolbar>
                 <button type="button" data-rich-command="bold" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-bold text-ink transition hover:bg-brand/15" title="Bold">B</button>
@@ -103,17 +103,17 @@
             <div contenteditable="true"
                  data-rich-editor
                  class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none empty:before:pointer-events-none empty:before:text-ink-soft/50 empty:before:content-['Tulis_konten_pengenalan_atau_artikel...']">
-                {{ ! is_null($lesson->content) ? $lesson->content : 'Tulis konten pengenalan atau artikel di sini...' }}
+                {{ ! is_null($lesson->content) ? $lesson->content : '' }}
             </div>
             <textarea name="content" class="hidden" data-rich-input>{{ ! is_null($lesson->content) ? $lesson->content : '' }}</textarea>
         </div>
-        <div class="mt-3">
+        <div>
             <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-deeper">
             <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB. Ditampilkan di halaman belajar bersama teks pengenala.</p>
         </div>
     </div>
-@endif
+</div>
 
 <div data-lesson-panel="quiz" {{ in_array($lesson->type ?? 'text', ['quiz']) ? '' : 'hidden' }} data-quiz-builder>
         <div>

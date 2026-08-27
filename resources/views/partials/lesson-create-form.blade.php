@@ -22,7 +22,7 @@
         ];
 @endphp
 
-<form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form data-week-task-title="{{ $weekTaskTitle }}">
+<form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form data-rich-form data-week-task-title="{{ $weekTaskTitle }}">
     @csrf
     <div>
         <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">{{ $isInternship ? 'Isi materi '.$module->title : 'Tambah tugas' }}</p>
@@ -83,7 +83,27 @@
     </div>
 
     <div data-lesson-panel="content" class="space-y-3 {{ in_array($defaultType, ['text', 'article'], true) ? '' : 'hidden' }}">
-        <textarea name="content" rows="4" class="input-field" placeholder="Konten pengenalan / artikel"></textarea>
+        <div class="overflow-hidden rounded-xl border border-ink/12 bg-white">
+            <div class="flex flex-wrap items-center gap-1 border-b border-ink/10 bg-slate-50 p-2" data-rich-toolbar>
+                <button type="button" data-rich-command="bold" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-bold text-ink transition hover:bg-brand/15" title="Bold">B</button>
+                <button type="button" data-rich-command="italic" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 italic text-ink transition hover:bg-brand/15" title="Italic">I</button>
+                <button type="button" data-rich-command="underline" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 underline text-ink transition hover:bg-brand/15" title="Underline">U</button>
+                <span class="mx-1 h-6 w-px bg-ink/10"></span>
+                <select data-rich-size class="rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-brand">
+                    <option value="">Ukuran font</option>
+                    <option value="2">Kecil</option>
+                    <option value="3">Normal</option>
+                    <option value="4">Sedang</option>
+                    <option value="5">Besar</option>
+                    <option value="6">Sangat besar</option>
+                </select>
+            </div>
+            <div contenteditable="true"
+                 data-rich-editor
+                 class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none empty:before:pointer-events-none empty:before:text-ink-soft/50 empty:before:content-['Tulis_konten_pengenalan_atau_artikel...']">
+            </div>
+            <textarea name="content" class="hidden" data-rich-input></textarea>
+        </div>
         <div>
             <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
@@ -91,8 +111,36 @@
         </div>
     </div>
 
-    <div data-lesson-panel="quiz" class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900 {{ $defaultType === 'quiz' ? '' : 'hidden' }}">
-        {{ $quizHint }}
+    <div data-lesson-panel="quiz" class="space-y-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 {{ $defaultType === 'quiz' ? '' : 'hidden' }}" data-quiz-builder>
+        <div>
+            <p class="text-sm font-semibold text-amber-900">Quiz di akhir modul</p>
+            <p class="mt-1 text-xs text-amber-800/80">Tambah soal sebanyak yang kamu mau (5, 10, 20, dst). Tiap soal pilihan ganda A–D.</p>
+        </div>
+        <textarea name="instructions" rows="2" class="input-field" placeholder="Instruksi singkat (opsional)"></textarea>
+
+        <div class="space-y-4" data-quiz-questions>
+            <div class="rounded-xl border border-amber-200/80 bg-white p-4" data-quiz-item>
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <p class="text-xs font-bold uppercase tracking-wide text-amber-900">Soal <span data-quiz-num>1</span></p>
+                    <button type="button" data-quiz-remove class="hidden text-xs font-semibold text-red-600 hover:underline">Hapus</button>
+                </div>
+                <input type="text" name="questions[0][question]" class="input-field" placeholder="Pertanyaan" data-quiz-required>
+                <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                    <input type="text" name="questions[0][options][0]" class="input-field" placeholder="Opsi A" data-quiz-required>
+                    <input type="text" name="questions[0][options][1]" class="input-field" placeholder="Opsi B" data-quiz-required>
+                    <input type="text" name="questions[0][options][2]" class="input-field" placeholder="Opsi C">
+                    <input type="text" name="questions[0][options][3]" class="input-field" placeholder="Opsi D">
+                </div>
+                <select name="questions[0][correct_index]" data-native-select class="input-field mt-2 max-w-xs">
+                    <option value="0">Jawaban benar: A</option>
+                    <option value="1">Jawaban benar: B</option>
+                    <option value="2">Jawaban benar: C</option>
+                    <option value="3">Jawaban benar: D</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="button" data-quiz-add class="btn-secondary text-sm">+ Tambah soal</button>
     </div>
 
     <button class="btn-secondary" type="submit">{{ $submitLabel }}</button>
