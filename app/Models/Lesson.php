@@ -40,6 +40,58 @@ class Lesson extends Model
         return $this->video_url;
     }
 
+    public function youtubeEmbedSrc(): ?string
+    {
+        $url = (string) $this->embedVideoUrl();
+
+        return $url !== '' && str_contains($url, 'youtube.com/embed/') ? $url : null;
+    }
+
+    public function playableVideoSrc(): ?string
+    {
+        if ($this->file_type === 'video' && $this->filePublicUrl()) {
+            return $this->filePublicUrl();
+        }
+
+        if (preg_match('/\.(mp4|webm|mov)(?:\?|$)/i', (string) $this->file_url)) {
+            return $this->filePublicUrl();
+        }
+
+        $url = (string) $this->embedVideoUrl();
+        if ($url !== '' && ! str_contains($url, 'youtube.com/embed/')) {
+            return $url;
+        }
+
+        return null;
+    }
+
+    public function playableAudioSrc(): ?string
+    {
+        if (! $this->filePublicUrl()) {
+            return null;
+        }
+
+        if ($this->file_type === 'audio') {
+            return $this->filePublicUrl();
+        }
+
+        if ($this->type === 'recording' && (
+            preg_match('/\.(mp3|wav|m4a|aac|ogg|mpeg)(?:\?|$)/i', (string) $this->file_url)
+            || str_starts_with((string) $this->file_url, 'http')
+        )) {
+            return $this->filePublicUrl();
+        }
+
+        return null;
+    }
+
+    public function isExternalFileUrl(): bool
+    {
+        $url = (string) $this->file_url;
+
+        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://');
+    }
+
     /**
      * Public URL for PDF/attachment — supports external links and uploaded files.
      */

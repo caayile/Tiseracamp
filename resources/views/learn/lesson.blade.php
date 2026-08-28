@@ -62,7 +62,27 @@
                 <h1 class="font-display text-3xl font-bold leading-tight text-ink md:text-4xl">{{ $lesson->title }}</h1>
 
                 <div class="prose prose-slate mt-8 max-w-none prose-a:text-brand-mid prose-strong:text-ink">
-                    @if (in_array($lesson->type, ['video', 'recording'], true) && $lesson->embedVideoUrl())
+                    @if ($lesson->type === 'video' && $lesson->youtubeEmbedSrc())
+                        <div class="not-prose mb-8 aspect-video overflow-hidden rounded-2xl border border-brand/20 bg-ink shadow-lg">
+                            <iframe
+                                class="h-full w-full"
+                                src="{{ $lesson->youtubeEmbedSrc() }}"
+                                title="{{ $lesson->title }}"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen
+                                referrerpolicy="strict-origin-when-cross-origin"
+                            ></iframe>
+                        </div>
+                    @elseif ($lesson->type === 'video' && $lesson->playableVideoSrc())
+                        <div class="not-prose mb-8 overflow-hidden rounded-2xl border border-brand/20 bg-ink shadow-lg">
+                            <video class="w-full" controls src="{{ $lesson->playableVideoSrc() }}" title="{{ $lesson->title }}"></video>
+                        </div>
+                    @elseif ($lesson->type === 'recording' && $lesson->playableAudioSrc())
+                        <div class="not-prose mb-8 rounded-2xl border border-brand/20 bg-white p-5 shadow-sm">
+                            <p class="mb-3 text-sm font-semibold text-ink">Rekaman audio</p>
+                            <audio class="w-full" controls src="{{ $lesson->playableAudioSrc() }}"></audio>
+                        </div>
+                    @elseif (in_array($lesson->type, ['video', 'recording'], true) && $lesson->embedVideoUrl())
                         <div class="not-prose mb-8 aspect-video overflow-hidden rounded-2xl border border-brand/20 bg-ink shadow-lg">
                             <iframe
                                 class="h-full w-full"

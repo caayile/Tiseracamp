@@ -304,9 +304,13 @@ document.addEventListener('DOMContentLoaded', () => {
             form.querySelectorAll('[data-lesson-panel]').forEach((panel) => {
                 const key = panel.dataset.lessonPanel;
                 const show = key === type
-                    || (key === 'content' && ['text', 'article'].includes(type))
-                    || (key === 'video' && ['video', 'recording'].includes(type));
+                    || (key === 'content' && ['text', 'article'].includes(type));
                 panel.classList.toggle('hidden', !show);
+                panel.toggleAttribute('hidden', !show);
+                panel.querySelectorAll('input, textarea, select').forEach((field) => {
+                    if (field.closest('template')) return;
+                    field.disabled = !show;
+                });
             });
 
             const titleInput = form.querySelector('input[name="title"]');
@@ -362,26 +366,31 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         addBtn.addEventListener('click', () => {
+            const template = builder.querySelector('[data-quiz-template]');
             const first = list.querySelector('[data-quiz-item]');
-            if (!first) return;
+            let clone = null;
 
-            // Ambil select asli (bukan wrapper custom-select yang rusak kalau di-clone)
-            const sourceSelect = first.querySelector('select[data-native-select], select');
-            const clone = first.cloneNode(true);
+            if (template?.content?.firstElementChild) {
+                clone = template.content.firstElementChild.cloneNode(true);
+            } else if (first) {
+                const sourceSelect = first.querySelector('select[data-native-select], select');
+                clone = first.cloneNode(true);
 
-            // Kalau custom-select ikut ter-clone, ganti lagi jadi select biasa
-            clone.querySelectorAll('.custom-select').forEach((wrapper) => {
-                const native = wrapper.querySelector('select');
-                if (!native || !sourceSelect) return;
-                const fresh = sourceSelect.cloneNode(true);
-                fresh.removeAttribute('aria-hidden');
-                fresh.tabIndex = 0;
-                fresh.classList.remove('custom-select__native');
-                fresh.classList.add('input-field', 'mt-2', 'max-w-xs');
-                fresh.setAttribute('data-native-select', '');
-                fresh.selectedIndex = 0;
-                wrapper.replaceWith(fresh);
-            });
+                clone.querySelectorAll('.custom-select').forEach((wrapper) => {
+                    const native = wrapper.querySelector('select');
+                    if (!native || !sourceSelect) return;
+                    const fresh = sourceSelect.cloneNode(true);
+                    fresh.removeAttribute('aria-hidden');
+                    fresh.tabIndex = 0;
+                    fresh.classList.remove('custom-select__native');
+                    fresh.classList.add('input-field', 'mt-2', 'max-w-xs');
+                    fresh.setAttribute('data-native-select', '');
+                    fresh.selectedIndex = 0;
+                    wrapper.replaceWith(fresh);
+                });
+            } else {
+                return;
+            }
 
             clone.querySelectorAll('input').forEach((input) => {
                 if (input.type === 'text') input.value = '';
@@ -394,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.tabIndex = 0;
             });
 
+            list.querySelector('[data-quiz-empty]')?.remove();
             list.appendChild(clone);
             renumber();
         });

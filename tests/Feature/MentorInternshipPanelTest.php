@@ -259,7 +259,7 @@ class MentorInternshipPanelTest extends TestCase
         Storage::disk(media_disk())->assertExists($submission->file_url);
 
         $this->actingAs($mentor)
-            ->get(route('mentor.submissions'))
+            ->get(route('mentor.submissions.internship'))
             ->assertOk()
             ->assertSee('Tugas Minggu 1')
             ->assertSee('Minggu 1')

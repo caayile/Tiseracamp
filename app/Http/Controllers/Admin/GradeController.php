@@ -126,6 +126,11 @@ class GradeController extends Controller
             'link' => $link,
         ]);
 
+        return $this->afterGradeSaved($enrollment, $final);
+    }
+
+    protected function afterGradeSaved(Enrollment $enrollment, int $final): RedirectResponse
+    {
         return back()->with('success', 'Nilai peserta disimpan. Nilai akhir: '.$final.' ('.Enrollment::letterFromScore($final).').');
     }
 

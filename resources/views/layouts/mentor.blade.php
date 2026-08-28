@@ -28,10 +28,11 @@
                     ],
                     'Bootcamp' => [
                         ['label' => 'Bootcamp Saya', 'route' => 'mentor.programs.index', 'match' => 'mentor.programs.*', 'icon' => 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14zM12 14v5'],
+                        ['label' => 'Review Tugas Bootcamp', 'route' => 'mentor.submissions.bootcamp', 'match' => 'mentor.submissions.bootcamp', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['label' => 'Nilai Bootcamp', 'route' => 'mentor.grades.bootcamp', 'match' => 'mentor.grades.bootcamp*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
                     ],
                     'Mentoring' => [
                         ['label' => 'Logbook Peserta', 'route' => 'mentor.logbooks.index', 'match' => 'mentor.logbooks.*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                        ['label' => 'Review Tugas', 'route' => 'mentor.submissions', 'match' => 'mentor.submissions*', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
                         ['label' => 'Jadwal Mentoring', 'route' => 'mentor.schedules.index', 'match' => 'mentor.schedules.*', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
                         ['label' => 'Pengumuman', 'route' => 'mentor.announcements.index', 'match' => 'mentor.announcements.*', 'icon' => 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z'],
                         ['label' => 'Diskusi', 'route' => 'mentor.discussions.index', 'match' => 'mentor.discussions.*', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
@@ -40,7 +41,8 @@
                     'Magang' => [
                         ['label' => 'Magang Saya', 'route' => 'mentor.internships.index', 'match' => 'mentor.internships.*', 'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
                         ['label' => 'Pendaftar Magang', 'route' => 'mentor.applications.index', 'match' => 'mentor.applications.*', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
-                        ['label' => 'Nilai Magang', 'route' => 'mentor.grades.index', 'match' => 'mentor.grades.*', 'icon' => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
+                        ['label' => 'Review Tugas Magang', 'route' => 'mentor.submissions.internship', 'match' => 'mentor.submissions.internship', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['label' => 'Nilai Magang', 'route' => 'mentor.grades.index', 'match' => ['mentor.grades.index', 'mentor.grades.edit', 'mentor.grades.print'], 'icon' => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
                     ],
                     'Akun' => [
                         ['label' => 'Edit Profil', 'route' => 'profile.edit', 'match' => 'profile.edit', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
@@ -53,7 +55,7 @@
                 <p class="panel-sidebar-label mt-3 px-3 text-[10px] font-bold uppercase tracking-[0.14em] first:mt-0">{{ $groupLabel }}</p>
                 @foreach ($items as $item)
                     @php
-                        $isActive = request()->routeIs($item['match']);
+                        $isActive = request()->routeIs(...(array) $item['match']);
                     @endphp
                     <a href="{{ route($item['route']) }}" class="panel-sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition {{ $isActive ? 'is-active' : '' }}">
                         <svg class="panel-sidebar-icon h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -148,7 +150,8 @@
                 <a href="{{ route('mentor.dashboard') }}" class="btn-ghost whitespace-nowrap text-xs">Dashboard</a>
                 <a href="{{ route('mentor.programs.index') }}" class="btn-ghost whitespace-nowrap text-xs">Program</a>
                 <a href="{{ route('mentor.schedules.index') }}" class="btn-ghost whitespace-nowrap text-xs">Jadwal</a>
-                <a href="{{ route('mentor.submissions') }}" class="btn-ghost whitespace-nowrap text-xs">Tugas</a>
+                <a href="{{ route('mentor.submissions.bootcamp') }}" class="btn-ghost whitespace-nowrap text-xs">Tugas BC</a>
+                <a href="{{ route('mentor.submissions.internship') }}" class="btn-ghost whitespace-nowrap text-xs">Tugas Magang</a>
                 <a href="{{ route('mentor.announcements.index') }}" class="btn-ghost whitespace-nowrap text-xs">Pengumuman</a>
                 <a href="{{ route('mentor.chat.index') }}" class="btn-ghost whitespace-nowrap text-xs">Chat</a>
             </div>
@@ -162,6 +165,16 @@
         @if (session('error'))
             <div class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 sm:mx-6">
                 {{ session('error') }}
+            </div>
+        @endif
+        @if ($errors->any())
+            <div class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 sm:mx-6">
+                <p class="font-semibold">Periksa kembali isian berikut:</p>
+                <ul class="mt-1 list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 

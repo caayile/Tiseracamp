@@ -64,7 +64,10 @@
                                         <a href="{{ route('learn.certificate', $enrollment->program) }}" target="_blank" class="btn-secondary">Cetak sertifikat</a>
                                     @endif
                                     @if ($enrollment->program->type === 'internship' && $enrollment->hasGrade())
-                                        <a href="{{ route('internships.grade', $enrollment->program) }}" target="_blank" class="btn-secondary">Lihat & cetak nilai</a>
+                                        <a href="{{ route('internships.grade', $enrollment->program) }}" target="_blank" class="btn-secondary">Lihat & cetak nilai magang</a>
+                                    @endif
+                                    @if ($enrollment->program->type === 'bootcamp' && $enrollment->hasGrade())
+                                        <a href="{{ route('learn.grade', $enrollment->program) }}" target="_blank" class="btn-secondary">Lihat & cetak nilai bootcamp</a>
                                     @endif
                                     @if ($enrollment->isCompleted() && ! $enrollment->student_feedback_at)
                                         <a href="{{ route('learn.show', $enrollment->program) }}#rating" class="btn-secondary">⭐ Rate mentor</a>

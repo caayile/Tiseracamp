@@ -4,8 +4,10 @@
 @section('heading', 'Siswa: '.$program->title)
 
 @section('content')
-<div class="mb-6">
+<div class="mb-6 flex flex-wrap gap-3">
     <a href="{{ route('mentor.programs.index') }}" class="btn-secondary">← Kembali</a>
+    <a href="{{ route('mentor.grades.bootcamp', ['program_id' => $program->id]) }}" class="btn-ghost">Nilai bootcamp</a>
+    <a href="{{ route('mentor.submissions.bootcamp') }}" class="btn-ghost">Review tugas</a>
 </div>
 
 @php $ratingLabels = \App\Models\Enrollment::mentorRatingLabels(); @endphp

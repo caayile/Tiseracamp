@@ -117,6 +117,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/learn/{program}/lessons/{lesson}/submit', [DashboardController::class, 'submitAssignment'])->name('learn.submit');
     Route::post('/learn/{program}/lessons/{lesson}/note', [DashboardController::class, 'saveNote'])->name('learn.note');
     Route::post('/learn/{program}/feedback', [DashboardController::class, 'storeFeedback'])->name('learn.feedback');
+    Route::get('/learn/{program}/nilai', [DashboardController::class, 'grade'])->name('learn.grade');
     Route::get('/learn/{program}/certificate', [DashboardController::class, 'certificate'])->name('learn.certificate');
 
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -202,7 +203,8 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::post('/lessons/{lesson}/assignments', [MentorAssignmentController::class, 'store'])->name('assignments.store');
     Route::put('/assignments/{assignment}', [MentorAssignmentController::class, 'update'])->name('assignments.update');
     Route::post('/assignments/{assignment}/questions', [MentorAssignmentController::class, 'storeQuestion'])->name('assignments.questions');
-    Route::get('/submissions', [MentorAssignmentController::class, 'submissions'])->name('submissions');
+    Route::get('/submissions/bootcamp', [MentorAssignmentController::class, 'bootcampSubmissions'])->name('submissions.bootcamp');
+    Route::get('/submissions/internship', [MentorAssignmentController::class, 'internshipSubmissions'])->name('submissions.internship');
     Route::post('/submissions/{submission}/review', [MentorAssignmentController::class, 'review'])->name('submissions.review');
     Route::get('/schedules', [MentorScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules', [MentorScheduleController::class, 'store'])->name('schedules.store');
@@ -217,7 +219,11 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/logbooks/{user}', [MentorLogbookController::class, 'show'])->name('logbooks.show');
     Route::get('/logbooks/{logbook}/dokumentasi', [MentorLogbookController::class, 'attachment'])->name('logbooks.attachment');
     Route::post('/logbooks/{logbook}/review', [MentorLogbookController::class, 'review'])->name('logbooks.review');
+    Route::get('/grades/bootcamp', [MentorGradeController::class, 'bootcampIndex'])->name('grades.bootcamp');
+    Route::put('/grades/bootcamp/{enrollment}', [MentorGradeController::class, 'bootcampUpdate'])->name('grades.bootcamp.update');
+    Route::get('/grades/bootcamp/{enrollment}/print', [MentorGradeController::class, 'bootcampPrint'])->name('grades.bootcamp.print');
     Route::get('/grades', [MentorGradeController::class, 'index'])->name('grades.index');
+    Route::get('/grades/{enrollment}', [MentorGradeController::class, 'edit'])->name('grades.edit');
     Route::put('/grades/{enrollment}', [MentorGradeController::class, 'update'])->name('grades.update');
     Route::get('/grades/{enrollment}/print', [MentorGradeController::class, 'print'])->name('grades.print');
     Route::get('/announcements', [MentorAnnouncementController::class, 'index'])->name('announcements.index');

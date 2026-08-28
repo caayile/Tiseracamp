@@ -117,6 +117,8 @@
     $projectWeight = $projectWeight ?? \App\Models\Enrollment::projectWeight();
     $sikapWeight = $sikapWeight ?? \App\Models\Enrollment::sikapWeight();
     $finalLetter = \App\Models\Enrollment::letterFromScore((int) $enrollment->final_score);
+    $sheetKind = $sheetKind ?? (($enrollment->grade_aspects['kind'] ?? null) === 'bootcamp' ? 'bootcamp' : 'internship');
+    $workScores = $workScores ?? (($sheetKind === 'bootcamp') ? $enrollment->bootcampWorkScores() : null);
 @endphp
 
     <div class="toolbar no-print">
@@ -125,7 +127,7 @@
     </div>
 
     <div class="sheet">
-        <h1>Daftar Nilai</h1>
+        <h1>{{ $sheetKind === 'bootcamp' ? 'Daftar Nilai Bootcamp' : 'Daftar Nilai Magang' }}</h1>
 
         <div class="meta">
             <div><strong>Nama:</strong> {{ $user->name }}</div>
@@ -138,6 +140,38 @@
             @endif
         </div>
 
+        @if ($sheetKind === 'bootcamp')
+            <table class="nilai">
+                <thead>
+                    <tr>
+                        <th>Komponen</th>
+                        <th class="score">Nilai</th>
+                        <th class="letter">Huruf</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Rata-rata quiz</td>
+                        <td class="score">{{ $workScores['quiz_avg'] ?? '—' }}</td>
+                        <td class="letter">
+                            {{ isset($workScores['quiz_avg']) ? \App\Models\Enrollment::letterFromScore($workScores['quiz_avg']) : '—' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Rata-rata tugas</td>
+                        <td class="score">{{ $workScores['tugas_avg'] ?? '—' }}</td>
+                        <td class="letter">
+                            {{ isset($workScores['tugas_avg']) ? \App\Models\Enrollment::letterFromScore($workScores['tugas_avg']) : '—' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="final-label">Nilai Akhir Bootcamp</td>
+                        <td class="final-score">{{ $enrollment->final_score }}</td>
+                        <td class="final-letter">{{ $finalLetter }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        @else
         <table class="nilai">
             <thead>
                 <tr>
@@ -179,6 +213,7 @@
                 </tr>
             </tbody>
         </table>
+        @endif
 
         @if ($enrollment->grade_note)
             <p style="margin-top:18px;font-size:13px;"><strong>Catatan:</strong> {{ $enrollment->grade_note }}</p>

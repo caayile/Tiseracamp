@@ -183,6 +183,27 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function grade(Program $program): View
+    {
+        abort_unless($program->type === 'bootcamp', 404);
+
+        $enrollment = Enrollment::with(['user', 'program', 'grader'])
+            ->where('user_id', auth()->id())
+            ->where('program_id', $program->id)
+            ->firstOrFail();
+
+        abort_unless($enrollment->hasGrade(), 404, 'Nilai belum tersedia.');
+
+        return view('grades.show', [
+            'enrollment' => $enrollment,
+            'user' => $enrollment->user,
+            'program' => $program,
+            'sheetKind' => 'bootcamp',
+            'workScores' => $enrollment->bootcampWorkScores(),
+            'backUrl' => route('dashboard'),
+        ]);
+    }
+
     public function lesson(Program $program, Lesson $lesson): View|RedirectResponse
     {
         $enrollment = $this->requireEnrollmentForLearning($program);
@@ -384,10 +405,10 @@ class DashboardController extends Controller
         if ($program->mentor_id) {
             AppNotification::create([
                 'user_id' => $program->mentor_id,
-                'title' => 'Submission baru',
+                'title' => $program->type === 'internship' ? 'Pengumpulan tugas magang' : 'Submission bootcamp baru',
                 'body' => auth()->user()->name.' mengirim tugas: '.$assignment->title,
                 'type' => 'assignment',
-                'link' => route('mentor.submissions'),
+                'link' => route($program->type === 'internship' ? 'mentor.submissions.internship' : 'mentor.submissions.bootcamp'),
             ]);
         }
 

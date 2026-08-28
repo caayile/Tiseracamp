@@ -34,7 +34,7 @@
     <p class="mt-1 text-emerald-900/80 dark:text-emerald-200/80">
         Tidak perlu membuat folder atau materi tugas lagi. Tiap minggu sudah punya satu slot pengumpulan — kamu tinggal
         mengisi instruksi dan deadline. Peserta mengumpulkan lewat <strong>tautan atau unggah file</strong>, dan hasilnya
-        masuk ke <strong>Review Tugas</strong>.
+        masuk ke <strong>Review Tugas Magang</strong>.
     </p>
 </div>
 
@@ -156,12 +156,12 @@
                         @method('PUT')
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">Pengumpulan tugas {{ $module->title }}</p>
-                            <a href="{{ route('mentor.submissions') }}" class="text-xs font-semibold text-brand-dark underline">
+                            <a href="{{ route('mentor.submissions.internship') }}" class="text-xs font-semibold text-brand-dark underline">
                                 {{ $submissionCount }} pengumpulan masuk
                             </a>
                         </div>
                         <p class="text-sm text-ink-soft">
-                            Slot ini otomatis ada di setiap minggu. Peserta mengumpulkan lewat tautan atau unggah file, dan hasilnya masuk ke Review Tugas.
+                            Slot ini otomatis ada di setiap minggu. Peserta mengumpulkan lewat tautan atau unggah file, dan hasilnya masuk ke Review Tugas Magang.
                         </p>
                         <div class="grid gap-3 md:grid-cols-2">
                             <div>

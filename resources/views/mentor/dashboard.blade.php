@@ -75,6 +75,7 @@
                     <div class="flex gap-2">
                         <a href="{{ route('mentor.programs.curriculum', $program) }}" class="btn-ghost text-xs">Kurikulum</a>
                         <a href="{{ route('mentor.programs.students', $program) }}" class="btn-secondary text-xs">Siswa</a>
+                        <a href="{{ route('mentor.grades.bootcamp', ['program_id' => $program->id]) }}" class="btn-ghost text-xs">Nilai</a>
                     </div>
                 </div>
             @empty

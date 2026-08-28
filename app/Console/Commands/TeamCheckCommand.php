@@ -74,7 +74,8 @@ class TeamCheckCommand extends Command
         $mentorRoutes = [
             'mentor.dashboard',
             'mentor.programs.index',
-            'mentor.submissions',
+            'mentor.submissions.bootcamp',
+            'mentor.submissions.internship',
             'mentor.schedules.index',
             'mentor.chat.index',
         ];

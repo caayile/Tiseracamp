@@ -12,6 +12,7 @@
         'pdf' => 'PDF',
         'recording' => 'Rekaman',
         'quiz' => 'Quiz',
+        'assignment' => 'Tugas',
     ];
 @endphp
 
@@ -70,6 +71,7 @@
                             @if ($lesson->assignment)
                                 <span class="badge">{{ $lesson->assignment->kind === 'quiz' ? 'Quiz' : 'Tugas' }}</span>
                             @endif
+                                <a href="{{ route('mentor.materials.edit', $lesson) }}" class="rounded-lg px-2 py-1 text-xs font-semibold text-brand-dark hover:bg-brand-mist">Edit</a>
                                 <form method="POST" action="{{ route('mentor.lessons.destroy', $lesson) }}" onsubmit="return confirm('Hapus materi ini?')">
                                     @csrf @method('DELETE')
                                     <button class="text-xs font-semibold text-red-600 hover:underline" type="submit">Hapus</button>

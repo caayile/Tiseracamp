@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Mentor;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Mentor\ProgramController as BaseProgramController;
+use App\Models\Assignment;
 use App\Models\Lesson;
 use App\Models\Module;
+use App\Models\QuizQuestion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class MateriController extends Controller
@@ -32,135 +34,24 @@ class MateriController extends Controller
     {
         abort_unless($module->program->mentor_id === auth()->id(), 403);
 
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'in:text,video,article,pdf,recording,quiz,assignment'],
-            'content' => ['nullable', 'string'],
-            'video_url' => ['nullable', 'url'],
-            'file_url' => ['nullable', 'url'],
-            'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
-            'duration_minutes' => ['nullable', 'integer', 'min:1'],
-            'instructions' => ['nullable', 'string'],
-            'deadline' => ['nullable', 'date'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'questions' => ['nullable', 'array', 'max:50'],
-            'questions.*.question' => ['nullable', 'string', 'max:500'],
-            'questions.*.options' => ['nullable', 'array', 'max:4'],
-            'questions.*.options.*' => ['nullable', 'string', 'max:255'],
-            'questions.*.correct_index' => ['nullable', 'integer', 'min:0', 'max:3'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-        ]);
-
-        if ($data['type'] === 'pdf' && ! $request->hasFile('pdf_file') && blank($data['file_url'] ?? null)) {
-            return back()
-                ->withInput()
-                ->withErrors(['pdf_file' => 'Upload file PDF atau tempel link PDF.']);
+        $data = $request->validate($this->lessonRules());
+        $mediaError = $this->validateRequiredMedia($request, $data['type']);
+        if ($mediaError) {
+            return back()->withInput()->withErrors($mediaError);
         }
 
-        $content = in_array($data['type'], ['text', 'article'], true)
-            ? null
-            : ($data['content'] ?? null);
+        $attributes = $this->lessonAttributes($request, $data, new Lesson);
+        $attributes['sort_order'] = $module->lessons()->count() + 1;
+        $lesson = $module->lessons()->create($attributes);
 
-        if ($data['type'] === 'pdf') {
-            $description = trim((string) ($data['description'] ?? ''));
-            $content = $description !== '' ? nl2br(e($description)) : null;
-        }
-
-        $imagePath = null;
-        if ($request->hasFile('image') && in_array($data['type'], ['text', 'article'], true)) {
-            $imagePath = $request->file('image')->store('lesson-images', media_disk());
-        }
-
-        $fileUrl = $data['file_url'] ?? null;
-        $fileType = null;
-        if ($data['type'] === 'pdf' && $request->hasFile('pdf_file')) {
-            $fileUrl = $request->file('pdf_file')->store('lesson-pdfs', media_disk());
-            $fileType = 'pdf';
-        } elseif (filled($fileUrl) && str_contains(strtolower($fileUrl), '.pdf')) {
-            $fileType = 'pdf';
-        }
-
-        $lesson = $module->lessons()->create([
-            'title' => $data['title'],
-            'type' => $data['type'],
-            'content' => $content,
-            'video_url' => $data['video_url'] ?? null,
-            'file_url' => $fileUrl,
-            'file_type' => $fileType,
-            'image_path' => $imagePath,
-            'duration_minutes' => $data['duration_minutes'] ?? ($data['type'] === 'text' ? 10 : 15),
-            'sort_order' => $module->lessons()->count() + 1,
-        ]);
-
-        if ($data['type'] === 'assignment') {
-            $lesson->assignment()->create([
-                'title' => $data['title'],
-                'instructions' => $data['instructions'] ?? null,
-                'deadline' => $data['deadline'] ?? null,
-                'kind' => 'assignment',
-            ]);
-
-            return back()->with('success', 'Tugas ditambahkan. Peserta magang langsung melihatnya dan mengumpulkan lewat tautan.');
-        }
-
-        if ($data['type'] === 'quiz') {
-            $assignment = $lesson->assignment()->create([
-                'title' => $data['title'],
-                'instructions' => $data['instructions'] ?? null,
-                'kind' => 'quiz',
-            ]);
-
-            $saved = 0;
-            foreach ($data['questions'] ?? [] as $row) {
-                $question = trim((string) ($row['question'] ?? ''));
-                if ($question === '') {
-                    continue;
-                }
-
-                $options = collect($row['options'] ?? [])
-                    ->map(fn ($opt) => trim((string) $opt))
-                    ->filter()
-                    ->values()
-                    ->all();
-
-                if (count($options) < 2) {
-                    continue;
-                }
-
-                $correct = (int) ($row['correct_index'] ?? 0);
-                if ($correct < 0 || $correct >= count($options)) {
-                    $correct = 0;
-                }
-
-                QuizQuestion::create([
-                    'assignment_id' => $assignment->id,
-                    'question' => $question,
-                    'options' => $options,
-                    'correct_index' => $correct,
-                    'points' => 10,
-                ]);
-                $saved++;
-            }
-
-            if ($saved === 0) {
-                $assignment->delete();
-                $lesson->delete();
-
-                return back()
-                    ->withInput()
-                    ->withErrors(['questions' => 'Quiz minimal 1 soal dengan pertanyaan dan 2 opsi.']);
-            }
-
-            return back()->with('success', "Quiz ditambahkan ({$saved} soal). Peserta langsung melihatnya di ruang belajar.");
-        }
-
-        return back()->with('success', 'Materi ditambahkan. Peserta magang langsung melihatnya di ruang belajar.');
+        return $this->syncRelatedAndRespond($request, $data, $lesson, created: true);
     }
 
     public function edit(Lesson $lesson): View
     {
         abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
 
+        $lesson->load(['assignment.questions']);
         $program = $lesson->module->program;
 
         $typeLabels = [
@@ -180,13 +71,46 @@ class MateriController extends Controller
     {
         abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
 
-        $data = $request->validate([
+        $data = $request->validate($this->lessonRules());
+        $mediaError = $this->validateRequiredMedia($request, $data['type'], $lesson);
+        if ($mediaError) {
+            return back()->withInput()->withErrors($mediaError);
+        }
+
+        $lesson->update($this->lessonAttributes($request, $data, $lesson));
+
+        return $this->syncRelatedAndRespond($request, $data, $lesson, created: false);
+    }
+
+    public function destroy(Lesson $lesson): RedirectResponse
+    {
+        abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
+
+        $lesson->load('assignment');
+        $lesson->assignment?->questions()->delete();
+        $lesson->assignment()?->delete();
+        $this->deleteStoredPath($lesson->file_url);
+        $this->deleteStoredPath($lesson->image_path);
+        $lesson->delete();
+
+        return back()->with('success', 'Materi dihapus.');
+    }
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    private function lessonRules(): array
+    {
+        return [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:text,video,article,pdf,recording,quiz,assignment'],
             'content' => ['nullable', 'string'],
-            'video_url' => ['nullable', 'url'],
-            'file_url' => ['nullable', 'url'],
+            'video_url' => ['nullable', 'string', 'max:2048'],
+            'file_url' => ['nullable', 'string', 'max:2048'],
+            'audio_url' => ['nullable', 'string', 'max:2048'],
             'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
+            'video_file' => ['nullable', 'file', 'max:51200'],
+            'audio_file' => ['nullable', 'file', 'max:20480'],
             'duration_minutes' => ['nullable', 'integer', 'min:1'],
             'instructions' => ['nullable', 'string'],
             'deadline' => ['nullable', 'date'],
@@ -197,116 +121,320 @@ class MateriController extends Controller
             'questions.*.options.*' => ['nullable', 'string', 'max:255'],
             'questions.*.correct_index' => ['nullable', 'integer', 'min:0', 'max:3'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-        ]);
+        ];
+    }
 
-        if ($data['type'] === 'pdf' && ! $request->hasFile('pdf_file') && blank($data['file_url'] ?? null)) {
-            return back()
-                ->withInput()
-                ->withErrors(['pdf_file' => 'Upload file PDF atau tempel link PDF.']);
+    /**
+     * @return array<string, string>|null
+     */
+    private function validateRequiredMedia(Request $request, string $type, ?Lesson $existing = null): ?array
+    {
+        if ($type === 'pdf'
+            && ! $request->hasFile('pdf_file')
+            && blank($request->input('file_url'))
+            && blank($existing?->file_url)
+        ) {
+            return ['pdf_file' => 'Upload file PDF atau tempel link PDF.'];
         }
 
-        $content = in_array($data['type'], ['text', 'article'], true)
-            ? null
-            : ($data['content'] ?? null);
+        if ($type === 'video'
+            && blank($request->input('video_url'))
+            && ! $request->hasFile('video_file')
+            && blank($existing?->video_url)
+            && ! ($existing?->file_type === 'video' && filled($existing->file_url))
+        ) {
+            return ['video_url' => 'Tempel link YouTube atau unggah file video.'];
+        }
 
-        if ($data['type'] === 'pdf') {
+        if ($type === 'recording'
+            && ! $request->hasFile('audio_file')
+            && blank($request->input('audio_url'))
+            && blank($existing?->file_url)
+            && blank($existing?->video_url)
+        ) {
+            return ['audio_file' => 'Unggah file audio atau tempel link rekaman.'];
+        }
+
+        return $this->assertUploadExtension($request, 'video_file', ['mp4', 'webm', 'mov'], 'Format video harus MP4, WebM, atau MOV.')
+            ?? $this->assertUploadExtension($request, 'audio_file', ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'mpeg', 'mpga'], 'Format audio harus MP3, WAV, M4A, AAC, atau OGG.');
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     * @return array<string, string>|null
+     */
+    private function assertUploadExtension(Request $request, string $field, array $allowed, string $message): ?array
+    {
+        if (! $request->hasFile($field)) {
+            return null;
+        }
+
+        $ext = strtolower((string) $request->file($field)->getClientOriginalExtension());
+        if (! in_array($ext, $allowed, true)) {
+            return [$field => $message];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function lessonAttributes(Request $request, array $data, Lesson $lesson): array
+    {
+        $type = $data['type'];
+        $content = null;
+
+        if (in_array($type, ['text', 'article'], true)) {
+            $content = $this->sanitizeRichText($data['content'] ?? null);
+        } elseif ($type === 'pdf') {
             $description = trim((string) ($data['description'] ?? ''));
             $content = $description !== '' ? nl2br(e($description)) : null;
         }
 
         $imagePath = $lesson->image_path;
-        if ($request->hasFile('image') && in_array($lesson->type ?? 'text', ['text', 'article'], true)) {
+        if ($request->hasFile('image') && in_array($type, ['text', 'article'], true)) {
+            $this->deleteStoredPath($imagePath);
             $imagePath = $request->file('image')->store('lesson-images', media_disk());
         }
 
-        $fileUrl = $data['file_url'] ?? $lesson->file_url;
-        $fileType = $lesson->file_type;
-        if ($data['type'] === 'pdf' && $request->hasFile('pdf_file')) {
-            $fileUrl = $request->file('pdf_file')->store('lesson-pdfs', media_disk());
-            $fileType = 'pdf';
-        } elseif (filled($fileUrl) && str_contains(strtolower($fileUrl), '.pdf')) {
-            $fileType = 'pdf';
+        [$fileUrl, $fileType] = $this->resolveFile($request, $data, $lesson);
+        $videoUrl = null;
+        if ($type === 'video') {
+            $videoUrl = filled($data['video_url'] ?? null)
+                ? $data['video_url']
+                : ($request->hasFile('video_file') ? null : $lesson->getRawOriginal('video_url'));
+        } elseif ($type === 'recording') {
+            $videoUrl = ($request->hasFile('audio_file') || filled($data['audio_url'] ?? null))
+                ? null
+                : $lesson->getRawOriginal('video_url');
         }
 
-        $lesson->update([
+        return [
             'title' => $data['title'],
-            'type' => $data['type'],
+            'type' => $type,
             'content' => $content,
-            'video_url' => $data['video_url'] ?? null,
+            'video_url' => $videoUrl,
             'file_url' => $fileUrl,
             'file_type' => $fileType,
             'image_path' => $imagePath,
-            'duration_minutes' => $data['duration_minutes'] ?? ($data['type'] === 'text' ? 10 : 15),
-        ]);
+            'duration_minutes' => $data['duration_minutes'] ?? ($type === 'text' ? 10 : 15),
+        ];
+    }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function resolveFile(Request $request, array $data, Lesson $lesson): array
+    {
+        $type = $data['type'];
+        $fileUrl = $lesson->file_url;
+        $fileType = $lesson->file_type;
+
+        if ($type === 'pdf') {
+            if ($request->hasFile('pdf_file')) {
+                $this->deleteStoredPath($fileUrl);
+                $fileUrl = $request->file('pdf_file')->store('lesson-pdfs', media_disk());
+                $fileType = 'pdf';
+            } elseif (filled($data['file_url'] ?? null)) {
+                $this->deleteStoredPath($fileUrl);
+                $fileUrl = $this->normalizeExternalUrl($data['file_url']);
+                $fileType = str_contains(strtolower((string) $fileUrl), '.pdf') ? 'pdf' : 'pdf';
+            }
+        } elseif ($type === 'video') {
+            if ($request->hasFile('video_file')) {
+                $this->deleteStoredPath($fileUrl);
+                $fileUrl = $request->file('video_file')->store('lesson-videos', media_disk());
+                $fileType = 'video';
+            }
+        } elseif ($type === 'recording') {
+            if ($request->hasFile('audio_file')) {
+                $this->deleteStoredPath($fileUrl);
+                $fileUrl = $request->file('audio_file')->store('lesson-audios', media_disk());
+                $fileType = 'audio';
+            } elseif (filled($data['audio_url'] ?? null)) {
+                $this->deleteStoredPath($fileUrl);
+                $fileUrl = $this->normalizeExternalUrl($data['audio_url']);
+                $fileType = 'audio';
+            }
+        } else {
+            $fileUrl = $lesson->exists ? $fileUrl : null;
+            $fileType = $lesson->exists ? $fileType : null;
+        }
+
+        return [$fileUrl, $fileType];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function syncRelatedAndRespond(Request $request, array $data, Lesson $lesson, bool $created): RedirectResponse
+    {
         if ($data['type'] === 'assignment') {
             $lesson->assignment()->updateOrCreate(
                 ['lesson_id' => $lesson->id],
-                ['title' => $data['title'], 'instructions' => $data['instructions'] ?? null, 'deadline' => $data['deadline'] ?? null, 'kind' => 'assignment']
+                [
+                    'title' => $data['title'],
+                    'instructions' => $data['instructions'] ?? null,
+                    'deadline' => $data['deadline'] ?? null,
+                    'kind' => 'assignment',
+                ]
             );
 
-            return back()->with('success', 'Tugas diperbarui. Peserta magang langsung melihatnya dan mengumpulkan lewat tautan.');
+            $message = $created
+                ? 'Tugas ditambahkan. Peserta magang langsung melihatnya dan mengumpulkan lewat tautan.'
+                : 'Tugas diperbarui, termasuk instruksi dan deadline.';
+
+            return back()->with('success', $message);
         }
 
         if ($data['type'] === 'quiz') {
             $assignment = $lesson->assignment()->updateOrCreate(
                 ['lesson_id' => $lesson->id],
-                ['title' => $data['title'], 'instructions' => $data['instructions'] ?? null, 'kind' => 'quiz']
+                [
+                    'title' => $data['title'],
+                    'instructions' => $data['instructions'] ?? null,
+                    'kind' => 'quiz',
+                    'deadline' => $data['deadline'] ?? $lesson->assignment?->deadline,
+                ]
             );
 
-            if ($data['questions']) {
-                $assignment->questions()->delete();
-
-                $saved = 0;
-                foreach ($data['questions'] ?? [] as $row) {
-                    $question = trim((string) ($row['question'] ?? ''));
-                    if ($question === '') {
-                        continue;
-                    }
-
-                    $options = collect($row['options'] ?? [])
-                        ->map(fn ($opt) => trim((string) $opt))
-                        ->filter()
-                        ->values()
-                        ->all();
-
-                    if (count($options) < 2) {
-                        continue;
-                    }
-
-                    $correct = (int) ($row['correct_index'] ?? 0);
-                    if ($correct < 0 || $correct >= count($options)) {
-                        $correct = 0;
-                    }
-
-                    QuizQuestion::create([
-                        'assignment_id' => $assignment->id,
-                        'question' => $question,
-                        'options' => $options,
-                        'correct_index' => $correct,
-                        'points' => 10,
-                    ]);
-                    $saved++;
+            $saved = $this->syncQuizQuestions($assignment, $data['questions'] ?? []);
+            if ($saved === 0) {
+                if ($created) {
+                    $assignment->delete();
+                    $lesson->delete();
                 }
+
+                return back()
+                    ->withInput()
+                    ->withErrors(['questions' => 'Quiz minimal 1 soal dengan pertanyaan dan 2 opsi.']);
             }
 
-            if ($saved > 0 || $assignment->questions->isNotEmpty()) {
-                return back()->with('success', "Quiz diperbarui ({$saved} soal baru ditambahkan).");
+            $verb = $created ? 'ditambahkan' : 'diperbarui';
+
+            return back()->with('success', "Quiz {$verb} ({$saved} soal).");
+        }
+
+        return back()->with('success', $created ? 'Materi ditambahkan. Peserta magang langsung melihatnya di ruang belajar.' : 'Materi diperbarui.');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function syncQuizQuestions(Assignment $assignment, array $rows): int
+    {
+        $payload = [];
+        foreach ($rows as $row) {
+            $question = trim((string) ($row['question'] ?? ''));
+            if ($question === '') {
+                continue;
+            }
+
+            $options = collect($row['options'] ?? [])
+                ->map(fn ($opt) => trim((string) $opt))
+                ->filter()
+                ->values()
+                ->all();
+
+            if (count($options) < 2) {
+                continue;
+            }
+
+            $correct = (int) ($row['correct_index'] ?? 0);
+            if ($correct < 0 || $correct >= count($options)) {
+                $correct = 0;
+            }
+
+            $payload[] = [
+                'question' => $question,
+                'options' => $options,
+                'correct_index' => $correct,
+                'points' => 10,
+            ];
+        }
+
+        if ($payload === []) {
+            return $assignment->questions()->count();
+        }
+
+        $assignment->questions()->delete();
+        foreach ($payload as $item) {
+            QuizQuestion::create([
+                'assignment_id' => $assignment->id,
+                ...$item,
+            ]);
+        }
+
+        return count($payload);
+    }
+
+    private function normalizeExternalUrl(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (! preg_match('~^https?://~i', $value)) {
+            $value = 'https://'.$value;
+        }
+
+        return $value;
+    }
+
+    private function deleteStoredPath(?string $path): void
+    {
+        if (! filled($path) || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return;
+        }
+
+        try {
+            Storage::disk(media_disk())->delete($path);
+        } catch (\Throwable) {
+        }
+    }
+
+    private function sanitizeRichText(?string $html): ?string
+    {
+        if (! filled($html)) {
+            return null;
+        }
+
+        $html = strip_tags($html, '<div><p><br><strong><b><em><i><u><span><font>');
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML(
+            '<?xml encoding="UTF-8"><div id="rich-root">'.$html.'</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $root = $document->getElementById('rich-root');
+        if (! $root) {
+            return null;
+        }
+
+        foreach (iterator_to_array($document->getElementsByTagName('*')) as $element) {
+            foreach (iterator_to_array($element->attributes ?? []) as $attribute) {
+                $keepFontSize = $element->tagName === 'font'
+                    && $attribute->name === 'size'
+                    && preg_match('/^[1-6]$/', $attribute->value);
+
+                if ($element !== $root && ! $keepFontSize) {
+                    $element->removeAttribute($attribute->name);
+                }
             }
         }
 
-        return back()->with('success', 'Materi diperbarui.');
-    }
+        $clean = '';
+        foreach ($root->childNodes as $child) {
+            $clean .= $document->saveHTML($child);
+        }
 
-    public function destroy(Lesson $lesson): RedirectResponse
-    {
-        abort_unless($lesson->module->program->mentor_id === auth()->id(), 403);
-
-        $lesson->load('assignment');
-        $lesson->assignment?->questions()->delete();
-        $lesson->assignment()?->delete();
-        $lesson->delete();
-
-        return back()->with('success', 'Materi dihapus.');
+        return trim($clean) ?: null;
     }
 }

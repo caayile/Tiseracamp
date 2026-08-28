@@ -115,20 +115,42 @@ class AssignmentController extends Controller
         return back()->with('success', 'Tugas '.$lesson->module->title.' disimpan. Peserta bisa langsung mengumpulkan lewat tautan atau file.');
     }
 
-    public function submissions(): View
+    public function bootcampSubmissions(): View
     {
-        $programIds = Program::where('mentor_id', auth()->id())->pluck('id');
-        $submissions = Submission::with(['user', 'assignment.lesson.module.program'])
-            ->whereHas('assignment.lesson.module', fn ($q) => $q->whereIn('program_id', $programIds))
-            ->latest()
-            ->get();
+        return $this->submissions('bootcamp');
+    }
 
-        return view('mentor.submissions.index', compact('submissions'));
+    public function internshipSubmissions(): View
+    {
+        return $this->submissions('internship');
+    }
+
+    public function submissions(string $type = 'bootcamp'): View
+    {
+        $type = in_array($type, ['bootcamp', 'internship'], true) ? $type : 'bootcamp';
+
+        $programIds = Program::query()
+            ->where('mentor_id', auth()->id())
+            ->where('type', $type)
+            ->pluck('id');
+
+        $submissions = $programIds->isEmpty()
+            ? collect()
+            : Submission::with(['user', 'assignment.lesson.module.program'])
+                ->whereHas('assignment.lesson.module', fn ($q) => $q->whereIn('program_id', $programIds))
+                ->latest()
+                ->get();
+
+        return view('mentor.submissions.index', [
+            'submissions' => $submissions,
+            'audience' => $type,
+        ]);
     }
 
     public function review(Request $request, Submission $submission): RedirectResponse
     {
-        abort_unless($submission->assignment->lesson->module->program->mentor_id === auth()->id(), 403);
+        $program = $submission->assignment->lesson->module->program;
+        abort_unless($program->mentor_id === auth()->id(), 403);
         $data = $request->validate([
             'score' => ['required', 'integer', 'min:0', 'max:100'],
             'feedback' => ['nullable', 'string'],
@@ -140,13 +162,18 @@ class AssignmentController extends Controller
             'status' => 'reviewed',
         ]);
 
+        $reviewRoute = $program->type === 'internship'
+            ? 'mentor.submissions.internship'
+            : 'mentor.submissions.bootcamp';
+
         AppNotification::create([
             'user_id' => $submission->user_id,
-            'title' => 'Tugas dinilai',
+            'title' => $program->type === 'internship' ? 'Tugas magang dinilai' : 'Tugas bootcamp dinilai',
             'body' => 'Skor '.$data['score'].' untuk '.$submission->assignment->title,
             'type' => 'grade',
+            'link' => route('learn.lesson', [$program, $submission->assignment->lesson]),
         ]);
 
-        return back()->with('success', 'Penilaian disimpan.');
+        return redirect()->route($reviewRoute)->with('success', 'Penilaian disimpan.');
     }
 }

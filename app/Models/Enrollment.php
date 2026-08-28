@@ -46,9 +46,17 @@ class Enrollment extends Model
 
     public function isCompleted(): bool
     {
-        return $this->progress >= 100
-            || $this->status === 'completed'
-            || $this->hasGrade();
+        if ($this->progress >= 100 || $this->status === 'completed') {
+            return true;
+        }
+
+        if (! $this->hasGrade()) {
+            return false;
+        }
+
+        $this->loadMissing('program');
+
+        return $this->program?->type === 'internship';
     }
 
     public function canWriteTestimonial(): bool
@@ -88,6 +96,44 @@ class Enrollment extends Model
     public function hasGrade(): bool
     {
         return $this->graded_at !== null && $this->final_score !== null;
+    }
+
+    /**
+     * Ringkasan skor quiz & tugas bootcamp milik peserta ini.
+     *
+     * @return array{quiz_count: int, quiz_avg: int|null, tugas_count: int, tugas_avg: int|null, pending_tugas: int, suggested: int|null}
+     */
+    public function bootcampWorkScores(): array
+    {
+        $submissions = Submission::query()
+            ->where('user_id', $this->user_id)
+            ->whereHas('assignment.lesson.module', fn ($q) => $q->where('program_id', $this->program_id))
+            ->with('assignment')
+            ->get();
+
+        $quiz = $submissions->filter(fn (Submission $s) => $s->assignment?->isQuiz() && $s->score !== null);
+        $tugas = $submissions->filter(fn (Submission $s) => $s->assignment && ! $s->assignment->isQuiz() && $s->score !== null);
+        $pending = $submissions->filter(fn (Submission $s) => $s->assignment && ! $s->assignment->isQuiz() && $s->status !== 'reviewed')->count();
+
+        $quizAvg = $quiz->isEmpty() ? null : (int) round($quiz->avg('score'));
+        $tugasAvg = $tugas->isEmpty() ? null : (int) round($tugas->avg('score'));
+        $suggested = null;
+        if ($quizAvg !== null && $tugasAvg !== null) {
+            $suggested = (int) round(($quizAvg + $tugasAvg) / 2);
+        } elseif ($quizAvg !== null) {
+            $suggested = $quizAvg;
+        } elseif ($tugasAvg !== null) {
+            $suggested = $tugasAvg;
+        }
+
+        return [
+            'quiz_count' => $quiz->count(),
+            'quiz_avg' => $quizAvg,
+            'tugas_count' => $tugas->count(),
+            'tugas_avg' => $tugasAvg,
+            'pending_tugas' => $pending,
+            'suggested' => $suggested,
+        ];
     }
 
     public static function gradeAspectDefaults(): array
