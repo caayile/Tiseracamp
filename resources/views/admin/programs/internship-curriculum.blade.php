@@ -62,12 +62,29 @@
     </form>
 </div>
 
-<div class="card-soft mb-6 border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950">
-    <p class="font-semibold">Langsung tampil ke peserta</p>
-    <p class="mt-1 text-emerald-900/80">
-        Minggu 1–4 sudah siap. Mentor (atau admin) isi tugas di sini — peserta yang diterima langsung melihatnya di ruang belajar.
-    </p>
-</div>
+@if ($program->approval_status === 'approved')
+    <div class="card-soft mb-6 border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950">
+        <p class="font-semibold">Langsung tampil ke peserta</p>
+        <p class="mt-1 text-emerald-900/80">
+            Minggu 1–4 sudah siap. Mentor (atau admin) isi tugas di sini — peserta yang diterima langsung melihatnya di ruang belajar.
+        </p>
+    </div>
+@else
+    <div class="card-soft mb-6 border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950">
+        <p class="font-semibold">Menunggu persetujuan admin</p>
+        <p class="mt-1 text-amber-900/80">
+            Lowongan magang ini belum tampil di katalog. Setelah disetujui, buka lowongan lewat toggle Status Lowongan di halaman manajemen.
+        </p>
+        @if ($program->approval_status === 'pending')
+            <form method="POST" action="{{ route('admin.programs.approve', $program) }}" class="mt-3">
+                @csrf
+                <button class="btn-primary" type="submit">Setujui lowongan</button>
+            </form>
+        @elseif ($program->approval_status === 'rejected')
+            <p class="mt-2 text-xs text-amber-900/70">Lowongan ini ditolak. Minta mentor memperbaiki lewat Edit di panel mentor lalu mengajukan ulang.</p>
+        @endif
+    </div>
+@endif
 
 <div class="card-soft mb-6 border-brand/20 bg-brand-mist/40 p-4 text-sm text-ink-soft">
     <p class="font-semibold text-ink">Materi per minggu</p>

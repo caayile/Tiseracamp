@@ -102,13 +102,15 @@
                             </svg>
                             Materi Magang
                         </a>
-                        <a href="{{ route('programs.show', $program->slug) }}" target="_blank"
-                           class="inline-flex items-center gap-1.5 rounded-lg border border-ink/15 bg-panel px-3 py-2 text-xs font-semibold text-ink-soft transition hover:border-brand/40 hover:bg-brand-mist hover:text-ink">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Detail
-                        </a>
+                        @if ($program->is_published && $program->approval_status === 'approved')
+                            <a href="{{ route('programs.show', $program->slug) }}" target="_blank"
+                               class="inline-flex items-center gap-1.5 rounded-lg border border-ink/15 bg-panel px-3 py-2 text-xs font-semibold text-ink-soft transition hover:border-brand/40 hover:bg-brand-mist hover:text-ink">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Detail
+                            </a>
+                        @endif
                         <a href="{{ route('admin.applications.pendaftar', ['program' => $program->id]) }}"
                            class="relative inline-flex items-center gap-1.5 rounded-lg border border-ink/15 bg-panel px-3 py-2 text-xs font-semibold text-ink-soft transition hover:border-brand/40 hover:bg-brand-mist hover:text-ink">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -137,6 +139,32 @@
                                 </button>
                             </form>
                         </div>
+                    </div>
+
+                    @php
+                        $approvalBadge = match ($program->approval_status) {
+                            'pending' => ['Menunggu persetujuan', 'bg-amber-100 text-amber-800'],
+                            'rejected' => ['Ditolak', 'bg-rose-100 text-rose-700'],
+                            default => ['Disetujui', 'bg-emerald-100 text-emerald-700'],
+                        };
+                    @endphp
+                    <div class="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-ink/8 bg-ink/[0.03] px-3 py-2">
+                        <span class="text-xs font-semibold text-ink-soft">Approval:</span>
+                        <span class="rounded-full px-2 py-0.5 text-[11px] font-bold {{ $approvalBadge[1] }}">{{ $approvalBadge[0] }}</span>
+                        @if ($program->approval_status === 'pending')
+                            <span class="ml-auto flex flex-wrap gap-1.5">
+                                <form method="POST" action="{{ route('admin.programs.approve', $program) }}">
+                                    @csrf
+                                    <button class="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700" type="submit">Setujui</button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.programs.reject', $program) }}" onsubmit="return confirm('Tolak lowongan magang ini?')">
+                                    @csrf
+                                    <button class="rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50" type="submit">Tolak</button>
+                                </form>
+                            </span>
+                        @elseif ($program->approval_status === 'approved')
+                            <span class="ml-auto text-[11px] text-ink-soft">Setelah disetujui, buka lowongan lewat toggle Status Lowongan.</span>
+                        @endif
                     </div>
 
                     <div class="mt-auto flex items-center justify-between gap-3 border-t border-ink/8 pt-4">

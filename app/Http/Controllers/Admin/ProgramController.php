@@ -290,16 +290,21 @@ class ProgramController extends Controller
         $program->update(['approval_status' => 'approved', 'is_published' => true]);
 
         if ($program->mentor_id) {
+            $curriculumRoute = $program->type === 'internship'
+                ? 'mentor.internships.curriculum'
+                : 'mentor.programs.curriculum';
+            $label = $program->type === 'internship' ? 'Lowongan magang disetujui' : 'Bootcamp disetujui';
+
             notify_user(
                 $program->mentor_id,
-                'Bootcamp disetujui',
-                $program->title.' sudah tayang di katalog.',
+                $label,
+                $program->title.' sudah disetujui. Buka lowongan di katalog agar peserta bisa mendaftar.',
                 'success',
-                route('mentor.programs.curriculum', $program)
+                route($curriculumRoute, $program)
             );
         }
 
-        return back()->with('success', 'Program disetujui & dipublish.');
+        return back()->with('success', 'Program disetujui & dipublish. Buka lowongan via toggle Status Lowongan.');
     }
 
     public function reject(Request $request, Program $program): RedirectResponse
@@ -311,12 +316,21 @@ class ProgramController extends Controller
         $program->update(['approval_status' => 'rejected', 'is_published' => false]);
 
         if ($program->mentor_id) {
+            $editRoute = $program->type === 'internship'
+                ? 'mentor.internships.edit'
+                : 'mentor.programs.edit';
+            $label = $program->type === 'internship' ? 'Lowongan magang ditolak' : 'Bootcamp ditolak';
+            $reason = trim((string) ($data['reason'] ?? ''));
+            $note = $reason !== ''
+                ? ' — '.$reason
+                : ' Belum dapat dipublikasikan. Silakan perbaiki lalu ajukan ulang.';
+
             notify_user(
                 $program->mentor_id,
-                'Bootcamp ditolak',
-                $program->title.($data['reason'] ? ' — '.$data['reason'] : ' Belum dapat dipublikasikan. Silakan perbaiki lalu ajukan ulang.'),
+                $label,
+                $program->title.$note,
                 'warning',
-                route('mentor.programs.edit', $program)
+                route($editRoute, $program)
             );
         }
 

@@ -7,7 +7,7 @@
 <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
     <div>
         <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-mid">Panel magang</p>
-        <p class="mt-1 max-w-xl text-sm text-ink-soft">Buat magang sendiri atau ambil yang belum ada mentor — langsung isi materi Minggu 1–4, tanpa menunggu admin.</p>
+        <p class="mt-1 max-w-xl text-sm text-ink-soft">Buat magang sendiri atau ambil yang belum ada mentor. Lowongan yang kamu buat menunggu <strong class="text-ink">persetujuan admin</strong> sebelum tampil di katalog.</p>
     </div>
     <a href="{{ route('mentor.internships.create') }}" class="btn-primary">+ Tambah magang</a>
 </div>
@@ -29,18 +29,28 @@
                 $percent = $quota ? min(100, (int) round(($filled / $quota) * 100)) : 0;
             @endphp
             <article class="card-soft flex flex-col p-5">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="font-display text-lg font-semibold text-ink">{{ $program->title }}</p>
-                        <p class="mt-1 text-xs text-ink-soft">
-                            {{ $program->division ?: 'Tanpa divisi' }}
-                            · {{ $program->internshipStatusLabel() }}
-                        </p>
+<div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-display text-lg font-semibold text-ink">{{ $program->title }}</p>
+                            <p class="mt-1 text-xs text-ink-soft">
+                                {{ $program->division ?: 'Tanpa divisi' }}
+                                · {{ $program->internshipStatusLabel() }}
+                            </p>
+                        </div>
+                        <div class="flex shrink-0 flex-col items-end gap-1">
+                            @php
+                                $approvalBadge = match ($program->approval_status) {
+                                    'pending' => ['Menunggu persetujuan', 'bg-amber-100 text-amber-800'],
+                                    'rejected' => ['Ditolak', 'bg-rose-100 text-rose-700'],
+                                    default => ['Disetujui', 'bg-emerald-100 text-emerald-800'],
+                                };
+                            @endphp
+                            <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $approvalBadge[1] }}">{{ $approvalBadge[0] }}</span>
+                            <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $program->isInternshipOpen() ? 'bg-emerald-100 text-emerald-800' : 'bg-ink/10 text-ink-soft' }}">
+                                {{ $program->internshipStatusLabel() }}
+                            </span>
+                        </div>
                     </div>
-                    <span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $program->isInternshipOpen() ? 'bg-emerald-100 text-emerald-800' : 'bg-ink/10 text-ink-soft' }}">
-                        {{ $program->internshipStatusLabel() }}
-                    </span>
-                </div>
 
                 <div class="mt-4 rounded-xl border border-brand/15 bg-brand-mist/40 p-3">
                     <div class="flex items-center justify-between text-xs">
@@ -66,7 +76,9 @@
                 <div class="mt-4 flex flex-wrap gap-2">
                     <a href="{{ route('mentor.internships.curriculum', $program) }}" class="btn-primary text-xs">Isi materi</a>
                     <a href="{{ route('mentor.internships.edit', $program) }}" class="btn-secondary text-xs">Edit &amp; kuota</a>
-                    <a href="{{ route('programs.show', $program->slug) }}" class="btn-ghost text-xs" target="_blank">Lihat</a>
+                    @if ($program->is_published && $program->approval_status === 'approved')
+                        <a href="{{ route('programs.show', $program->slug) }}" class="btn-ghost text-xs" target="_blank">Lihat</a>
+                    @endif
                 </div>
             </article>
         @endforeach

@@ -100,9 +100,9 @@ class ProgramController extends Controller
             'preferred_skills' => $this->parseLines($request->input('preferred_skills_text')),
             'responsibilities' => $this->parseLines($request->input('responsibilities_text')),
             'mentor_id' => auth()->id(),
-            'is_published' => true,
-            'is_open' => true,
-            'approval_status' => 'approved',
+            'is_published' => false,
+            'is_open' => false,
+            'approval_status' => 'pending',
             'audience' => 'all',
         ]);
 
@@ -110,15 +110,15 @@ class ProgramController extends Controller
         $program->syncInternshipQuota($quota);
 
         notify_admins(
-            'Magang baru dari mentor',
-            auth()->user()->name.' membuka '.$program->title.'.',
-            'info',
+            'Magang baru menunggu persetujuan',
+            auth()->user()->name.' membuka '.$program->title.'. Setujui agar tampil di katalog.',
+            'warning',
             route('admin.programs.index', ['type' => 'internship'])
         );
 
         return redirect()
             ->route('mentor.internships.curriculum', $program)
-            ->with('success', 'Magang dibuat. Isi materi Minggu 1–4 dan atur kuota peserta bila perlu.');
+            ->with('success', 'Lowongan magang disimpan dan menunggu persetujuan admin sebelum tampil di katalog. Isi materi Minggu 1–4 dan atur kuota peserta bila perlu.');
     }
 
     public function editInternship(Program $program): View
@@ -137,6 +137,7 @@ class ProgramController extends Controller
 
         $data = $this->validatedInternship($request, $program);
         $quota = (int) $data['quota'];
+        $wasRejected = $program->approval_status === 'rejected';
 
         $program->update([
             'title' => $data['title'],
@@ -155,9 +156,24 @@ class ProgramController extends Controller
             'price' => 0,
             'level' => 'Beginner',
             'audience' => 'all',
+            'approval_status' => $wasRejected ? 'pending' : $program->approval_status,
+            'is_published' => $wasRejected ? false : $program->is_published,
         ]);
 
         $program->syncInternshipQuota($quota);
+
+        if ($wasRejected) {
+            notify_admins(
+                'Magang diajukan ulang',
+                auth()->user()->name.' memperbaiki '.$program->title.'. Setujui agar tampil di katalog.',
+                'info',
+                route('admin.programs.index', ['type' => 'internship'])
+            );
+
+            return redirect()
+                ->route('mentor.internships.index')
+                ->with('success', 'Perbaikan disimpan dan diajukan ulang ke admin untuk disetujui.');
+        }
 
         return redirect()
             ->route('mentor.internships.index')

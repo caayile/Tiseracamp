@@ -22,7 +22,7 @@
     @endif
 
     <div class="rounded-2xl border border-brand/20 bg-brand-mist/50 px-4 py-3 text-sm text-ink-soft">
-        Magang langsung aktif di katalog — <strong class="text-ink">tanpa approve admin</strong>. Setelah simpan, kamu diarahkan isi materi Minggu 1–4; peserta melihatnya di ruang belajar.
+        Lowongan tampil di katalog setelah <strong class="text-ink">disetujui admin</strong>. Setelah simpan, kamu diarahkan isi materi Minggu 1–4 dulu.
     </div>
 
     <section class="card-soft space-y-5 p-6">
