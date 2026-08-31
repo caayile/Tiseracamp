@@ -403,7 +403,7 @@ class MateriController extends Controller
             return null;
         }
 
-        $html = strip_tags($html, '<div><p><br><strong><b><em><i><u><span><font>');
+        $html = strip_tags($html, '<div><p><br><strong><b><em><i><u><s><strike><span><font><blockquote><pre><code><a><img><ul><ol><li>');
         $document = new \DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
         $document->loadHTML(
@@ -419,12 +419,27 @@ class MateriController extends Controller
         }
 
         foreach (iterator_to_array($document->getElementsByTagName('*')) as $element) {
-            foreach (iterator_to_array($element->attributes ?? []) as $attribute) {
-                $keepFontSize = $element->tagName === 'font'
-                    && $attribute->name === 'size'
-                    && preg_match('/^[1-6]$/', $attribute->value);
+            if ($element === $root) {
+                continue;
+            }
 
-                if ($element !== $root && ! $keepFontSize) {
+            foreach (iterator_to_array($element->attributes ?? []) as $attribute) {
+                $keep = false;
+
+                if ($element->tagName === 'font'
+                    && $attribute->name === 'size'
+                    && preg_match('/^[1-6]$/', $attribute->value)) {
+                    $keep = true;
+                } elseif ($element->tagName === 'a'
+                    && $attribute->name === 'href'
+                    && $this->isSafeHref($attribute->value)) {
+                    $keep = true;
+                } elseif ($element->tagName === 'img') {
+                    $keep = ($attribute->name === 'alt')
+                        || ($attribute->name === 'src' && $this->isSafeImageSrc($attribute->value));
+                }
+
+                if (! $keep) {
                     $element->removeAttribute($attribute->name);
                 }
             }
@@ -436,5 +451,37 @@ class MateriController extends Controller
         }
 
         return trim($clean) ?: null;
+    }
+
+    private function isSafeHref(string $url): bool
+    {
+        $url = trim($url);
+        if ($url === '' || str_starts_with($url, '#')) {
+            return true;
+        }
+
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9+.\-]*:/', $url, $match)) {
+            return in_array(strtolower($match[0]), ['http:', 'https:', 'mailto:', 'tel:'], true);
+        }
+
+        return true;
+    }
+
+    private function isSafeImageSrc(string $src): bool
+    {
+        $src = trim($src);
+        if ($src === '') {
+            return false;
+        }
+
+        if (str_starts_with($src, 'data:')) {
+            return str_starts_with($src, 'data:image/');
+        }
+
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9+.\-]*:/', $src, $match)) {
+            return in_array(strtolower($match[0]), ['http:', 'https:'], true);
+        }
+
+        return true;
     }
 }

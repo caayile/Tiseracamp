@@ -77,23 +77,10 @@
     @if(in_array($defaultType ?? 'text', ['text', 'article']))
     <div data-lesson-panel="content" class="{{ $defaultType === 'text' || $defaultType === 'article' ? '' : 'hidden' }}">
         <div class="overflow-hidden rounded-xl border border-ink/12 bg-white">
-            <div class="flex flex-wrap items-center gap-1 border-b border-ink/10 bg-slate-50 p-2" data-rich-toolbar>
-                <button type="button" data-rich-command="bold" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-bold text-ink transition hover:bg-brand/15" title="Bold">B</button>
-                <button type="button" data-rich-command="italic" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 italic text-ink transition hover:bg-brand/15" title="Italic">I</button>
-                <button type="button" data-rich-command="underline" class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 underline text-ink transition hover:bg-brand/15" title="Underline">U</button>
-                <span class="mx-1 h-6 w-px bg-ink/10"></span>
-                <select data-rich-size class="rounded-lg border border-ink/10 bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-brand">
-                    <option value="">Ukuran font</option>
-                    <option value="2">Kecil</option>
-                    <option value="3">Normal</option>
-                    <option value="4">Sedang</option>
-                    <option value="5">Besar</option>
-                    <option value="6">Sangat besar</option>
-                </select>
-            </div>
+            @include('partials.rich-toolbar')
             <div contenteditable="true"
                  data-rich-editor
-                 class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none empty:before:pointer-events-none empty:before:text-ink-soft/50 empty:before:content-['Tulis_konten_pengenalan_atau_artikel...']"></div>
+                 class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none empty:before:pointer-events-none empty:before:text-ink-soft/50 empty:before:content-['Tulis_konten_pengenalan_atau_artikel...'] [&_a]:text-brand [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:border-ink/20 [&_blockquote]:pl-3 [&_blockquote]:text-ink-soft [&_blockquote]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-relaxed [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_img]:max-h-96 [&_img]:rounded-lg"></div>
             <textarea name="content" class="hidden" data-rich-input></textarea>
         </div>
         <div class="mt-3">

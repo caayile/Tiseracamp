@@ -425,19 +425,99 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = form.querySelector('[data-rich-input]');
         if (!editor || !input) return;
 
+        const exec = (command, value = false) => {
+            editor.focus();
+            document.execCommand(command, false, value);
+        };
+
+        // Jangan sampai klik tombol toolbar menghapus posisi kursor/selection di editor
+        form.querySelectorAll('[data-rich-toolbar]').forEach((toolbar) => {
+            toolbar.addEventListener('mousedown', (event) => {
+                if (event.target.closest('[data-rich-command], [data-rich-link], [data-rich-code], [data-rich-image-btn]')) {
+                    event.preventDefault();
+                }
+            });
+        });
+
+        // Ctrl / Cmd + klik pada tautan di dalam editor → buka di tab baru
+        editor.addEventListener('click', (event) => {
+            const link = event.target.closest('a');
+            if (!link || !link.getAttribute('href')) return;
+            if (event.ctrlKey || event.metaKey) {
+                event.preventDefault();
+                window.open(link.getAttribute('href'), '_blank', 'noopener');
+            }
+        });
+
         form.querySelectorAll('[data-rich-command]').forEach((button) => {
             button.addEventListener('click', () => {
-                editor.focus();
-                document.execCommand(button.dataset.richCommand, false);
+                exec(button.dataset.richCommand, button.dataset.richValue || false);
             });
         });
 
         form.querySelector('[data-rich-size]')?.addEventListener('change', (event) => {
             if (!event.target.value) return;
-            editor.focus();
-            document.execCommand('fontSize', false, event.target.value);
+            exec('fontSize', event.target.value);
             event.target.value = '';
         });
+
+        form.querySelector('[data-rich-link]')?.addEventListener('click', () => {
+            const selection = window.getSelection();
+            const saved = (selection && selection.rangeCount) ? selection.getRangeAt(0).cloneRange() : null;
+            const url = window.prompt('Masukkan URL tautan', 'https://');
+            if (!url) return;
+            if (saved) {
+                editor.focus();
+                selection.removeAllRanges();
+                selection.addRange(saved);
+            }
+            exec('createLink', url);
+        });
+
+        form.querySelector('[data-rich-code]')?.addEventListener('click', () => {
+            editor.focus();
+            const selectedText = window.getSelection().toString();
+            if (!selectedText) return;
+            try {
+                window.getSelection().getRangeAt(0).surroundContents(document.createElement('code'));
+            } catch (err) {
+                document.execCommand('insertHTML', false, '<code>' + selectedText + '</code>');
+            }
+        });
+
+        const imageInput = form.querySelector('[data-rich-image]');
+        if (imageInput) {
+            let imageSelection = null;
+
+            form.querySelector('[data-rich-image-btn]')?.addEventListener('click', () => {
+                const sel = window.getSelection();
+                imageSelection = (sel && sel.rangeCount) ? sel.getRangeAt(0).cloneRange() : null;
+                imageInput.value = '';
+                imageInput.click();
+            });
+
+            imageInput.addEventListener('change', () => {
+                const file = imageInput.files && imageInput.files[0];
+                if (!file) return;
+                if (!/^image\//.test(file.type)) {
+                    alert('File yang dipilih bukan gambar.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    if (imageSelection) {
+                        editor.focus();
+                        const sel = window.getSelection();
+                        if (sel) {
+                            sel.removeAllRanges();
+                            sel.addRange(imageSelection);
+                        }
+                    }
+                    exec('insertImage', reader.result);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
         form.addEventListener('submit', () => {
             const type = form.querySelector('[data-lesson-type]:checked')?.value

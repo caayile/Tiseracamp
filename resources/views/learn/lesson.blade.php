@@ -104,7 +104,7 @@
                     @endif
 
                     @if ($lesson->content)
-                        <div class="mb-8 text-[15px] leading-8 text-ink-soft [&_div]:mb-3 [&_p]:mb-3">{!! $lesson->content !!}</div>
+                        <div class="mb-8 text-[15px] leading-8 text-ink-soft [&_div]:mb-3 [&_p]:mb-3 [&_a]:font-medium [&_a]:text-brand [&_a]:underline [&_a:hover]:text-brand-deeper [&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-brand/30 [&_blockquote]:pl-4 [&_blockquote]:italic [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-relaxed [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_img]:my-3 [&_img]:max-h-96 [&_img]:rounded-xl">{!! $lesson->content !!}</div>
                     @endif
 
                     @if ($lesson->isPdf())
