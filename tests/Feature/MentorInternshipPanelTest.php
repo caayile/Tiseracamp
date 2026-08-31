@@ -53,7 +53,8 @@ class MentorInternshipPanelTest extends TestCase
         $this->assertNotNull($program);
         $this->assertSame('internship', $program->type);
         $this->assertSame($mentor->id, $program->mentor_id);
-        $this->assertTrue($program->is_published);
+        $this->assertFalse($program->is_published);
+        $this->assertSame('pending', $program->approval_status);
         $this->assertSame(12, $program->internshipQuota());
         $this->assertCount(4, $program->modules);
         $this->assertTrue($program->hasAvailableSeat());
