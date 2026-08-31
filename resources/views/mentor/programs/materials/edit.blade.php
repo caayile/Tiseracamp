@@ -5,7 +5,10 @@
 
 @section('content')
 @php
-    $currentType = old('type', $lesson->type ?? 'text');
+    $currentType = old('type', $lesson->type ?? 'article');
+    if ($currentType === 'text') {
+        $currentType = 'article';
+    }
     $pdfIsExternal = $lesson->isExternalFileUrl();
     $audioIsExternal = $lesson->type === 'recording' && $lesson->isExternalFileUrl();
 @endphp
@@ -28,7 +31,6 @@
 
     <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5" role="radiogroup" aria-label="Tipe materi">
         @foreach ([
-            'text' => ['Pengenalan', 'Teks pembuka modul'],
             'video' => ['Video', 'Materi utama'],
             'article' => ['Artikel', 'Bacaan / catatan'],
             'pdf' => ['PDF', 'Dokumen'],
@@ -139,14 +141,6 @@
                 {!! old('content', $lesson->content) !!}
             </div>
             <textarea name="content" class="hidden" data-rich-input>{{ old('content', $lesson->content) }}</textarea>
-        </div>
-        <div>
-            <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
-            <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-deeper">
-            <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB. Ditampilkan di halaman belajar bersama teks pengenalan.</p>
-            @if ($lesson->image_path)
-                <p class="mt-1 text-xs text-brand-mid">Gambar saat ini sudah tersimpan. Unggah file baru untuk mengganti.</p>
-            @endif
         </div>
     </div>
 

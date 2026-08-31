@@ -37,7 +37,7 @@
 
 <div class="space-y-6">
     @forelse ($program->modules as $module)
-        @php $defaultType = $module->lessons->isEmpty() ? 'text' : 'video'; @endphp
+        @php $defaultType = $module->lessons->isEmpty() ? 'article' : 'video'; @endphp
         <div class="card-soft p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -125,7 +125,7 @@
                     </li>
                 @empty
                     <li class="rounded-xl border border-dashed border-brand/30 bg-brand-mist/30 px-4 py-6 text-center text-sm text-ink-soft">
-                        Belum ada materi. Mulai dari <strong class="text-ink">Pengenalan</strong>.
+                        Belum ada materi. Mulai dari <strong class="text-ink">Artikel</strong>.
                     </li>
                 @endforelse
             </ul>
@@ -139,7 +139,6 @@
 
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5" role="radiogroup" aria-label="Tipe materi">
                     @foreach ([
-                        'text' => ['Pengenalan', 'Teks pembuka modul'],
                         'video' => ['Video', 'Materi utama'],
                         'article' => ['Artikel', 'Bacaan / catatan'],
                         'pdf' => ['PDF', 'Dokumen'],
@@ -156,7 +155,7 @@
                 </div>
 
                 <div class="grid gap-3 md:grid-cols-2">
-                    <input type="text" name="title" class="input-field" placeholder="{{ $defaultType === 'text' ? 'Judul, mis. Pengenalan modul' : 'Judul materi' }}" required value="{{ $defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : '' }}">
+                    <input type="text" name="title" class="input-field" placeholder="Judul materi" required>
                     <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="{{ $defaultType === 'text' ? 10 : 15 }}">
                 </div>
 
@@ -197,12 +196,6 @@
                              data-rich-editor
                              class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none empty:before:pointer-events-none empty:before:text-ink-soft/50 empty:before:content-['Tulis_konten_pengenalan_atau_artikel...'] [&_a]:text-brand [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:border-ink/20 [&_blockquote]:pl-3 [&_blockquote]:text-ink-soft [&_blockquote]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-relaxed [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_img]:max-h-96 [&_img]:rounded-lg"></div>
                         <textarea name="content" class="hidden" data-rich-input></textarea>
-                    </div>
-                    <div class="mt-3">
-                        <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
-                        <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-deeper">
-                        <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB. Ditampilkan di halaman belajar bersama teks pengenalan.</p>
-                        @error('image') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 

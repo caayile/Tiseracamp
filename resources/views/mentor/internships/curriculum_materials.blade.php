@@ -31,7 +31,6 @@
 
         <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5" role="radiogroup" aria-label="Tipe materi">
             @foreach ([
-                'text' => ['Pengenalan', 'Teks pembuka modul'],
                 'video' => ['Video', 'Materi utama'],
                 'article' => ['Artikel', 'Bacaan / catatan'],
                 'pdf' => ['PDF', 'Dokumen'],
@@ -84,11 +83,6 @@
                 @include('partials.rich-toolbar')
                 <div contenteditable="true" data-rich-editor class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none [&_a]:text-brand [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:border-ink/20 [&_blockquote]:pl-3 [&_blockquote]:text-ink-soft [&_blockquote]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-relaxed [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_img]:max-h-96 [&_img]:rounded-lg"></div>
                 <textarea name="content" class="hidden" data-rich-input></textarea>
-            </div>
-            <div class="mt-3">
-                <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
-                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="input-field file:mr-3 file:rounded-lg">
-                <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB.</p>
             </div>
         </div>
 
@@ -194,7 +188,7 @@
                 @endif
             </div>
         @empty
-            <div class="card-soft p-8 text-center text-ink-soft">Belum ada materi. Mulai dari <strong class="text-ink">Pengenalan</strong>.</div>
+            <div class="card-soft p-8 text-center text-ink-soft">Belum ada materi. Mulai dari <strong class="text-ink">Artikel</strong>.</div>
         @endforelse
     </div>
 @else

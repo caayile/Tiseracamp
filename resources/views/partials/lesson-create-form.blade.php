@@ -1,25 +1,15 @@
 @php
     $isInternship = $isInternship ?? ($module->program?->type === 'internship');
-    $defaultType = $defaultType ?? ($module->lessons->isEmpty() ? 'text' : 'video');
+    $defaultType = $defaultType ?? ($module->lessons->isEmpty() ? 'article' : 'video');
     $submitLabel = $submitLabel ?? 'Tambah materi';
     $quizHint = $quizHint ?? 'Materi quiz. Detail soal bisa dilengkapi mentor di halaman kurikulum mentor.';
     $weekTaskTitle = 'Tugas '.$module->title;
-    $defaultTitle = $defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : '';
-    $typeOptions = $isInternship
-        ? [
-            'text' => ['Pengenalan', 'Teks pembuka'],
-            'video' => ['Video', 'Materi utama'],
-            'article' => ['Artikel', 'Bacaan'],
-            'pdf' => ['PDF', 'Dokumen'],
-            'quiz' => ['Quiz', 'Biasanya di akhir'],
-        ]
-        : [
-            'text' => ['Pengenalan', 'Teks pembuka'],
-            'video' => ['Video', 'Materi utama'],
-            'article' => ['Artikel', 'Bacaan'],
-            'pdf' => ['PDF', 'Dokumen'],
-            'quiz' => ['Quiz', 'Biasanya di akhir'],
-        ];
+    $typeOptions = [
+        'video' => ['Video', 'Materi utama'],
+        'article' => ['Artikel', 'Bacaan / catatan'],
+        'pdf' => ['PDF', 'Dokumen'],
+        'quiz' => ['Quiz', 'Biasanya di akhir'],
+    ];
 @endphp
 
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-5 space-y-4 border-t border-brand/10 pt-5" data-lesson-form data-rich-form data-week-task-title="{{ $weekTaskTitle }}">
@@ -49,7 +39,7 @@
     </div>
 
     <div class="grid gap-3 md:grid-cols-2">
-        <input type="text" name="title" class="input-field" placeholder="{{ $isInternship ? $weekTaskTitle : 'Judul tugas' }}" required value="{{ old('title', $defaultTitle) }}" aria-label="Judul materi">
+        <input type="text" name="title" class="input-field" placeholder="{{ $isInternship ? $weekTaskTitle : 'Judul tugas' }}" required value="{{ old('title') }}" aria-label="Judul materi">
         <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="{{ old('duration_minutes', $defaultType === 'text' ? 10 : 15) }}">
     </div>
 
@@ -90,11 +80,6 @@
                  class="min-h-36 px-4 py-3 text-sm leading-relaxed text-ink outline-none empty:before:pointer-events-none empty:before:text-ink-soft/50 empty:before:content-['Tulis_konten_pengenalan_atau_artikel...'] [&_a]:text-brand [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:border-ink/20 [&_blockquote]:pl-3 [&_blockquote]:text-ink-soft [&_blockquote]:italic [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-relaxed [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_img]:max-h-96 [&_img]:rounded-lg">
             </div>
             <textarea name="content" class="hidden" data-rich-input></textarea>
-        </div>
-        <div>
-            <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
-            <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
-            <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB.</p>
         </div>
     </div>
 

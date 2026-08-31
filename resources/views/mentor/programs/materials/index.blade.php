@@ -96,7 +96,7 @@
                 @endif
             </div>
         @empty
-            <div class="card-soft p-8 text-center text-ink-soft">Belum ada materi. Mulai dari <strong class="text-ink">Pengenalan</strong>.</div>
+            <div class="card-soft p-8 text-center text-ink-soft">Belum ada materi. Mulai dari <strong class="text-ink">Artikel</strong>.</div>
         @endforelse
     </div>
 @else

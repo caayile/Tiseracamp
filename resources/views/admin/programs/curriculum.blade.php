@@ -68,7 +68,7 @@
 
 <div class="space-y-6">
     @forelse ($program->modules as $module)
-        @php $defaultType = $module->lessons->isEmpty() ? 'text' : 'video'; @endphp
+        @php $defaultType = $module->lessons->isEmpty() ? 'article' : 'video'; @endphp
         <div class="card-soft p-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -100,7 +100,7 @@
                     </li>
                 @empty
                     <li class="rounded-xl border border-dashed border-brand/30 bg-brand-mist/30 px-4 py-6 text-center text-sm text-ink-soft">
-                        Belum ada materi. Mulai dari <strong class="text-ink">Pengenalan</strong>.
+                        Belum ada materi. Mulai dari <strong class="text-ink">Artikel</strong>.
                     </li>
                 @endforelse
             </ul>
@@ -114,7 +114,6 @@
 
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5" role="radiogroup" aria-label="Tipe materi">
                     @foreach ([
-                        'text' => ['Pengenalan', 'Teks pembuka'],
                         'video' => ['Video', 'Materi utama'],
                         'article' => ['Artikel', 'Bacaan'],
                         'pdf' => ['PDF', 'Dokumen'],
@@ -131,7 +130,7 @@
                 </div>
 
                 <div class="grid gap-3 md:grid-cols-2">
-                    <input type="text" name="title" class="input-field" placeholder="Judul materi" required value="{{ $defaultType === 'text' && $module->lessons->isEmpty() ? 'Pengenalan' : '' }}">
+                    <input type="text" name="title" class="input-field" placeholder="Judul materi" required value="{{ $defaultType === 'article' && $module->lessons->isEmpty() ? 'Artikel' : '' }}">
                     <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="{{ $defaultType === 'text' ? 10 : 15 }}">
                 </div>
 
@@ -166,11 +165,6 @@
 
                 <div data-lesson-panel="content" class="space-y-3 {{ in_array($defaultType, ['text', 'article'], true) ? '' : 'hidden' }}">
                     <textarea name="content" rows="4" class="input-field" placeholder="Konten pengenalan / artikel"></textarea>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-ink">Gambar (opsional)</label>
-                        <input type="file" name="image" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" class="input-field file:mr-3 file:rounded-lg file:border-0 file:bg-brand/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold">
-                        <p class="mt-1 text-xs text-ink-soft">JPG/PNG/WebP, maks. 5MB.</p>
-                    </div>
                 </div>
 
                 <div data-lesson-panel="quiz" class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900 {{ $defaultType === 'quiz' ? '' : 'hidden' }}">

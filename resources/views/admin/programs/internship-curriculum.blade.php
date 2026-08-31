@@ -102,7 +102,7 @@
 
 <div class="space-y-4">
     @forelse ($program->modules as $index => $module)
-        @php $defaultType = $module->lessons->isEmpty() ? 'text' : 'video'; @endphp
+        @php $defaultType = $module->lessons->isEmpty() ? 'article' : 'video'; @endphp
         <details class="group card-soft overflow-hidden" {{ $index === 0 ? 'open' : '' }}>
             <summary class="flex cursor-pointer list-none items-center gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-mist text-brand-mid">

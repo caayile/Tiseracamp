@@ -100,7 +100,7 @@
             $weeklyTask = $module->lessons->firstWhere('type', 'assignment');
             $materials = $module->lessons->where('type', '!=', 'assignment')->values();
             $weekReady = $isWeekReady($module);
-            $defaultType = $materials->isEmpty() ? 'text' : 'video';
+            $defaultType = $materials->isEmpty() ? 'article' : 'video';
             $openWeek = $firstEmptyWeekIndex === false ? $index === 0 : $index === $firstEmptyWeekIndex;
         @endphp
         <details class="group card-soft overflow-hidden" {{ $openWeek ? 'open' : '' }}>
