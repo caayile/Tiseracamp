@@ -43,9 +43,15 @@
         <input type="number" name="duration_minutes" class="input-field" placeholder="Durasi menit" min="1" value="{{ old('duration_minutes', $defaultType === 'text' ? 10 : 15) }}">
     </div>
 
-    <div data-lesson-panel="video" class="{{ $defaultType === 'video' ? '' : 'hidden' }}">
-        <input type="url" name="video_url" class="input-field" placeholder="Tempel link YouTube — otomatis di-embed di halaman belajar">
-        <p class="mt-1.5 text-xs text-ink-soft">Boleh paste link biasa (watch / youtu.be / Shorts). Sistem otomatis ubah ke embed.</p>
+    <div data-lesson-panel="video" class="space-y-3 {{ $defaultType === 'video' ? '' : 'hidden' }}">
+        <div>
+            <label class="mb-1.5 block text-sm font-medium text-ink">Deskripsi video</label>
+            <textarea name="description" rows="4" class="input-field" placeholder="Jelaskan isi video ini untuk peserta">{{ old('description') }}</textarea>
+        </div>
+        <div>
+            <input type="url" name="video_url" class="input-field" placeholder="Tempel link YouTube — otomatis di-embed di halaman belajar">
+            <p class="mt-1.5 text-xs text-ink-soft">Boleh paste link biasa (watch / youtu.be / Shorts). Sistem otomatis ubah ke embed.</p>
+        </div>
     </div>
 
     <div data-lesson-panel="pdf" class="space-y-3 {{ $defaultType === 'pdf' ? '' : 'hidden' }}">

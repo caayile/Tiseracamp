@@ -449,7 +449,7 @@ class ProgramController extends Controller
             ? $this->sanitizeRichText($data['content'] ?? null)
             : null;
 
-        if ($data['type'] === 'pdf') {
+        if (in_array($data['type'], ['pdf', 'video'], true)) {
             $description = trim((string) ($data['description'] ?? ''));
             $content = $description !== '' ? nl2br(e($description)) : null;
         }

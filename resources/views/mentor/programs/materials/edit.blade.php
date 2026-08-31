@@ -55,6 +55,10 @@
 
     <div data-lesson-panel="video" class="space-y-3" @if ($currentType !== 'video') hidden @endif>
         <div>
+            <label class="mb-1.5 block text-sm font-medium text-ink">Deskripsi video</label>
+            <textarea name="description" rows="4" class="input-field" placeholder="Jelaskan isi video ini untuk peserta">{{ old('description', isset($lesson->content) ? strip_tags($lesson->content) : '') }}</textarea>
+        </div>
+        <div>
             <label class="mb-1.5 block text-sm font-medium text-ink">Link YouTube</label>
             <input type="text" name="video_url" inputmode="url" class="input-field" placeholder="Tempel link YouTube — otomatis di-embed di halaman belajar"
                    value="{{ old('video_url', $lesson->video_url) }}">

@@ -188,7 +188,7 @@ class MateriController extends Controller
 
         if (in_array($type, ['text', 'article'], true)) {
             $content = $this->sanitizeRichText($data['content'] ?? null);
-        } elseif ($type === 'pdf') {
+        } elseif (in_array($type, ['pdf', 'video'], true)) {
             $description = trim((string) ($data['description'] ?? ''));
             $content = $description !== '' ? nl2br(e($description)) : null;
         }
