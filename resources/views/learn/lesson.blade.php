@@ -207,8 +207,8 @@
                             @if ($submission?->file_url)
                                 <p class="mt-3 text-sm text-ink-soft">
                                     Status: {{ ucfirst($submission->status) }}
-                                    · <a href="{{ $sentIsLink ? $sentUrl : media_url($sentUrl) }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-mid hover:underline">
-                                        {{ $sentIsLink ? 'Buka tautan terkirim' : 'Lihat file terkirim' }}
+                                    · <a href="{{ route('learn.submission.file', $submission) }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-mid hover:underline">
+                                        {{ $submission->isExternalLink() ? 'Buka tautan terkirim' : 'Lihat file terkirim' }}
                                     </a>
                                 </p>
                             @endif

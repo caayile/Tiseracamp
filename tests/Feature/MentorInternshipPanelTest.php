@@ -264,7 +264,22 @@ class MentorInternshipPanelTest extends TestCase
             ->assertOk()
             ->assertSee('Tugas Minggu 1')
             ->assertSee('Minggu 1')
-            ->assertSee('Unduh file tugas');
+            ->assertSee($student->name)
+            ->assertSee('Buka pengumpulan');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.submissions.show', $submission))
+            ->assertOk()
+            ->assertSee('Pengumpulan Tugas Magang')
+            ->assertSee($student->name)
+            ->assertSee('Buka file tugas')
+            ->assertSee('Simpan penilaian')
+            ->assertSee('Tandai sudah dicek');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.submissions.file', $submission))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_weekly_assignment_requires_link_or_file(): void

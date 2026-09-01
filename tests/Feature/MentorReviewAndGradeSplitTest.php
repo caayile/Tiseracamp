@@ -100,7 +100,7 @@ class MentorReviewAndGradeSplitTest extends TestCase
             'batch_id' => $internship->enrollableBatchId(),
             'enrolled_at' => now(),
         ]);
-        Submission::create([
+        $internshipSubmission = Submission::create([
             'assignment_id' => $task->assignment->id,
             'user_id' => $intern->id,
             'file_url' => 'https://drive.google.com/file/d/magang/view',
@@ -112,7 +112,9 @@ class MentorReviewAndGradeSplitTest extends TestCase
             ->assertOk()
             ->assertSee('Review Tugas Bootcamp')
             ->assertSee('Tugas prototipe')
-            ->assertSee('Tugas bootcamp');
+            ->assertSee('Tugas bootcamp')
+            ->assertSee($student->name)
+            ->assertDontSee('Simpan penilaian');
 
         $this->actingAs($mentor)
             ->get(route('mentor.submissions.internship'))
@@ -120,18 +122,80 @@ class MentorReviewAndGradeSplitTest extends TestCase
             ->assertSee('Review Tugas Magang')
             ->assertSee('Tugas Minggu 1')
             ->assertSee('Tugas magang')
-            ->assertDontSee('Tugas prototipe');
+            ->assertSee($intern->name)
+            ->assertSee('Buka pengumpulan')
+            ->assertDontSee('Tugas prototipe')
+            ->assertDontSee('Simpan penilaian');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.submissions.show', $internshipSubmission))
+            ->assertOk()
+            ->assertSee('Pengumpulan Tugas Magang')
+            ->assertSee($intern->name)
+            ->assertSee('Tugas Minggu 1')
+            ->assertSee('Buka tautan tugas')
+            ->assertSee('Tandai sudah dicek')
+            ->assertSee('Simpan penilaian');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.submissions.file', $internshipSubmission))
+            ->assertRedirect('https://drive.google.com/file/d/magang/view');
+
+        $internshipSubmission->update([
+            'file_url' => 'https://drive.google.com/uc?export=download&id=1AbCdefGhijkLmNopQrsTuvWxyz012345',
+        ]);
+        $this->actingAs($mentor)
+            ->get(route('mentor.submissions.file', $internshipSubmission))
+            ->assertRedirect('https://drive.google.com/file/d/1AbCdefGhijkLmNopQrsTuvWxyz012345/view');
+        $internshipSubmission->update([
+            'file_url' => 'https://drive.google.com/file/d/magang/view',
+        ]);
+
+        $this->actingAs($mentor)
+            ->post(route('mentor.submissions.mark', $internshipSubmission))
+            ->assertRedirect(route('mentor.submissions.show', $internshipSubmission));
+
+        $internshipSubmission->refresh();
+        $this->assertSame('reviewed', $internshipSubmission->status);
+
+        $this->actingAs($mentor)
+            ->post(route('mentor.submissions.review', $internshipSubmission), [
+                'score' => 91,
+                'feedback' => 'Laporan minggu ini rapi.',
+            ])
+            ->assertRedirect(route('mentor.submissions.internship'));
+
+        $internshipSubmission->refresh();
+        $this->assertSame(91, (int) $internshipSubmission->score);
+        $this->assertSame('reviewed', $internshipSubmission->status);
 
         $bootcampEnrollment = Enrollment::where('program_id', $bootcampProgram->id)
             ->where('user_id', $student->id)
             ->firstOrFail();
 
         $this->actingAs($mentor)
+            ->get(route('mentor.grades.bootcamp'))
+            ->assertOk()
+            ->assertSee('Nilai Peserta Bootcamp')
+            ->assertSee('Bootcamp UI')
+            ->assertSee($student->name)
+            ->assertSee('Klik untuk input nilai')
+            ->assertDontSee('Simpan nilai bootcamp')
+            ->assertDontSee('Semua program magang');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.grades.bootcamp.edit', $bootcampEnrollment))
+            ->assertOk()
+            ->assertSee($student->name)
+            ->assertSee('Input Nilai Bootcamp')
+            ->assertSee('Simpan nilai bootcamp');
+
+        $this->actingAs($mentor)
             ->put(route('mentor.grades.bootcamp.update', $bootcampEnrollment), [
                 'final_score' => 88,
                 'grade_note' => 'Kuat di praktik.',
             ])
-            ->assertRedirect()
+            ->assertRedirect(route('mentor.grades.bootcamp'))
             ->assertSessionHas('success');
 
         $bootcampEnrollment->refresh();
@@ -143,6 +207,8 @@ class MentorReviewAndGradeSplitTest extends TestCase
             ->assertOk()
             ->assertSee('Nilai Peserta Bootcamp')
             ->assertSee('Bootcamp UI')
+            ->assertSee($student->name)
+            ->assertSee('88')
             ->assertDontSee('Semua program magang');
 
         $this->actingAs($mentor)

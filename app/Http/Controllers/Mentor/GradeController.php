@@ -108,6 +108,18 @@ class GradeController extends AdminGradeController
         ]);
     }
 
+    public function bootcampEdit(Enrollment $enrollment): View
+    {
+        $enrollment->load(['user', 'program']);
+        abort_unless($enrollment->program?->mentor_id === auth()->id(), 403);
+        abort_unless($enrollment->program?->type === 'bootcamp', 404);
+
+        return view('mentor.grades.bootcamp-edit', [
+            'enrollment' => $enrollment,
+            'scores' => $enrollment->bootcampWorkScores(),
+        ]);
+    }
+
     public function bootcampUpdate(Request $request, Enrollment $enrollment): RedirectResponse
     {
         $enrollment->load('program');
@@ -135,6 +147,8 @@ class GradeController extends AdminGradeController
             'graded_at' => now(),
         ]);
 
+        $enrollment->loadMissing('user');
+
         AppNotification::create([
             'user_id' => $enrollment->user_id,
             'title' => 'Nilai bootcamp tersedia',
@@ -143,7 +157,9 @@ class GradeController extends AdminGradeController
             'link' => route('learn.grade', $enrollment->program),
         ]);
 
-        return back()->with('success', 'Nilai bootcamp disimpan: '.$final.' ('.Enrollment::letterFromScore($final).').');
+        return redirect()
+            ->route('mentor.grades.bootcamp')
+            ->with('success', 'Nilai bootcamp '.$enrollment->user->name.' disimpan: '.$final.' ('.Enrollment::letterFromScore($final).').');
     }
 
     public function bootcampPrint(Enrollment $enrollment): View
@@ -159,7 +175,7 @@ class GradeController extends AdminGradeController
             'program' => $enrollment->program,
             'sheetKind' => 'bootcamp',
             'workScores' => $enrollment->bootcampWorkScores(),
-            'backUrl' => route('mentor.grades.bootcamp'),
+            'backUrl' => route('mentor.grades.bootcamp.edit', $enrollment),
         ]);
     }
 }

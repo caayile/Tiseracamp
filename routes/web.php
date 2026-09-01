@@ -115,6 +115,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/learn/{program}/lessons/{lesson}', [DashboardController::class, 'lesson'])->name('learn.lesson');
     Route::post('/learn/{program}/lessons/{lesson}/complete', [DashboardController::class, 'completeLesson'])->name('learn.complete');
     Route::post('/learn/{program}/lessons/{lesson}/submit', [DashboardController::class, 'submitAssignment'])->name('learn.submit');
+    Route::get('/learn/submissions/{submission}/file', [DashboardController::class, 'submissionFile'])->name('learn.submission.file');
     Route::post('/learn/{program}/lessons/{lesson}/note', [DashboardController::class, 'saveNote'])->name('learn.note');
     Route::post('/learn/{program}/feedback', [DashboardController::class, 'storeFeedback'])->name('learn.feedback');
     Route::get('/learn/{program}/nilai', [DashboardController::class, 'grade'])->name('learn.grade');
@@ -205,6 +206,9 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::post('/assignments/{assignment}/questions', [MentorAssignmentController::class, 'storeQuestion'])->name('assignments.questions');
     Route::get('/submissions/bootcamp', [MentorAssignmentController::class, 'bootcampSubmissions'])->name('submissions.bootcamp');
     Route::get('/submissions/internship', [MentorAssignmentController::class, 'internshipSubmissions'])->name('submissions.internship');
+    Route::get('/submissions/{submission}', [MentorAssignmentController::class, 'show'])->name('submissions.show');
+    Route::get('/submissions/{submission}/file', [MentorAssignmentController::class, 'file'])->name('submissions.file');
+    Route::post('/submissions/{submission}/mark', [MentorAssignmentController::class, 'mark'])->name('submissions.mark');
     Route::post('/submissions/{submission}/review', [MentorAssignmentController::class, 'review'])->name('submissions.review');
     Route::get('/schedules', [MentorScheduleController::class, 'index'])->name('schedules.index');
     Route::post('/schedules', [MentorScheduleController::class, 'store'])->name('schedules.store');
@@ -220,6 +224,7 @@ Route::middleware(['auth', 'active', 'mentor'])->prefix('mentor')->name('mentor.
     Route::get('/logbooks/{logbook}/dokumentasi', [MentorLogbookController::class, 'attachment'])->name('logbooks.attachment');
     Route::post('/logbooks/{logbook}/review', [MentorLogbookController::class, 'review'])->name('logbooks.review');
     Route::get('/grades/bootcamp', [MentorGradeController::class, 'bootcampIndex'])->name('grades.bootcamp');
+    Route::get('/grades/bootcamp/{enrollment}', [MentorGradeController::class, 'bootcampEdit'])->name('grades.bootcamp.edit');
     Route::put('/grades/bootcamp/{enrollment}', [MentorGradeController::class, 'bootcampUpdate'])->name('grades.bootcamp.update');
     Route::get('/grades/bootcamp/{enrollment}/print', [MentorGradeController::class, 'bootcampPrint'])->name('grades.bootcamp.print');
     Route::get('/grades', [MentorGradeController::class, 'index'])->name('grades.index');

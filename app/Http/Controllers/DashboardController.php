@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DashboardController extends Controller
 {
@@ -397,7 +398,7 @@ class DashboardController extends Controller
                 ->withErrors(['file_url' => 'Kirim tautan tugas atau unggah filenya.']);
         }
 
-        Submission::updateOrCreate(
+        $submission = Submission::updateOrCreate(
             ['assignment_id' => $assignment->id, 'user_id' => auth()->id()],
             ['file_url' => $path, 'notes' => $data['notes'] ?? null, 'status' => 'submitted']
         );
@@ -408,11 +409,19 @@ class DashboardController extends Controller
                 'title' => $program->type === 'internship' ? 'Pengumpulan tugas magang' : 'Submission bootcamp baru',
                 'body' => auth()->user()->name.' mengirim tugas: '.$assignment->title,
                 'type' => 'assignment',
-                'link' => route($program->type === 'internship' ? 'mentor.submissions.internship' : 'mentor.submissions.bootcamp'),
+                'link' => route('mentor.submissions.show', $submission),
             ]);
         }
 
         return back()->with('success', 'Tugas berhasil dikirim.');
+    }
+
+    public function submissionFile(Submission $submission): BinaryFileResponse|RedirectResponse
+    {
+        abort_unless($submission->user_id === auth()->id() || auth()->user()?->isAdmin(), 403);
+        $submission->loadMissing('assignment');
+
+        return $submission->serveForViewer();
     }
 
     /**

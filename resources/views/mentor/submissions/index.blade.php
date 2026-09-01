@@ -14,85 +14,56 @@
 @section('content')
 <p class="mb-6 text-sm text-ink-soft">
     @if ($isInternship)
-        Khusus pengumpulan <strong class="text-ink">tugas magang</strong> (laporan mingguan). Penilaian akhir peserta ada di
+        Pengumpulan tugas magang muncul di sini setelah peserta mengirim laporan. Pilih nama peserta untuk membuka
+        <strong class="text-ink">halaman pengumpulan</strong>, lalu tandai dan nilai langsung.
+        Penilaian akhir peserta tetap di
         <a href="{{ route('mentor.grades.index') }}" class="font-semibold text-brand-dark underline">Nilai Magang</a>
-        (Project + Sikap), terpisah dari skor tugas di halaman ini.
+        (Project + Sikap).
     @else
-        Khusus <strong class="text-ink">tugas dan quiz bootcamp</strong>. Quiz dinilai otomatis; tugas file dinilai di sini.
+        Khusus <strong class="text-ink">tugas dan quiz bootcamp</strong>. Quiz dinilai otomatis; tugas file dinilai di halaman pengumpulan.
         Nilai akhir bootcamp ada di
-        <a href="{{ route('mentor.grades.bootcamp') }}" class="font-semibold text-brand-dark underline">Nilai Bootcamp</a>,
-        terpisah dari nilai magang.
+        <a href="{{ route('mentor.grades.bootcamp') }}" class="font-semibold text-brand-dark underline">Nilai Bootcamp</a>.
     @endif
 </p>
 
-<div class="space-y-6">
-    @forelse ($submissions as $submission)
-        @php
-            $module = $submission->assignment->lesson->module;
-            $program = $module->program;
-            $isQuiz = $submission->assignment->isQuiz();
-            $deadline = $submission->assignment->deadline;
-        @endphp
-        <div class="card-soft p-5">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <p class="font-display text-lg font-semibold">{{ $submission->assignment->title }}</p>
+@if ($submissions->isEmpty())
+    <div class="card-soft p-10 text-center text-ink-soft">{{ $empty }}</div>
+@else
+    <div class="space-y-3">
+        @foreach ($submissions as $submission)
+            @php
+                $module = $submission->assignment->lesson->module;
+                $program = $module->program;
+                $isQuiz = $submission->assignment->isQuiz();
+            @endphp
+            <a href="{{ route('mentor.submissions.show', $submission) }}"
+               class="card-soft flex flex-wrap items-center justify-between gap-4 p-5 transition hover:border-brand/40 hover:shadow-md">
+                <div class="min-w-0">
+                    <p class="font-display text-lg font-semibold text-ink">{{ $submission->user->name }}</p>
+                    <p class="mt-1 text-sm text-brand-mid">{{ $submission->assignment->title }}</p>
+                    <p class="mt-1 text-sm text-ink-soft">
+                        {{ $program->title }} · {{ $module->title }}
+                        · {{ $submission->created_at->translatedFormat('d M Y, H:i') }}
+                    </p>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
                         <span class="rounded-lg bg-brand-mist px-2 py-0.5 text-[11px] font-semibold text-brand-mid">
                             {{ $isQuiz ? 'Quiz' : ($isInternship ? 'Tugas magang' : 'Tugas bootcamp') }}
                         </span>
+                        <span class="badge">{{ $submission->status === 'reviewed' ? 'Sudah dinilai' : 'Menunggu penilaian' }}</span>
                     </div>
-                    <p class="mt-1 text-sm text-ink-soft">
-                        {{ $submission->user->name }} ·
-                        {{ $program->title }} · {{ $module->title }} ·
-                        {{ $submission->created_at->translatedFormat('d M Y, H:i') }}
-                    </p>
-                    @if ($deadline)
-                        <p class="mt-1 text-xs text-brand">Deadline: {{ $deadline->translatedFormat('d M Y, H:i') }}</p>
-                    @endif
-                    <span class="badge mt-2">{{ $submission->status === 'reviewed' ? 'Sudah dinilai' : 'Menunggu penilaian' }}</span>
                 </div>
-                @if ($submission->score !== null)
-                    <p class="font-display text-2xl font-bold text-brand-deeper">{{ $submission->score }}/100</p>
-                @endif
-            </div>
-
-            @if ($isQuiz)
-                <p class="mt-3 text-xs text-ink-soft">Skor quiz dihitung otomatis. Kamu bisa menyesuaikan jika perlu.</p>
-            @endif
-
-            @if ($submission->notes && ! $isQuiz)
-                <p class="mt-4 text-sm text-ink whitespace-pre-line">{{ $submission->notes }}</p>
-            @endif
-
-            @if ($submission->file_url)
-                @php $isHttp = str_starts_with($submission->file_url, 'http'); @endphp
-                <a href="{{ $isHttp ? $submission->file_url : media_url($submission->file_url) }}"
-                   target="_blank" rel="noopener noreferrer"
-                   @if (! $isHttp) download @endif
-                   class="btn-secondary mt-3 text-sm">
-                    {{ $isHttp ? 'Buka tautan tugas' : 'Unduh file tugas' }}
-                </a>
-            @endif
-
-            @if ($submission->status !== 'reviewed' || $submission->assignment->kind === 'assignment' || $isQuiz)
-                <form method="POST" action="{{ route('mentor.submissions.review', $submission) }}" class="mt-4 flex flex-wrap items-end gap-3 border-t border-brand/10 pt-4">
-                    @csrf
-                    <div>
-                        <label class="mb-1 block text-xs font-medium">{{ $isInternship ? 'Skor laporan (0–100)' : 'Skor (0–100)' }}</label>
-                        <input type="number" name="score" value="{{ old('score', $submission->score ?? 0) }}" class="input-field w-24" min="0" max="100" required>
-                    </div>
-                    <div class="min-w-[200px] flex-1">
-                        <label class="mb-1 block text-xs font-medium">{{ $isInternship ? 'Catatan mentoring' : 'Feedback untuk siswa' }}</label>
-                        <input type="text" name="feedback" value="{{ old('feedback', $submission->feedback) }}" class="input-field"
-                               placeholder="{{ $isInternship ? 'Masukan untuk laporan minggu ini' : 'Catatan untuk siswa' }}">
-                    </div>
-                    <button class="btn-primary" type="submit">Simpan penilaian</button>
-                </form>
-            @endif
-        </div>
-    @empty
-        <div class="card-soft p-10 text-center text-ink-soft">{{ $empty }}</div>
-    @endforelse
-</div>
+                <div class="text-right">
+                    @if ($submission->score !== null)
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Skor</p>
+                        <p class="mt-1 font-display text-3xl font-bold text-ink leading-none">{{ $submission->score }}</p>
+                        <p class="mt-1 text-xs text-ink-soft">klik untuk ubah</p>
+                    @else
+                        <span class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Belum dinilai</span>
+                        <p class="mt-2 text-sm font-semibold text-brand-mid">Buka pengumpulan</p>
+                    @endif
+                </div>
+            </a>
+        @endforeach
+    </div>
+@endif
 @endsection

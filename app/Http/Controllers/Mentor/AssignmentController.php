@@ -13,6 +13,7 @@ use App\Models\Submission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AssignmentController extends Controller
 {
@@ -147,10 +148,51 @@ class AssignmentController extends Controller
         ]);
     }
 
+    public function show(Submission $submission): View
+    {
+        $submission->load(['user', 'assignment.lesson.module.program']);
+        $program = $submission->assignment->lesson->module->program;
+        abort_unless($program?->mentor_id === auth()->id(), 403);
+
+        return view('mentor.submissions.show', [
+            'submission' => $submission,
+            'program' => $program,
+            'module' => $submission->assignment->lesson->module,
+            'audience' => $program->type === 'internship' ? 'internship' : 'bootcamp',
+        ]);
+    }
+
+    public function file(Submission $submission): BinaryFileResponse|RedirectResponse
+    {
+        $this->ownedProgram($submission);
+
+        return $submission->serveForViewer();
+    }
+
+    public function mark(Submission $submission): RedirectResponse
+    {
+        $program = $this->ownedProgram($submission);
+
+        $submission->update([
+            'status' => 'reviewed',
+        ]);
+
+        AppNotification::create([
+            'user_id' => $submission->user_id,
+            'title' => $program->type === 'internship' ? 'Tugas magang ditandai' : 'Tugas bootcamp ditandai',
+            'body' => $submission->assignment->title.' sudah dicek mentor.',
+            'type' => 'info',
+            'link' => route('learn.lesson', [$program, $submission->assignment->lesson]),
+        ]);
+
+        return redirect()
+            ->route('mentor.submissions.show', $submission)
+            ->with('success', 'Pengumpulan '.$submission->user->name.' ditandai sudah dicek.');
+    }
+
     public function review(Request $request, Submission $submission): RedirectResponse
     {
-        $program = $submission->assignment->lesson->module->program;
-        abort_unless($program->mentor_id === auth()->id(), 403);
+        $program = $this->ownedProgram($submission);
         $data = $request->validate([
             'score' => ['required', 'integer', 'min:0', 'max:100'],
             'feedback' => ['nullable', 'string'],
@@ -174,6 +216,15 @@ class AssignmentController extends Controller
             'link' => route('learn.lesson', [$program, $submission->assignment->lesson]),
         ]);
 
-        return redirect()->route($reviewRoute)->with('success', 'Penilaian disimpan.');
+        return redirect()->route($reviewRoute)->with('success', 'Penilaian '.$submission->user->name.' disimpan.');
+    }
+
+    private function ownedProgram(Submission $submission): Program
+    {
+        $submission->loadMissing(['user', 'assignment.lesson.module.program']);
+        $program = $submission->assignment->lesson->module->program;
+        abort_unless($program?->mentor_id === auth()->id(), 403);
+
+        return $program;
     }
 }
